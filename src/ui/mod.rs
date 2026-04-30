@@ -26,6 +26,7 @@ mod main_menu;
 mod menu;
 mod regions;
 pub mod save_load;
+mod scroll;
 
 pub fn plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Load), setup_fonts)
