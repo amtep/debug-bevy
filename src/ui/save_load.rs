@@ -61,7 +61,7 @@ pub fn open_load_game_popup(
         Ok(v) => v,
     };
     v.sort_by_key(|(_, metadata, _)| std::cmp::Reverse(metadata.save_timestamp));
-    // TODO: make this fit in the flex space of the dialog, instead of guessing 80%.
+    // TODO: make this fit in the flex space of the dialog, instead of guessing a percentage.
     let container = commands
         .spawn(Node {
             width: percent(100),

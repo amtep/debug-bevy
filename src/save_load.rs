@@ -232,14 +232,13 @@ pub fn load(mut commands: Commands, campaign: Campaign, content: Vec<u8>) {
     commands.insert_resource(campaign);
 }
 
-/// Examine the savefile filenames to find a new number to save under.
-fn calc_new_campaign_index() -> Result<usize, SaveLoadError> {
+fn list_save_files() -> Result<(PathBuf, Vec<OsString>), SaveLoadError> {
+    let mut v = Vec::default();
     if let Some(pd) = ProjectDirs::from(
         PROJECT_DIR_QUALIFIER,
         PROJECT_DIR_ORGANIZATION,
         PROJECT_DIR_APPLICATION,
     ) {
-        let mut max_campaign_index = 0;
         let save_dir = pd.data_dir().join("saves");
         create_dir_all(&save_dir)
             .map_err(|e| SaveLoadError::CreateDirError(save_dir.to_owned(), e))?;
@@ -250,72 +249,64 @@ fn calc_new_campaign_index() -> Result<usize, SaveLoadError> {
             if entry.path().extension() != Some(&OsString::from(EXTENSION)) {
                 continue;
             }
-            // Parse the leading number in the filename
-            if let Some(Ok(index)) = entry
-                .file_name()
-                .to_string_lossy()
-                .split(&['.', '-'])
-                .next()
-                .map(|number| number.parse())
-                && index > max_campaign_index
-            {
-                max_campaign_index = index;
-            }
+            v.push(entry.file_name().to_owned());
         }
-        Ok(max_campaign_index + 1)
+        Ok((save_dir, v))
     } else {
         Err(SaveLoadError::ProjectDirFailed)
     }
 }
 
-pub fn scan_saved_games() -> Result<Vec<(Campaign, SaveMetadata, Vec<u8>)>, SaveLoadError> {
-    if let Some(pd) = ProjectDirs::from(
-        PROJECT_DIR_QUALIFIER,
-        PROJECT_DIR_ORGANIZATION,
-        PROJECT_DIR_APPLICATION,
-    ) {
-        let mut v = Vec::default();
-        let save_dir = pd.data_dir().join("saves");
-        create_dir_all(&save_dir)
-            .map_err(|e| SaveLoadError::CreateDirError(save_dir.to_owned(), e))?;
-        for entry in
-            read_dir(&save_dir).map_err(|e| SaveLoadError::ReadDirError(save_dir.to_owned(), e))?
+/// Examine the savefile filenames to find a new number to save under.
+fn calc_new_campaign_index() -> Result<usize, SaveLoadError> {
+    let mut max_campaign_index = 0;
+    for file_name in list_save_files()?.1 {
+        // Parse the leading number in the filename
+        if let Some(Ok(index)) = file_name
+            .to_string_lossy()
+            .split(&['.', '-'])
+            .next()
+            .map(|number| number.parse())
+            && index > max_campaign_index
         {
-            let entry = entry.map_err(|e| SaveLoadError::ReadEntryError(save_dir.to_owned(), e))?;
-            if entry.path().extension() != Some(&OsString::from(EXTENSION)) {
-                continue;
-            }
-            // Parse the leading number in the filename
-            if let Some(Ok(index)) = entry
-                .file_name()
-                .to_string_lossy()
-                .split(&['.', '-'])
-                .next()
-                .map(|number| number.parse())
-            {
-                let Ok(bytes) = std::fs::read(entry.path()).map_err(|e| {
-                    let e = SaveLoadError::ReadSaveError(save_dir.to_owned(), e);
-                    error!("Skipping save file: {e}");
-                }) else {
-                    continue;
-                };
-                let Some(p) = bytes
-                    .windows(SEPARATOR.len())
-                    .position(|window| window == SEPARATOR)
-                else {
-                    error!("Savefile without metadata: {}", entry.path().display());
-                    continue;
-                };
-                let (metadata, content) = (&bytes[..p], &bytes[p + SEPARATOR.len()..]);
-                let Ok(metadata) = ron::de::from_bytes(metadata) else {
-                    error!("Savefile with invalid metadata: {}", entry.path().display());
-                    continue;
-                };
-                v.push((Campaign(index), metadata, content.to_owned()));
-            }
+            max_campaign_index = index;
         }
-        Ok(v)
-    } else {
-        Err(SaveLoadError::ProjectDirFailed)
     }
+    Ok(max_campaign_index + 1)
+}
+
+pub fn scan_saved_games() -> Result<Vec<(Campaign, SaveMetadata, Vec<u8>)>, SaveLoadError> {
+    let mut v = Vec::default();
+    let (save_dir, savegames) = list_save_files()?;
+    for file_name in savegames {
+        // Parse the leading number in the filename
+        if let Some(Ok(index)) = file_name
+            .to_string_lossy()
+            .split(&['.', '-'])
+            .next()
+            .map(|number| number.parse())
+        {
+            let path = save_dir.join(file_name);
+            let Ok(bytes) = std::fs::read(&path).map_err(|e| {
+                let e = SaveLoadError::ReadSaveError(path.clone(), e);
+                error!("Skipping save file: {e}");
+            }) else {
+                continue;
+            };
+            let Some(p) = bytes
+                .windows(SEPARATOR.len())
+                .position(|window| window == SEPARATOR)
+            else {
+                error!("Savefile without metadata: {}", path.display());
+                continue;
+            };
+            let (metadata, content) = (&bytes[..p], &bytes[p + SEPARATOR.len()..]);
+            let Ok(metadata) = ron::de::from_bytes(metadata) else {
+                error!("Savefile with invalid metadata: {}", path.display());
+                continue;
+            };
+            v.push((Campaign(index), metadata, content.to_owned()));
+        }
+    }
+    Ok(v)
 }
