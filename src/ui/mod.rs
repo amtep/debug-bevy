@@ -10,12 +10,15 @@ use crate::{
     common::{CultName, CultSymbol},
     constants::ui::*,
     funds::{Expense, ExpenseCategory, Funds, FundsAmount, Income, IncomeCategory},
+    main_menu::NewGame,
     state::{GameState, MainSetupSet},
     suspicion::{IntelligenceSuspicion, ScientificSuspicion},
     text::TextKey,
     time::{CurrentGameSpeed, GameDate, GameSpeed, GameSpeedAction, GameSpeedChangedEvent},
     ui::{
-        buttons::setup_observe_buttons, dialog::setup_observe_dialogs, main_menu::setup_main_menu,
+        buttons::setup_observe_buttons,
+        dialog::{Dialog, setup_observe_dialogs},
+        main_menu::setup_main_menu,
         menu::setup_observe_menus,
     },
 };
@@ -44,7 +47,9 @@ pub fn plugin(app: &mut App) {
         .add_systems(OnEnter(GameState::MainMenu), setup_main_menu)
         .add_systems(
             OnEnter(GameState::Main),
-            (setup_map, regions::setup).chain().in_set(MainSetupSet::Ui),
+            (setup_map, regions::setup, setup_intro)
+                .chain()
+                .in_set(MainSetupSet::Ui),
         )
         .add_systems(
             Update,
@@ -595,5 +600,16 @@ fn update_funds_tooltip(
                 *funds,
             );
         }
+    }
+}
+
+fn setup_intro(mut commands: Commands, new_game: Option<Res<NewGame>>) {
+    if new_game.is_some() {
+        commands.spawn(
+            Dialog::new()
+                .with_pause()
+                .with_text_body("new-game-intro-body")
+                .with_confirm_label("new-game-confirm"),
+        );
     }
 }
