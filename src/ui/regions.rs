@@ -1,15 +1,16 @@
 use bevy::prelude::*;
 
 use crate::{
-    bases::{Base, BasetypesAsset, BasetypesHandle},
+    bases::{Base, BasetypesAsset, BasetypesHandle, spawn_base},
     constants::ui::*,
     followers::Follower,
     regions::{BasePlot, Location, Region},
+    rng::RandomSource,
     suspicion::{MediaSuspicion, PoliceSuspicion},
     text::TextKey,
     ui::{
         BaseUi, FollowerList, UnicodeFontHandle,
-        dialog::Dialog,
+        dialog::{Dialog, DialogConfirmed},
         menu::{Menu, MenuClicked, MenuEntry, MenuItem},
     },
 };
@@ -153,49 +154,117 @@ fn on_region_click(
     click: On<Pointer<Click>>,
     mut commands: Commands,
     region_uis: Query<&ViewOf, With<RegionUi>>,
-    regions: Query<&Region>,
+    regions: Query<(&Region, &Children)>,
+    base_plots: Query<Has<Children>, With<BasePlot>>,
     base_types_handle: Res<BasetypesHandle>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
 ) {
-    let region = region_uis.get(click.entity).unwrap().0;
-    let region_name = &regions.get(region).unwrap().name;
+    if click.button != PointerButton::Primary {
+        return;
+    }
+    let region_entity = region_uis.get(click.entity).unwrap().0;
+    let (region, children) = regions.get(region_entity).unwrap();
+    let is_any_base_plot_vacant = children
+        .iter()
+        .any(|base_plot| base_plots.get(base_plot) == Ok(false));
+
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
     let iter = base_types
         .iter()
         .filter(|(_, settings)| {
-            settings.regions.is_empty() || settings.regions.contains(region_name)
+            settings.regions.is_empty() || settings.regions.contains(&region.name)
         })
         .map(|(name, _)| MenuItem {
-            enabled: true,
+            enabled: is_any_base_plot_vacant,
             text: format!("acquire-{}", name).into(),
-            description: format!("acquire-{}-desc", name).into(),
+            tooltip: if is_any_base_plot_vacant {
+                format!("acquire-{}-tooltip", name).into()
+            } else {
+                "acquire-tooltip-no-vacant-base-plot".into()
+            },
         });
     let entry = MenuEntry::new("menu-region-bases").with_items_iter(iter);
 
     commands
         .spawn((ChildOf(click.entity), Menu::new().with_entry(entry)))
         .observe(
-            |menu_clicked: On<Add, MenuClicked>,
-             mut commands: Commands,
-             menu_clickeds: Query<&MenuClicked>,
-             base_types_handle: Res<BasetypesHandle>,
-             base_types_asset: Res<Assets<BasetypesAsset>>| {
+            move |menu_clicked: On<Add, MenuClicked>,
+                  mut commands: Commands,
+                  menu_clickeds: Query<&MenuClicked>,
+                  base_types_handle: Res<BasetypesHandle>,
+                  base_types_asset: Res<Assets<BasetypesAsset>>,
+                  font_handle: Res<FontHandle>| {
                 let menu_clicked = menu_clickeds.get(menu_clicked.entity).unwrap();
                 let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
 
                 if menu_clicked.0.starts_with("acquire-") {
                     for (name, settings) in base_types.iter() {
                         if name == menu_clicked.0.strip_prefix("acquire-").unwrap() {
-                            commands.spawn(
-                                Dialog::new()
-                                    .with_pause()
-                                    .with_cancel()
-                                    .with_title(menu_clicked.0.as_str())
-                                    .with_text_body(
-                                        TextKey::new("acquire-basetype-dialog")
-                                            .add_arg("funds", settings.initial_cost as f64),
-                                    ),
-                            );
+                            let entity = commands
+                                .spawn(Node {
+                                    flex_direction: FlexDirection::Column,
+                                    align_items: AlignItems::Center,
+                                    margin: UiRect::top(px(20)),
+                                    row_gap: px(20),
+                                    ..default()
+                                })
+                                .with_children(|parent| {
+                                    let line = |key, arg, value| {
+                                        (
+                                            TextKey::new(key).add_arg(arg, value),
+                                            TextColor::from(TEXT),
+                                            TextFont::from_font_size(LARGE)
+                                                .with_font(font_handle.0.clone()),
+                                        )
+                                    };
+
+                                    parent.spawn(line(
+                                        "acquire-basetype-dialog-max-pop",
+                                        "count",
+                                        settings.max_pop as f64,
+                                    ));
+                                    parent.spawn(line(
+                                        "acquire-basetype-dialog-initial-cost",
+                                        "funds",
+                                        settings.initial_cost as f64,
+                                    ));
+                                    parent.spawn(line(
+                                        "acquire-basetype-dialog-cost-per-day",
+                                        "funds",
+                                        settings.cost_per_day as f64,
+                                    ));
+                                    parent.spawn(line(
+                                        "acquire-basetype-dialog-police-suspicion",
+                                        "suspicion",
+                                        settings.police_suspicion as f64,
+                                    ));
+                                    parent.spawn(line(
+                                        "acquire-basetype-dialog-media-suspicion",
+                                        "suspicion",
+                                        settings.media_suspicion as f64,
+                                    ));
+                                })
+                                .id();
+
+                            let base_type = name.clone();
+
+                            commands
+                                .spawn(
+                                    Dialog::new()
+                                        .with_pause()
+                                        .with_cancel()
+                                        .with_title(menu_clicked.0.as_str())
+                                        .with_entity_body(entity),
+                                )
+                                .observe(move |_: On<Add, DialogConfirmed>,
+                                               commands: Commands,
+                                               regions: Query<&Children, With<Region>>,
+                                               base_plots: Query<Has<Children>, With<BasePlot>>,
+                                               base_types_handle: Res<BasetypesHandle>,
+                                               base_types_asset: Res<Assets<BasetypesAsset>>,
+                                               random_source: ResMut<RandomSource>| {
+                                            spawn_base(commands, region_entity, regions, base_type.clone(), base_plots, base_types_handle, base_types_asset, random_source);
+                                });
                         }
                     }
                 }
@@ -253,6 +322,7 @@ fn on_spawn_base(
             parent.spawn((
                 TextKey::new(format!("basetype-{}", base_type.0)),
                 TextFont::from_font_size(NORMAL).with_font(font_handle.0.clone()),
+                TextLayout::new_with_justify(Justify::Center),
             ));
             parent.spawn((
                 FollowerList,

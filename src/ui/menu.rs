@@ -7,7 +7,7 @@ pub struct MenuItem {
     pub enabled: bool,
     pub text: TextKey,
     #[expect(dead_code)]
-    pub description: TextKey,
+    pub tooltip: TextKey,
 }
 
 #[derive(Clone)]
@@ -160,6 +160,12 @@ fn on_menu_add(
                             let mut cmd = parent.spawn((
                                 MenuItemUi,
                                 Button,
+                                Node {
+                                    width: percent(100),
+                                    padding: UiRect::axes(px(5), px(2)),
+                                    ..default()
+                                },
+                                BackgroundColor::from(background_color),
                             ));
 
                             if !item.enabled {
@@ -168,29 +174,20 @@ fn on_menu_add(
 
                             let text = item.text.0.clone();
 
-                            cmd.with_children(|parent| {
-                                parent.spawn((
-                                    Node {
-                                        width: percent(100),
-                                        padding: UiRect::axes(px(5), px(2)),
-                                        ..default()
-                                    },
-                                    BackgroundColor::from(background_color),
-                                )).with_child((
-                                    item.text,
-                                    TextColor::from(TEXT),
-                                    TextFont::from_font_size(SMALL).with_font(font.clone()),
-                                    TextLayout::new_with_no_wrap(),
-                                    )).observe(move |mut click: On<Pointer<Click>>,
-                                    mut commands: Commands,
-                                    has_disableds: Query<Has<InteractionDisabled>>| {
-                                            if !has_disableds.get(click.entity).unwrap() {
+                            cmd.with_child((
+                                item.text,
+                                TextColor::from(if item.enabled { TEXT } else { TEXT_DISABLED }),
+                                TextFont::from_font_size(SMALL).with_font(font.clone()),
+                                TextLayout::new_with_no_wrap(),
+                                )).observe(move |mut click: On<Pointer<Click>>,
+                                                     mut commands: Commands,
+                                                     has_disableds: Query<Has<InteractionDisabled>>| {
+                                            if click.button == PointerButton::Primary && !has_disableds.get(click.entity).unwrap() {
                                                 commands.entity(menu_entity).insert(MenuClicked(text.clone()));
                                                 commands.entity(menu_entity).despawn();
                                             }
                                             click.propagate(false);
                                 });
-                            });
                         }
                     });
             }

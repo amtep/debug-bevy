@@ -124,7 +124,7 @@ pub fn setup_observe_buttons(mut commands: Commands) {
          mut commands: Commands,
          map_ui: Query<&MapUi>,
          menus: Query<Entity, With<Menu>>| {
-            if map_ui.contains(click.entity) {
+            if click.button == PointerButton::Primary && map_ui.contains(click.entity) {
                 for menu in &menus {
                     commands.entity(menu).try_despawn();
                 }

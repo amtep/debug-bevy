@@ -181,9 +181,11 @@ pub fn setup_main_menu(
                                                         TextFont::from_font_size(72.0).with_font(unicode_font_handle.0.clone()),
                                                     )
                                                 ]
-                                            )).observe(move |_: On<Pointer<Click>>, mut commands: Commands| {
-                                                commands.trigger(CultSymbolChanged(symbol));
-                                                commands.entity(entity).insert(DialogConfirm(true));
+                                            )).observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
+                                                if click.button == PointerButton::Primary {
+                                                    commands.trigger(CultSymbolChanged(symbol));
+                                                    commands.entity(entity).insert(DialogConfirm(true));
+                                                }
                                             });
                                         }
                                     });

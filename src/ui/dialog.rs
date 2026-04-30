@@ -188,6 +188,11 @@ fn on_dialog_add(
                 TextFont::from_font_size(HEADING).with_font(font.clone()),
             ))
             .with_child(hrule.clone());
+    } else {
+        entity_commands.with_child(Node {
+            height: px(10),
+            ..default()
+        });
     }
 
     if let Some(body) = dialog.body {
@@ -269,12 +274,15 @@ fn on_dialog_add(
                         cancel_label.unwrap_or_else(|| TextKey::new("dialog-cancel"));
 
                     parent.spawn(button(cancel_label)).observe(
-                        move |_: On<Pointer<Click>>, mut commands: Commands| {
-                            commands.entity(dialog_entity).remove::<Dialog>();
-                            commands.entity(dialog_background).despawn();
-                            if dialog.pause {
-                                commands
-                                    .trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
+                        move |click: On<Pointer<Click>>, mut commands: Commands| {
+                            if click.button == PointerButton::Primary {
+                                commands.entity(dialog_entity).remove::<Dialog>();
+                                commands.entity(dialog_background).despawn();
+                                if dialog.pause {
+                                    commands.trigger(GameSpeedChangedEvent(
+                                        GameSpeedAction::DialogClose,
+                                    ));
+                                }
                             }
                         },
                     );
@@ -294,7 +302,9 @@ fn on_dialog_add(
                     move |click: On<Pointer<Click>>,
                           mut commands: Commands,
                           has_disableds: Query<Has<InteractionDisabled>>| {
-                        if !has_disableds.get(click.entity).unwrap() {
+                        if click.button == PointerButton::Primary
+                            && !has_disableds.get(click.entity).unwrap()
+                        {
                             commands.entity(dialog_entity).insert(DialogConfirmed);
                             commands.entity(dialog_entity).despawn();
                             commands.entity(dialog_background).despawn();

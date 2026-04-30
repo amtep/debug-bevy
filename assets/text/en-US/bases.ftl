@@ -1,5 +1,9 @@
 basetype-apartment = Apartment
 basetype-old-farmhouse = Old Farmhouse
+basetype-abandoned-hospital =
+    Abandoned
+    Hospital
+basetype-castle = Castle
 
 menu-region-bases = Bases
 
@@ -8,10 +12,14 @@ acquire-old-farmhouse = Buy old farmhouse
 acquire-abandoned-hospital = Occupy abandoned hospital
 acquire-castle = Buy castle
 
-acquire-apartment-desc = empty
-acquire-old-farmhouse-desc = empty
-acquire-abandoned-hospital-desc = empty
-acquire-castle-desc = empty
+acquire-tooltip-no-vacant-base-plot = there is no vacant base plot in the region!
+acquire-apartment-tooltip = expand your base of operation from the confines of the urban jungle
+acquire-old-farmhouse-tooltip = plot under the shadow of falling roof and the smell of manure
+acquire-abandoned-hospital-tooltip = enjoy the haunted fluorescent corridors
+acquire-castle-tooltip = gather your followers in the stone grand hall
 
-acquire-basetype-dialog =
-    Initial cost: { funds }
+acquire-basetype-dialog-max-pop = Max follower count: { $count }
+acquire-basetype-dialog-initial-cost = Initial cost: { funds }
+acquire-basetype-dialog-cost-per-day = Cost per day: { funds }
+acquire-basetype-dialog-police-suspicion = Police suspicion: { $suspicion }
+acquire-basetype-dialog-media-suspicion = Media suspicion: { $suspicion }

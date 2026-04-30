@@ -3,18 +3,20 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 use bevy_common_assets::toml::TomlAssetPlugin;
 use moonshine_save::save::Save;
-use rand::RngExt;
+use rand::{RngExt, seq::IndexedRandom};
 use serde_derive::Deserialize;
 
 use crate::{
     funds::{Expense, ExpenseCategory, FundsAmount},
     main_menu::{LoadedGame, NewGame},
-    regions::BasePlot,
+    regions::{BasePlot, Region},
     rng::RandomSource,
     state::{GameState, MainSetupSet},
 };
 
 const BASETYPES_ASSET_PATH: &str = "data/define.basetypes.toml";
+
+const DEFAULT_BASETYPE: &str = "apartment";
 
 pub fn plugin(app: &mut App) {
     app.add_plugins(TomlAssetPlugin::<BasetypesAsset>::new(&["basetypes.toml"]))
@@ -70,10 +72,40 @@ fn new_game(
 
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
     // TODO: don't hardcode this string
-    let apartment = base_types.get("apartment").unwrap();
+    let apartment = base_types.get(DEFAULT_BASETYPE).unwrap();
     commands.entity(base_plot).with_child((
-        Base("apartment".into()),
+        Base(DEFAULT_BASETYPE.into()),
         Expense(apartment.cost_per_day, ExpenseCategory::Bases),
+    ));
+}
+
+pub fn spawn_base(
+    mut commands: Commands,
+    region: Entity,
+    regions: Query<&Children, With<Region>>,
+    base_type: String,
+    base_plots: Query<Has<Children>, With<BasePlot>>,
+    base_types_handle: Res<BasetypesHandle>,
+    base_types_asset: Res<Assets<BasetypesAsset>>,
+    mut random_source: ResMut<RandomSource>,
+) {
+    let vacant_base_plots: Vec<Entity> = regions
+        .get(region)
+        .unwrap()
+        .iter()
+        .filter(|base_plot| base_plots.get(*base_plot) == Ok(false))
+        .collect();
+    let Some(base_plot) = vacant_base_plots.choose(&mut random_source.0) else {
+        warn!("expected at least one vacant base plot");
+        return;
+    };
+
+    let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
+    let base_type_settings = base_types.get(&base_type).unwrap();
+
+    commands.entity(*base_plot).with_child((
+        Base(base_type),
+        Expense(base_type_settings.cost_per_day, ExpenseCategory::Bases),
     ));
 }
 
