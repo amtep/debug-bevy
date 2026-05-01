@@ -197,7 +197,7 @@ fn on_dialog_add(
         });
     }
 
-    let tooltip = dialog.confirm_disabled.as_ref().map(|text_key| {
+    let tooltip_entity = dialog.confirm_disabled.as_ref().map(|text_key| {
         entity_commands
             .commands()
             .spawn((
@@ -236,7 +236,7 @@ fn on_dialog_add(
                             } else {
                                 commands.entity(confirm_button.0).insert((
                                     InteractionDisabled,
-                                    Tooltip::cursor(tooltip.unwrap())
+                                    Tooltip::cursor(tooltip_entity.unwrap())
                                         .with_activation(TooltipActivation::SHORT_DELAY),
                                 ));
                             }
@@ -314,7 +314,7 @@ fn on_dialog_add(
                 if dialog.confirm_disabled.is_some() {
                     confirm_button.insert((
                         InteractionDisabled,
-                        Tooltip::cursor(tooltip.unwrap())
+                        Tooltip::cursor(tooltip_entity.unwrap())
                             .with_activation(TooltipActivation::IMMEDIATE),
                     ));
                 }
@@ -329,6 +329,9 @@ fn on_dialog_add(
                             commands.entity(dialog_entity).insert(DialogConfirmed);
                             commands.entity(dialog_entity).despawn();
                             commands.entity(dialog_background).despawn();
+                            if let Some(tooltip_entity) = tooltip_entity {
+                                commands.entity(tooltip_entity).despawn();
+                            }
                             if dialog.pause {
                                 commands
                                     .trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));

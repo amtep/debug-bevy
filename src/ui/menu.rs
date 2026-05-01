@@ -93,6 +93,7 @@ fn on_menu_add(
     font_handle: Res<FontHandle>,
 ) {
     let menu_entity = add.entity;
+    let tooltip_root_entity = commands.spawn(Node::default()).id();
     let menu = menus.get(menu_entity).unwrap().clone();
     let font = font_handle.0.clone();
 
@@ -157,7 +158,8 @@ fn on_menu_add(
                     .with_children(|parent| {
                         for (index, item) in entry.items.into_iter().enumerate() {
                             let background_color = if index % 2 == 0 { WHITE.with_alpha(0.01) } else { Srgba::NONE };
-                            let tooltip = parent.commands().spawn((
+                            let tooltip_entity = parent.commands().spawn((
+                                ChildOf(tooltip_root_entity),
                                 item.tooltip,
                                 TextColor::from(if item.enabled { TEXT } else { TEXT_NEGATIVE }),
                                 TextFont::from_font_size(SMALL).with_font(font.clone()),
@@ -173,7 +175,7 @@ fn on_menu_add(
                                     ..default()
                                 },
                                 BackgroundColor::from(background_color),
-                                Tooltip::cursor(tooltip)
+                                Tooltip::cursor(tooltip_entity)
                                     .with_activation(TooltipActivation::SHORT_DELAY)
                             ));
 
@@ -194,6 +196,7 @@ fn on_menu_add(
                                             if click.button == PointerButton::Primary && !has_disableds.get(click.entity).unwrap() {
                                                 commands.entity(menu_entity).insert(MenuClicked(text.clone()));
                                                 commands.entity(menu_entity).despawn();
+                                                commands.entity(tooltip_root_entity).despawn();
                                             }
                                             click.propagate(false);
                                 });
