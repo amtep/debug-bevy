@@ -194,7 +194,6 @@ pub fn setup_main_menu(
                                 commands.spawn(Dialog::new()
                                     .with_title("main-menu-button-new-game")
                                     .with_entity_body(entity)
-                                    .with_confirm_disabled("load-game-confirm-tooltip")
                                     .with_cancel()
                                     .with_confirm_disabled("main-menu-new-game-confirm-tooltip"))
                                 .observe(
