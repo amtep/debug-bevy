@@ -273,7 +273,7 @@ fn format_funds(mut f: f64) -> String {
         let magnifiers = &["", "k", "M", "B", "T", "Q"];
         let mut i = 0;
         while f > 1_000.0 && i + 1 < magnifiers.len() {
-            f = f / 1000.0;
+            f /= 1000.0;
             i += 1;
         }
         // Keep 3 significant digits, unless f is way over the Q range

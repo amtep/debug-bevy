@@ -14,5 +14,9 @@ fn listen_dev_keys(keys: Res<ButtonInput<KeyCode>>, mut funds: ResMut<Funds>) {
             // Alt + F
             funds.0 += 100000;
         }
+        if keys.pressed(KeyCode::ControlLeft) {
+            // Ctrl + F
+            funds.0 -= 100000;
+        }
     }
 }
