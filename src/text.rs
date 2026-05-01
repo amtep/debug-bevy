@@ -1,5 +1,5 @@
-use std::string::FromUtf8Error;
 use std::sync::Arc;
+use std::{borrow::Cow, string::FromUtf8Error};
 
 use bevy::{
     asset::{AssetLoader, LoadContext, LoadedFolder, RecursiveDependencyLoadState, io::Reader},
@@ -7,7 +7,8 @@ use bevy::{
     ui::UiSystems,
 };
 use chrono::{Datelike, NaiveDate, Timelike, Utc};
-use fluent::{FluentResource, FluentValue, concurrent::FluentBundle};
+use fluent::types::FluentNumber;
+use fluent::{FluentArgs, FluentResource, FluentValue, concurrent::FluentBundle};
 use fluent_datetime::{BundleExt, FluentDateTime, length};
 use icu::{
     calendar::{Date, Iso},
@@ -258,6 +259,51 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(FluentFolder(asset_server.load_folder("text/en-US")));
 }
 
+// TODO: localize decimal sign
+fn format_funds(mut f: f64) -> String {
+    let sign = if f < 0.0 {
+        f = -f;
+        "-"
+    } else {
+        ""
+    };
+    if f < 100_000.0 {
+        format!("{sign}€{f:.0}")
+    } else {
+        let magnifiers = &["", "k", "M", "B", "T", "Q"];
+        let mut i = 0;
+        while f > 1_000.0 && i + 1 < magnifiers.len() {
+            f = f / 1000.0;
+            i += 1;
+        }
+        // Keep 3 significant digits, unless f is way over the Q range
+        let precision = if f < 10.0 {
+            2
+        } else if f < 100.0 {
+            1
+        } else {
+            0
+        };
+        format!("{sign}€{1:.0$}{2}", precision, f, magnifiers[i])
+    }
+}
+
+fn fluent_funds<'a>(positional: &[FluentValue<'a>], _named: &FluentArgs) -> FluentValue<'a> {
+    match positional.first() {
+        Some(FluentValue::Number(FluentNumber { value: f, .. })) => {
+            FluentValue::String(Cow::Owned(format_funds(*f)))
+        }
+        Some(FluentValue::String(s)) => {
+            if let Ok(f) = s.parse::<f64>() {
+                FluentValue::String(Cow::Owned(format_funds(f)))
+            } else {
+                FluentValue::Error
+            }
+        }
+        _ => FluentValue::Error,
+    }
+}
+
 fn new_bundle<'a, I: Iterator<Item = &'a Arc<FluentResource>>>(
     bundle_resource: &FluentBundleWrapper,
     resource_iter: I,
@@ -269,6 +315,10 @@ fn new_bundle<'a, I: Iterator<Item = &'a Arc<FluentResource>>>(
     }
     if let Err(e) = new_bundle.add_datetime_support() {
         error!("could not add DATETIME to fluent bundle: {e}");
+        return None;
+    }
+    if let Err(e) = new_bundle.add_function("FUNDS", fluent_funds) {
+        error!("could not add FUNDS to fluent bundle: {e}");
         return None;
     }
 
@@ -343,5 +393,39 @@ fn recalc_changed_texts(
 ) {
     for (mut text, TextKey(key, args)) in &mut q {
         text.set_if_neq(Text(bundle.get(key, args)));
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn funds_low() {
+        assert_eq!(format_funds(50.0), "€50");
+        assert_eq!(format_funds(5000.0), "€5000");
+        assert_eq!(format_funds(12_345.0), "€12345");
+    }
+
+    #[test]
+    fn funds_high() {
+        assert_eq!(format_funds(123_456.0), "€123k");
+        assert_eq!(format_funds(12_345_678.0), "€12.3M");
+        assert_eq!(format_funds(1_234_567_891.0), "€1.23B");
+        assert_eq!(format_funds(1_234_567_891_000.0), "€1.23T");
+    }
+
+    #[test]
+    fn funds_very_high() {
+        assert_eq!(format_funds(1_234_567_891_000_000.0), "€1.23Q");
+        assert_eq!(format_funds(1_234_567_891_000_000_000.0), "€1235Q");
+    }
+
+    #[test]
+    fn funds_negative() {
+        assert_eq!(format_funds(-50.0), "-€50");
+        assert_eq!(format_funds(-5000.0), "-€5000");
+        assert_eq!(format_funds(-12_345.0), "-€12345");
+        assert_eq!(format_funds(-1_234_567_891.0), "-€1.23B");
     }
 }

@@ -19,8 +19,8 @@ acquire-abandoned-hospital-tooltip = enjoy the haunted fluorescent corridors
 acquire-castle-tooltip = gather your followers in the stone grand hall
 
 acquire-basetype-dialog-max-pop = Max follower count: { $count }
-acquire-basetype-dialog-initial-cost = Initial cost: { funds }
-acquire-basetype-dialog-cost-per-day = Cost per day: { funds }
+acquire-basetype-dialog-initial-cost = Initial cost: { FUNDS($funds) }
+acquire-basetype-dialog-cost-per-day = Cost per day: { FUNDS($funds) }
 acquire-basetype-dialog-police-suspicion = Police suspicion: { $suspicion }
 acquire-basetype-dialog-media-suspicion = Media suspicion: { $suspicion }
-acquire-basetype-dialog-confirm-tooltip = not enough funds, { funds } required!
+acquire-basetype-dialog-confirm-tooltip = not enough funds, { FUNDS($funds) } required!

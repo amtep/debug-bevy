@@ -1,5 +1,5 @@
-funds-display = €{ $funds }
-funds = €{ $funds }
+funds-display = { FUNDS($funds) }
+funds = { FUNDS($funds) }
 income-tooltip-header = Income
 expense-tooltip-header = Expenses
 income-category-jobs = Jobs
