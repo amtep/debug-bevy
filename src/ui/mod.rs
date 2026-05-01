@@ -559,7 +559,7 @@ fn update_funds_tooltip(
     for Income(amount, category) in incomes {
         let (funds, count) = income_ledger.entry(*category).or_default();
         *funds += amount;
-        *count += 1
+        *count += 1;
     }
     for category in IncomeCategory::iter() {
         if let Some((funds, count)) = income_ledger.get(&category) {
@@ -585,7 +585,7 @@ fn update_funds_tooltip(
     for Expense(amount, category) in expenses {
         let (funds, count) = expense_ledger.entry(*category).or_default();
         *funds += amount;
-        *count += 1
+        *count += 1;
     }
     for category in ExpenseCategory::iter() {
         if let Some((funds, count)) = expense_ledger.get(&category) {

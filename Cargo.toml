@@ -49,3 +49,22 @@ opt-level = 3
 # The Query system-parameters often triggers this, but they are self-documenting.
 type_complexity = "allow"
 too_many_arguments = "allow"
+
+doc_markdown = "warn"
+manual_let_else = "warn"
+match_same_arms = "warn"
+redundant_closure_for_method_calls = "warn"
+redundant_else = "warn"
+semicolon_if_nothing_returned = "warn"
+undocumented_unsafe_blocks = "warn"
+unwrap_or_default = "warn"
+nonstandard_macro_braces = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+
+ptr_as_ptr = "warn"
+ptr_cast_constness = "warn"
+ref_as_ptr = "warn"
+
+[lints.rust]
+unused_qualifications = "warn"

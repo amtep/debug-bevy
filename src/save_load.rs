@@ -266,7 +266,7 @@ fn calc_new_campaign_index() -> Result<usize, SaveLoadError> {
             .to_string_lossy()
             .split(&['.', '-'])
             .next()
-            .map(|number| number.parse())
+            .map(str::parse)
             && index > max_campaign_index
         {
             max_campaign_index = index;
@@ -284,7 +284,7 @@ pub fn scan_saved_games() -> Result<Vec<(Campaign, SaveMetadata, Vec<u8>)>, Save
             .to_string_lossy()
             .split(&['.', '-'])
             .next()
-            .map(|number| number.parse())
+            .map(str::parse)
         {
             let path = save_dir.join(file_name);
             let Ok(bytes) = std::fs::read(&path).map_err(|e| {

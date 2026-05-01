@@ -49,8 +49,8 @@ pub fn plugin(app: &mut App) {
 /// There is the option of using `SyncCell` but I couldn't get that to work.
 #[derive(Debug, Clone)]
 pub enum TextArgValue {
-    /// This uses f64 because that's what FluentValue uses.
-    /// It's unfortunate, because we use i64 internally.
+    /// This uses `f64` because that's what `FluentValue` uses.
+    /// It's unfortunate, because we use `i64` internally.
     Number(f64),
     Datetime(DateTime<Iso>),
 }
