@@ -23,7 +23,7 @@ use crate::{
         files::{PROJECT_DIR_APPLICATION, PROJECT_DIR_ORGANIZATION, PROJECT_DIR_QUALIFIER},
     },
     funds::{Funds, FundsAmount},
-    main_menu::NewGame,
+    main_menu::{LoadedGame, NewGame},
     state::{GameState, MainSetupSet},
     suspicion::{IntelligenceSuspicion, ScientificSuspicion},
     time::GameDate,
@@ -227,9 +227,19 @@ fn listen_save_keys(
     }
 }
 
-pub fn load(mut commands: Commands, campaign: Campaign, content: Vec<u8>) {
+pub fn load(
+    mut commands: Commands,
+    mut next_state: ResMut<NextState<GameState>>,
+    campaign: Campaign,
+    content: Vec<u8>,
+) {
+    // Set the next state early, so that it can be set back to MainMenu if the load fails.
+    // It won't take effect till the next frame anyway.
+    next_state.set(GameState::Main);
+    info!("Loading game {}", *campaign);
     commands.trigger_load(LoadWorld::default_from_stream(Cursor::new(content)));
     commands.insert_resource(campaign);
+    commands.insert_resource(LoadedGame);
 }
 
 fn list_save_files() -> Result<(PathBuf, Vec<OsString>), SaveLoadError> {

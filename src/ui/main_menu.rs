@@ -10,7 +10,7 @@ use crate::{
     ui::{
         DisplayFontHandle, FontHandle, UnicodeFontHandle,
         dialog::{Dialog, DialogConfirm, DialogConfirmed},
-        save_load::open_load_game_popup,
+        save_load::{load_most_recent_game, open_load_game_popup},
     },
 };
 
@@ -31,7 +31,7 @@ pub fn setup_main_menu(
             Button,
             Node {
                 width: percent(100),
-                padding: UiRect::all(px(20)),
+                padding: UiRect::all(px(15)),
                 border: UiRect::all(px(4)),
                 border_radius: BorderRadius::all(px(20)),
                 align_self: AlignSelf::Center,
@@ -108,6 +108,13 @@ pub fn setup_main_menu(
                     ..default()
                 })
                 .with_children(|parent| {
+                    parent.spawn(button("main-menu-button-continue-game")).observe(
+                        |click: On<Pointer<Click>>, mut commands: Commands, next_state: ResMut<NextState<GameState>>| {
+                            if click.button == PointerButton::Primary {
+                                load_most_recent_game(commands.reborrow(), next_state);
+                            }
+                        },
+                    );
                     parent.spawn(button("main-menu-button-new-game")).observe(
                         move |click: On<Pointer<Click>>,
                          mut commands: Commands,

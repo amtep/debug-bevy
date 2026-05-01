@@ -5,7 +5,6 @@ use bevy::{
 
 use crate::{
     constants::ui::{BORDER, NORMAL, TEXT},
-    main_menu::LoadedGame,
     save_load::{Campaign, load, scan_saved_games},
     state::GameState,
     text::TextKey,
@@ -203,14 +202,24 @@ pub fn open_load_game_popup(
             |_: On<Add, DialogConfirmed>,
              mut commands: Commands,
              option: Single<&LoadGameOption, With<Selected>>,
-             mut next_state: ResMut<NextState<GameState>>| {
+             next_state: ResMut<NextState<GameState>>| {
                 let LoadGameOption(campaign, content) = *option;
-                // Set the next state early, so that it can be set back to MainMenu
-                // if the load fails. It won't take effect till the next frame anyway.
-                next_state.set(GameState::Main);
-                info!("Loading game {}", **campaign);
-                load(commands.reborrow(), *campaign, content.clone());
-                commands.insert_resource(LoadedGame);
+                load(commands.reborrow(), next_state, *campaign, content.clone());
             },
         );
+}
+
+pub fn load_most_recent_game(mut commands: Commands, next_state: ResMut<NextState<GameState>>) {
+    let mut v = match scan_saved_games() {
+        Err(e) => {
+            error!("Could not scan saved games: {e}");
+            commands.spawn(warn_no_load_scan());
+            return;
+        }
+        Ok(v) => v,
+    };
+    v.sort_by_key(|(_, metadata, _)| std::cmp::Reverse(metadata.save_timestamp));
+    if let Some((campaign, _, content)) = v.first() {
+        load(commands.reborrow(), next_state, *campaign, content.clone());
+    }
 }
