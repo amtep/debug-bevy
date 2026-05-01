@@ -3,6 +3,8 @@ pub mod main_loop;
 mod bases;
 mod common;
 mod constants;
+#[cfg(feature = "dev")]
+mod dev;
 mod followers;
 mod funds;
 mod main_menu;

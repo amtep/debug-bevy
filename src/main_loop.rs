@@ -24,6 +24,8 @@ pub fn main_loop() {
             TextInputPlugin,
             ScrollbarPlugin,
             (
+                #[cfg(feature = "dev")]
+                crate::dev::plugin,
                 crate::state::plugin,
                 crate::text::plugin,
                 crate::regions::plugin,
