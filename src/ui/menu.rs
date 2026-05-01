@@ -1,4 +1,5 @@
 use bevy::{prelude::*, ui::InteractionDisabled};
+use pyri_tooltip::prelude::*;
 
 use crate::{constants::ui::*, text::TextKey, ui::FontHandle};
 
@@ -6,7 +7,6 @@ use crate::{constants::ui::*, text::TextKey, ui::FontHandle};
 pub struct MenuItem {
     pub enabled: bool,
     pub text: TextKey,
-    #[expect(dead_code)]
     pub tooltip: TextKey,
 }
 
@@ -157,6 +157,13 @@ fn on_menu_add(
                     .with_children(|parent| {
                         for (index, item) in entry.items.into_iter().enumerate() {
                             let background_color = if index % 2 == 0 { WHITE.with_alpha(0.01) } else { Srgba::NONE };
+                            let tooltip = parent.commands().spawn((
+                                item.tooltip,
+                                TextColor::from(if item.enabled { TEXT } else { TEXT_NEGATIVE }),
+                                TextFont::from_font_size(SMALL).with_font(font.clone()),
+                                Visibility::Hidden,
+                                GlobalZIndex(ZINDEX_MENU + 1),
+                            )).id();
                             let mut cmd = parent.spawn((
                                 MenuItemUi,
                                 Button,
@@ -166,6 +173,8 @@ fn on_menu_add(
                                     ..default()
                                 },
                                 BackgroundColor::from(background_color),
+                                Tooltip::cursor(tooltip)
+                                    .with_activation(TooltipActivation::SHORT_DELAY)
                             ));
 
                             if !item.enabled {

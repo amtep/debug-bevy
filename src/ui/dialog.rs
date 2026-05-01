@@ -203,7 +203,7 @@ fn on_dialog_add(
             .spawn((
                 text_key.clone(),
                 TextColor::from(TEXT_NEGATIVE),
-                TextFont::from_font_size(NORMAL).with_font(font.clone()),
+                TextFont::from_font_size(SMALL).with_font(font.clone()),
                 Visibility::Hidden,
                 GlobalZIndex(ZINDEX_DIALOG + 1),
             ))
@@ -237,7 +237,7 @@ fn on_dialog_add(
                                 commands.entity(confirm_button.0).insert((
                                     InteractionDisabled,
                                     Tooltip::cursor(tooltip.unwrap())
-                                        .with_activation(TooltipActivation::IMMEDIATE),
+                                        .with_activation(TooltipActivation::SHORT_DELAY),
                                 ));
                             }
                         }
