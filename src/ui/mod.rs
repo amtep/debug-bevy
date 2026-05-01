@@ -321,11 +321,11 @@ fn setup_map(
                                 width: px(25),
                                 ..default()
                             },
-                            // RIGHTWARDS ARROW
-                            Text("\u{2192}".to_string()),
-                            TextColor::from(TEXT_HIGHLIGHT),
-                            unicode_text_font.clone(),
-                            TextLayout::new_with_justify(Justify::Center),
+                            ImageNode {
+                                image: asset_server.load(ICON_PLAY),
+                                color: TEXT.into(),
+                                ..default()
+                            },
                         ))
                         .observe(on_game_speed_clicked);
                     parent
@@ -336,11 +336,11 @@ fn setup_map(
                                 width: px(25),
                                 ..default()
                             },
-                            // RIGHTWARDS PAIRED ARROWS
-                            Text("\u{21C9}".to_string()),
-                            TextColor::from(TEXT),
-                            unicode_text_font.clone(),
-                            TextLayout::new_with_justify(Justify::Center),
+                            ImageNode {
+                                image: asset_server.load(ICON_FAST),
+                                color: TEXT.into(),
+                                ..default()
+                            },
                         ))
                         .observe(on_game_speed_clicked);
                     parent
@@ -351,11 +351,11 @@ fn setup_map(
                                 width: px(25),
                                 ..default()
                             },
-                            // THREE RIGHTWARDS ARROWS
-                            Text("\u{21F6}".to_string()),
-                            TextColor::from(TEXT),
-                            unicode_text_font.clone(),
-                            TextLayout::new_with_justify(Justify::Center),
+                            ImageNode {
+                                image: asset_server.load(ICON_FASTEST),
+                                color: TEXT.into(),
+                                ..default()
+                            },
                         ))
                         .observe(on_game_speed_clicked);
                 });

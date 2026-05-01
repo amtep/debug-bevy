@@ -65,6 +65,9 @@ pub mod ui {
     pub const SMALL: f32 = 10.0;
 
     pub const ICON_PAUSE: &str = "textures/pause.png";
+    pub const ICON_PLAY: &str = "textures/play.png";
+    pub const ICON_FAST: &str = "textures/fast.png";
+    pub const ICON_FASTEST: &str = "textures/fastest.png";
 
     pub const ZINDEX_MENU: i32 = 50;
     pub const ZINDEX_DIALOG: i32 = 100;
