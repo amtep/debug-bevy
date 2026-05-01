@@ -23,3 +23,4 @@ acquire-basetype-dialog-initial-cost = Initial cost: { funds }
 acquire-basetype-dialog-cost-per-day = Cost per day: { funds }
 acquire-basetype-dialog-police-suspicion = Police suspicion: { $suspicion }
 acquire-basetype-dialog-media-suspicion = Media suspicion: { $suspicion }
+acquire-basetype-dialog-confirm-tooltip = not enough funds, { funds } required!

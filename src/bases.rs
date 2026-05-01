@@ -7,7 +7,7 @@ use rand::{RngExt, seq::IndexedRandom};
 use serde_derive::Deserialize;
 
 use crate::{
-    funds::{Expense, ExpenseCategory, FundsAmount},
+    funds::{Expense, ExpenseCategory, Funds, FundsAmount},
     main_menu::{LoadedGame, NewGame},
     regions::{BasePlot, Region},
     rng::RandomSource,
@@ -81,6 +81,7 @@ fn new_game(
 
 pub fn spawn_base(
     mut commands: Commands,
+    mut funds: ResMut<Funds>,
     region: Entity,
     regions: Query<&Children, With<Region>>,
     base_type: String,
@@ -107,6 +108,8 @@ pub fn spawn_base(
         Base(base_type),
         Expense(base_type_settings.cost_per_day, ExpenseCategory::Bases),
     ));
+    // Assume initial funds are sufficient.
+    funds.0 -= base_type_settings.initial_cost;
 }
 
 fn loaded_game(mut commands: Commands, bases: Query<(Entity, &Base)>) {

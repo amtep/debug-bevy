@@ -195,7 +195,7 @@ pub fn open_load_game_popup(
             Dialog::new()
                 .with_title("load-game-title")
                 .with_entity_body(container)
-                .with_confirm_disabled()
+                .with_confirm_disabled("load-game-confirm-tooltip")
                 .with_confirm_label("load-game-confirm")
                 .with_cancel_label("dialog-back"),
         )

@@ -108,7 +108,7 @@ pub fn setup_main_menu(
                     ..default()
                 })
                 .with_children(|parent| {
-                    parent.spawn(button("menu-button-new-game")).observe(
+                    parent.spawn(button("main-menu-button-new-game")).observe(
                         move |click: On<Pointer<Click>>,
                          mut commands: Commands,
                          font_handle: Res<FontHandle>,
@@ -192,10 +192,12 @@ pub fn setup_main_menu(
                                 });
 
                                 commands.spawn(Dialog::new()
-                                    .with_title("menu-button-new-game")
+                                    .with_title("main-menu-button-new-game")
                                     .with_entity_body(entity)
+                                    .with_confirm_disabled("load-game-confirm-tooltip")
                                     .with_cancel()
-                                    .with_confirm_disabled()).observe(
+                                    .with_confirm_disabled("main-menu-new-game-confirm-tooltip"))
+                                .observe(
                                         move |_: On<Add, DialogConfirmed>,
                                          mut commands: Commands,
                                          mut game_state: ResMut<NextState<GameState>>,
@@ -212,7 +214,7 @@ pub fn setup_main_menu(
                             }
                         },
                     );
-                    parent.spawn(button("menu-button-load-game")).observe(
+                    parent.spawn(button("main-menu-button-load-game")).observe(
                         |click: On<Pointer<Click>>,
                          mut commands: Commands,
                          font: Res<FontHandle>, unicode_font: Res<UnicodeFontHandle>| {
@@ -221,7 +223,7 @@ pub fn setup_main_menu(
                             }
                         },
                     );
-                    parent.spawn(button("menu-button-quit")).observe(
+                    parent.spawn(button("main-menu-button-quit")).observe(
                         |click: On<Pointer<Click>>, mut exit: MessageWriter<AppExit>| {
                             if click.button == PointerButton::Primary {
                                 exit.write(AppExit::Success);

@@ -2,6 +2,7 @@ use bevy::{
     prelude::*,
     ui::{FocusPolicy, InteractionDisabled},
 };
+use pyri_tooltip::prelude::*;
 
 use crate::{
     constants::ui::*,
@@ -27,7 +28,8 @@ pub struct Dialog {
     body: Option<DialogBody>,
     /// default label: "Confirm"
     confirm_label: Option<TextKey>,
-    confirm_disabled: bool,
+    /// tooltip for when the confirm is disabled
+    confirm_disabled: Option<TextKey>,
     /// default label: None (no cancel button)
     cancel_label: Option<Option<TextKey>>,
 }
@@ -55,9 +57,9 @@ impl Dialog {
         }
     }
 
-    pub fn with_confirm_disabled(self) -> Self {
+    pub fn with_confirm_disabled(self, disabled_tooltip: impl Into<TextKey>) -> Self {
         Self {
-            confirm_disabled: true,
+            confirm_disabled: Some(disabled_tooltip.into()),
             ..self
         }
     }
@@ -195,6 +197,19 @@ fn on_dialog_add(
         });
     }
 
+    let tooltip = dialog.confirm_disabled.as_ref().map(|text_key| {
+        entity_commands
+            .commands()
+            .spawn((
+                text_key.clone(),
+                TextColor::from(TEXT_NEGATIVE),
+                TextFont::from_font_size(NORMAL).with_font(font.clone()),
+                Visibility::Hidden,
+                GlobalZIndex(ZINDEX_DIALOG + 1),
+            ))
+            .id()
+    });
+
     if let Some(body) = dialog.body {
         match body {
             DialogBody::Text(text_key) => {
@@ -217,11 +232,13 @@ fn on_dialog_add(
                             if dialog_confirm.0 {
                                 commands
                                     .entity(confirm_button.0)
-                                    .try_remove::<InteractionDisabled>();
+                                    .try_remove::<(InteractionDisabled, Tooltip)>();
                             } else {
-                                commands
-                                    .entity(confirm_button.0)
-                                    .insert(InteractionDisabled);
+                                commands.entity(confirm_button.0).insert((
+                                    InteractionDisabled,
+                                    Tooltip::cursor(tooltip.unwrap())
+                                        .with_activation(TooltipActivation::IMMEDIATE),
+                                ));
                             }
                         }
                     },
@@ -294,8 +311,12 @@ fn on_dialog_add(
 
                 let mut confirm_button = parent.spawn(button(confirm_label));
 
-                if dialog.confirm_disabled {
-                    confirm_button.insert(InteractionDisabled);
+                if dialog.confirm_disabled.is_some() {
+                    confirm_button.insert((
+                        InteractionDisabled,
+                        Tooltip::cursor(tooltip.unwrap())
+                            .with_activation(TooltipActivation::IMMEDIATE),
+                    ));
                 }
 
                 confirm_button.observe(

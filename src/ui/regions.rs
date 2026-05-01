@@ -4,6 +4,7 @@ use crate::{
     bases::{Base, BasetypesAsset, BasetypesHandle, spawn_base},
     constants::ui::*,
     followers::Follower,
+    funds::Funds,
     regions::{BasePlot, Location, Region},
     rng::RandomSource,
     suspicion::{MediaSuspicion, PoliceSuspicion},
@@ -190,6 +191,7 @@ fn on_region_click(
         .observe(
             move |menu_clicked: On<Add, MenuClicked>,
                   mut commands: Commands,
+                  funds: Res<Funds>,
                   menu_clickeds: Query<&MenuClicked>,
                   base_types_handle: Res<BasetypesHandle>,
                   base_types_asset: Res<Assets<BasetypesAsset>>,
@@ -248,22 +250,30 @@ fn on_region_click(
 
                             let base_type = name.clone();
 
+                            let mut dialog = Dialog::new()
+                                .with_pause()
+                                .with_cancel()
+                                .with_title(menu_clicked.0.as_str())
+                                .with_entity_body(entity);
+
+                            if settings.initial_cost > funds.0 {
+                                dialog = dialog.with_confirm_disabled(
+                                    TextKey::new("acquire-basetype-dialog-confirm-tooltip")
+                                        .add_arg("funds", settings.initial_cost)
+                                );
+                            }
+
                             commands
-                                .spawn(
-                                    Dialog::new()
-                                        .with_pause()
-                                        .with_cancel()
-                                        .with_title(menu_clicked.0.as_str())
-                                        .with_entity_body(entity),
-                                )
+                                .spawn(dialog)
                                 .observe(move |_: On<Add, DialogConfirmed>,
                                                commands: Commands,
+                                               funds: ResMut<Funds>,
                                                regions: Query<&Children, With<Region>>,
                                                base_plots: Query<Has<Children>, With<BasePlot>>,
                                                base_types_handle: Res<BasetypesHandle>,
                                                base_types_asset: Res<Assets<BasetypesAsset>>,
                                                random_source: ResMut<RandomSource>| {
-                                            spawn_base(commands, region_entity, regions, base_type.clone(), base_plots, base_types_handle, base_types_asset, random_source);
+                                            spawn_base(commands, funds, region_entity, regions, base_type.clone(), base_plots, base_types_handle, base_types_asset, random_source);
                                 });
                         }
                     }
