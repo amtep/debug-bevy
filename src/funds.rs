@@ -4,6 +4,7 @@ use strum::{EnumIter, IntoStaticStr};
 
 use crate::{
     constants::STARTING_FUNDS,
+    main_menu::NewGame,
     state::{GameState, MainSetupSet},
     time::GameDate,
 };
@@ -11,7 +12,9 @@ use crate::{
 pub fn plugin(app: &mut App) {
     app.add_systems(
         OnEnter(GameState::Main),
-        setup_funds.in_set(MainSetupSet::Default),
+        setup_funds
+            .run_if(resource_exists::<NewGame>)
+            .in_set(MainSetupSet::Default),
     )
     .add_systems(
         FixedUpdate,
