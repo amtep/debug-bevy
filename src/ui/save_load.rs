@@ -22,28 +22,26 @@ struct LoadGameOption(Campaign, Vec<u8>);
 pub fn warn_no_save() -> Dialog {
     Dialog::new()
         .with_pause()
-        .with_title("save-error-title")
-        .with_text_body("save-error-body")
-        .with_confirm_label("dialog-ok")
+        .with_title("save-error.title")
+        .with_text_body("save-error.body")
+        .with_confirm_label("save-error.confirm")
 }
 
 #[must_use]
 fn warn_no_load_scan() -> Dialog {
     Dialog::new()
-        .with_title("load-scan-error-title")
-        .with_text_body("load-scan-error-body")
-        .with_confirm_label("dialog-ok")
-        .with_cancel_label("dialog-back")
+        .with_title("load-scan-error.title")
+        .with_text_body("load-scan-error.body")
+        .with_confirm_label("load-scan-error.confirm")
 }
 
 #[must_use]
 #[expect(dead_code)]
 fn warn_no_load() -> Dialog {
     Dialog::new()
-        .with_title("load-error-title")
-        .with_text_body("load-error-body")
-        .with_confirm_label("dialog-ok")
-        .with_cancel_label("dialog-back")
+        .with_title("load-error.title")
+        .with_text_body("load-error.body")
+        .with_confirm_label("load-error.confirm")
 }
 
 pub fn open_load_game_popup(
@@ -192,11 +190,11 @@ pub fn open_load_game_popup(
     commands
         .spawn(
             Dialog::new()
-                .with_title("load-game-title")
+                .with_title("load-game.title")
                 .with_entity_body(container)
-                .with_confirm_disabled("load-game-confirm-tooltip")
-                .with_confirm_label("load-game-confirm")
-                .with_cancel_label("dialog-back"),
+                .with_confirm_disabled("load-game.confirm-tooltip")
+                .with_confirm_label("load-game.confirm")
+                .with_cancel_label("load-game.cancel"),
         )
         .observe(
             |_: On<Add, DialogConfirmed>,

@@ -227,14 +227,26 @@ impl FluentBundleWrapper {
             Some(&args.iter().map(|(k, v)| (*k, v.fluent())).collect())
         };
 
-        let Some(msg) = self.0.get_message(key) else {
-            error!("no message with key {key} exists");
-            return String::new();
-        };
-
-        let Some(pattern) = msg.value() else {
-            error!("message {key} has no value");
-            return String::new();
+        let pattern = if let Some((key, attribute)) = key.split_once('.') {
+            let Some(msg) = self.0.get_message(key) else {
+                error!("no message with key {key} exists");
+                return String::new();
+            };
+            let Some(attr) = msg.get_attribute(attribute) else {
+                error!("message {key} has no attribute {attribute}");
+                return String::new();
+            };
+            attr.value()
+        } else {
+            let Some(msg) = self.0.get_message(key) else {
+                error!("no message with key {key} exists");
+                return String::new();
+            };
+            let Some(pattern) = msg.value() else {
+                error!("message {key} has no value");
+                return String::new();
+            };
+            pattern
         };
 
         let mut errors = vec![];
