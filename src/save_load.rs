@@ -285,6 +285,12 @@ fn calc_new_campaign_index() -> Result<usize, SaveLoadError> {
     Ok(max_campaign_index + 1)
 }
 
+pub fn any_save_file_exists() -> bool {
+    list_save_files()
+        .map(|(_, list)| !list.is_empty())
+        .unwrap_or_default()
+}
+
 pub fn scan_saved_games() -> Result<Vec<(Campaign, SaveMetadata, Vec<u8>)>, SaveLoadError> {
     let mut v = Vec::default();
     let (save_dir, savegames) = list_save_files()?;

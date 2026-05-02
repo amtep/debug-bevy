@@ -5,6 +5,7 @@ use crate::{
     common::{CultName, CultSymbol},
     constants::ui::*,
     main_menu::NewGame,
+    save_load::any_save_file_exists,
     state::GameState,
     text::TextKey,
     ui::{
@@ -31,7 +32,7 @@ pub fn setup_main_menu(
             Button,
             Node {
                 width: percent(100),
-                padding: UiRect::all(px(15)),
+                padding: UiRect::axes(px(30), px(15)),
                 border: UiRect::all(px(4)),
                 border_radius: BorderRadius::all(px(20)),
                 align_self: AlignSelf::Center,
@@ -43,7 +44,7 @@ pub fn setup_main_menu(
             BorderColor::all(WHITE),
             BackgroundColor::from(BUTTON_BACKGROUND),
             children![(
-                TextFont::from_font_size(48.0).with_font(font_handle.0.clone()),
+                TextFont::from_font_size(40.0).with_font(font_handle.0.clone()),
                 TextKey::new(key),
             )],
         )
@@ -75,7 +76,7 @@ pub fn setup_main_menu(
                 align_items: AlignItems::Start,
                 justify_content: JustifyContent::Start,
                 flex_direction: FlexDirection::Column,
-                row_gap: px(40),
+                row_gap: px(20),
                 ..default()
             },
             ImageNode {
@@ -108,13 +109,15 @@ pub fn setup_main_menu(
                     ..default()
                 })
                 .with_children(|parent| {
-                    parent.spawn(button("main-menu-button-continue-game")).observe(
-                        |click: On<Pointer<Click>>, mut commands: Commands, next_state: ResMut<NextState<GameState>>| {
-                            if click.button == PointerButton::Primary {
-                                load_most_recent_game(commands.reborrow(), next_state);
-                            }
-                        },
-                    );
+                    if any_save_file_exists() {
+                        parent.spawn(button("main-menu-button-continue-game")).observe(
+                            |click: On<Pointer<Click>>, mut commands: Commands, next_state: ResMut<NextState<GameState>>| {
+                                if click.button == PointerButton::Primary {
+                                    load_most_recent_game(commands.reborrow(), next_state);
+                                }
+                            },
+                        );
+                    }
                     parent.spawn(button("main-menu-button-new-game")).observe(
                         move |click: On<Pointer<Click>>,
                          mut commands: Commands,
