@@ -109,7 +109,8 @@ pub fn setup_main_menu(
                     ..default()
                 })
                 .with_children(|parent| {
-                    if any_save_file_exists() {
+                    let any_save = any_save_file_exists();
+                    if any_save {
                         parent.spawn(button("main-menu-button-continue-game")).observe(
                             |click: On<Pointer<Click>>, mut commands: Commands, next_state: ResMut<NextState<GameState>>| {
                                 if click.button == PointerButton::Primary {
@@ -223,15 +224,17 @@ pub fn setup_main_menu(
                             }
                         },
                     );
-                    parent.spawn(button("main-menu-button-load-game")).observe(
-                        |click: On<Pointer<Click>>,
-                         mut commands: Commands,
-                         font: Res<FontHandle>, unicode_font: Res<UnicodeFontHandle>| {
-                            if click.button == PointerButton::Primary {
-                                open_load_game_popup(commands.reborrow(), font.0.clone(), unicode_font.0.clone());
-                            }
-                        },
-                    );
+                    if any_save {
+                        parent.spawn(button("main-menu-button-load-game")).observe(
+                            |click: On<Pointer<Click>>,
+                            mut commands: Commands,
+                            font: Res<FontHandle>, unicode_font: Res<UnicodeFontHandle>| {
+                                if click.button == PointerButton::Primary {
+                                    open_load_game_popup(commands.reborrow(), font.0.clone(), unicode_font.0.clone());
+                                }
+                            },
+                        );
+                    }
                     parent.spawn(button("main-menu-button-quit")).observe(
                         |click: On<Pointer<Click>>, mut exit: MessageWriter<AppExit>| {
                             if click.button == PointerButton::Primary {
