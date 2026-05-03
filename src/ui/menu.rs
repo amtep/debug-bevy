@@ -1,7 +1,10 @@
 use bevy::{prelude::*, ui::InteractionDisabled};
-use pyri_tooltip::prelude::*;
 
-use crate::{constants::ui::*, text::TextKey, ui::FontHandle};
+use crate::{
+    constants::ui::*,
+    text::TextKey,
+    ui::{FontHandle, tooltip::Tooltip},
+};
 
 #[derive(Clone)]
 pub struct MenuItem {
@@ -71,7 +74,7 @@ impl Menu {
 }
 
 #[derive(Component)]
-struct MenuRootUi;
+pub struct MenuRootUi;
 
 #[derive(Component)]
 struct MenuHeadingUi;
@@ -93,7 +96,6 @@ fn on_menu_add(
     font_handle: Res<FontHandle>,
 ) {
     let menu_entity = add.entity;
-    let tooltip_root_entity = commands.spawn(Node::default()).id();
     let menu = menus.get(menu_entity).unwrap().clone();
     let font = font_handle.0.clone();
 
@@ -102,8 +104,8 @@ fn on_menu_add(
     entity_commands.insert((
         MenuRootUi,
         Node {
-            top: percent(100),
             left: px(10),
+            top: percent(100),
             min_width: px(100),
             position_type: PositionType::Absolute,
             flex_direction: FlexDirection::Column,
@@ -158,14 +160,6 @@ fn on_menu_add(
                     .with_children(|parent| {
                         for (index, item) in entry.items.into_iter().enumerate() {
                             let background_color = if index % 2 == 0 { WHITE.with_alpha(0.01) } else { Srgba::NONE };
-                            let tooltip_entity = parent.commands().spawn((
-                                ChildOf(tooltip_root_entity),
-                                item.tooltip,
-                                TextColor::from(if item.enabled { TEXT } else { TEXT_NEGATIVE }),
-                                TextFont::from_font_size(SMALL).with_font(font.clone()),
-                                Visibility::Hidden,
-                                GlobalZIndex(ZINDEX_MENU + 1),
-                            )).id();
                             let mut cmd = parent.spawn((
                                 MenuItemUi,
                                 Button,
@@ -175,8 +169,7 @@ fn on_menu_add(
                                     ..default()
                                 },
                                 BackgroundColor::from(background_color),
-                                Tooltip::cursor(tooltip_entity)
-                                    .with_activation(TooltipActivation::SHORT_DELAY)
+                                Tooltip::new_text_color(item.tooltip, if item.enabled { TEXT } else { TEXT_NEGATIVE })
                             ));
 
                             if !item.enabled {
@@ -196,8 +189,8 @@ fn on_menu_add(
                                             if click.button == PointerButton::Primary && !has_disableds.get(click.entity).unwrap() {
                                                 commands.entity(menu_entity).insert(MenuClicked(text.clone()));
                                                 commands.entity(menu_entity).despawn();
-                                                commands.entity(tooltip_root_entity).despawn();
                                             }
+                                            // prevent the click to reopen menu
                                             click.propagate(false);
                                 });
                         }

@@ -399,6 +399,7 @@ fn recalc_all_texts(bundle: Res<FluentBundleWrapper>, mut q: Query<(&mut Text, &
     }
 }
 
+// TODO: change to an On<Insert, TextKey>?
 fn recalc_changed_texts(
     bundle: Res<FluentBundleWrapper>,
     mut q: Query<(&mut Text, &TextKey), Changed<TextKey>>,

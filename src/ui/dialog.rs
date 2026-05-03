@@ -2,13 +2,12 @@ use bevy::{
     prelude::*,
     ui::{FocusPolicy, InteractionDisabled},
 };
-use pyri_tooltip::prelude::*;
 
 use crate::{
     constants::ui::*,
     text::TextKey,
     time::{GameSpeedAction, GameSpeedChangedEvent},
-    ui::FontHandle,
+    ui::{FontHandle, tooltip::Tooltip},
 };
 
 #[derive(Component)]
@@ -197,19 +196,6 @@ fn on_dialog_add(
         });
     }
 
-    let tooltip_entity = dialog.confirm_disabled.as_ref().map(|text_key| {
-        entity_commands
-            .commands()
-            .spawn((
-                text_key.clone(),
-                TextColor::from(TEXT_NEGATIVE),
-                TextFont::from_font_size(SMALL).with_font(font.clone()),
-                Visibility::Hidden,
-                GlobalZIndex(ZINDEX_DIALOG + 1),
-            ))
-            .id()
-    });
-
     if let Some(body) = dialog.body {
         match body {
             DialogBody::Text(text_key) => {
@@ -222,6 +208,7 @@ fn on_dialog_add(
                 ))
             }
             DialogBody::Entity(entity) => {
+                let confirm_disabled = dialog.confirm_disabled.clone();
                 entity_commands.commands().entity(entity).observe(
                     move |confirm: On<Insert, DialogConfirm>,
                           mut commands: Commands,
@@ -234,11 +221,17 @@ fn on_dialog_add(
                                     .entity(confirm_button.0)
                                     .try_remove::<(InteractionDisabled, Tooltip)>();
                             } else {
-                                commands.entity(confirm_button.0).insert((
-                                    InteractionDisabled,
-                                    Tooltip::cursor(tooltip_entity.unwrap())
-                                        .with_activation(TooltipActivation::SHORT_DELAY),
-                                ));
+                                commands
+                                    .entity(confirm_button.0)
+                                    .insert(InteractionDisabled);
+                                if let Some(confirm_disabled) = confirm_disabled.clone() {
+                                    commands.entity(confirm_button.0).insert(
+                                        Tooltip::new_text_color(
+                                            confirm_disabled.clone(),
+                                            TEXT_NEGATIVE,
+                                        ),
+                                    );
+                                }
                             }
                         }
                     },
@@ -311,11 +304,10 @@ fn on_dialog_add(
 
                 let mut confirm_button = parent.spawn(button(confirm_label));
 
-                if dialog.confirm_disabled.is_some() {
+                if let Some(confirm_disabled) = dialog.confirm_disabled {
                     confirm_button.insert((
                         InteractionDisabled,
-                        Tooltip::cursor(tooltip_entity.unwrap())
-                            .with_activation(TooltipActivation::IMMEDIATE),
+                        Tooltip::new_text_color(confirm_disabled, TEXT_NEGATIVE),
                     ));
                 }
 
@@ -329,9 +321,6 @@ fn on_dialog_add(
                             commands.entity(dialog_entity).insert(DialogConfirmed);
                             commands.entity(dialog_entity).despawn();
                             commands.entity(dialog_background).despawn();
-                            if let Some(tooltip_entity) = tooltip_entity {
-                                commands.entity(tooltip_entity).despawn();
-                            }
                             if dialog.pause {
                                 commands
                                     .trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));

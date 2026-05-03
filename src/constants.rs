@@ -32,7 +32,8 @@ pub mod ui {
     pub const THEME_CYAN: Srgba = Srgba::rgb(0.243, 0.816, 0.922); // #3ED0EB
 
     pub const WHITE: Srgba = Srgba::rgb(0.878, 0.878, 0.878);
-    pub const GREY: Srgba = Srgba::rgb(0.4, 0.4, 0.4);
+    pub const DARK_GREY: Srgba = Srgba::rgb(0.149, 0.145, 0.153);
+    pub const GREY: Srgba = Srgba::rgb(0.5, 0.5, 0.5);
     pub const BLACK: Srgba = Srgba::rgb(0.071, 0.071, 0.071);
     pub const YELLOW: Srgba = Srgba::rgb(1.00, 1.00, 0.384);
     pub const GREEN: Srgba = Srgba::rgb(0.694, 1.00, 0.384);
@@ -47,6 +48,8 @@ pub mod ui {
     pub const DIALOG_BACKGROUND: Srgba = THEME_DARK_PURPLE;
 
     pub const MENU_BACKGROUND: Srgba = THEME_DARK_PURPLE;
+
+    pub const TOOLTIP_BACKGROUND: Srgba = DARK_GREY;
 
     pub const TEXT: Srgba = WHITE;
     pub const BORDER: Srgba = WHITE;
@@ -71,4 +74,5 @@ pub mod ui {
 
     pub const ZINDEX_MENU: i32 = 50;
     pub const ZINDEX_DIALOG: i32 = 100;
+    pub const ZINDEX_TOOLTIP: i32 = 150;
 }

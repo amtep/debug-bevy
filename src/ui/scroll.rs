@@ -1,6 +1,6 @@
 use bevy::{input::mouse::MouseScrollUnit, prelude::*};
 
-pub fn listen_scroll(
+pub fn on_scroll(
     mut ev: On<Pointer<Scroll>>,
     mut q: Query<(&mut ScrollPosition, &Node, &ComputedNode)>,
 ) {

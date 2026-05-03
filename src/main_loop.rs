@@ -1,6 +1,5 @@
 use bevy::{prelude::*, ui_widgets::ScrollbarPlugin, window::WindowMode};
 use bevy_ui_text_input::TextInputPlugin;
-use pyri_tooltip::TooltipPlugin;
 
 pub fn main_loop() {
     App::new()
@@ -20,7 +19,6 @@ pub fn main_loop() {
                     }),
                     ..default()
                 }),
-            TooltipPlugin::default(),
             TextInputPlugin,
             ScrollbarPlugin,
             (

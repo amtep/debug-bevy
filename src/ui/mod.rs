@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
 use bevy::{input_focus::InputFocus, prelude::*, ui::UiSystems, window::WindowResized};
-use pyri_tooltip::{
-    Tooltip, TooltipActivation, TooltipContent, TooltipDismissal, TooltipPlacement, TooltipTransfer,
-};
 use strum::IntoEnumIterator;
 
 use crate::{
     common::{CultName, CultSymbol},
     constants::ui::*,
-    funds::{Expense, ExpenseCategory, Funds, FundsAmount, Income, IncomeCategory},
+    funds::{
+        Expense, ExpenseCategory, Funds, FundsAmount, Income, IncomeCategory,
+        IncomeExpenseUpdatedEvent,
+    },
     main_menu::NewGame,
     state::{GameState, MainSetupSet},
     suspicion::{IntelligenceSuspicion, ScientificSuspicion},
@@ -20,6 +20,7 @@ use crate::{
         dialog::{Dialog, setup_observe_dialogs},
         main_menu::setup_main_menu,
         menu::setup_observe_menus,
+        tooltip::{Tooltip, TooltipInner, listen_tooltip_timers, setup_observe_tooltips},
     },
 };
 
@@ -30,6 +31,7 @@ mod menu;
 mod regions;
 pub mod save_load;
 mod scroll;
+mod tooltip;
 
 pub fn plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Load), setup_fonts)
@@ -41,8 +43,10 @@ pub fn plugin(app: &mut App) {
                 setup_observe_buttons,
                 setup_observe_dialogs,
                 setup_observe_menus,
+                setup_observe_tooltips,
             ),
         )
+        .add_systems(Update, listen_tooltip_timers)
         .add_systems(Update, read_window_resized_messages)
         .add_systems(OnEnter(GameState::MainMenu), setup_main_menu)
         .add_systems(
@@ -62,7 +66,7 @@ pub fn plugin(app: &mut App) {
         )
         .add_systems(
             Update,
-            (update_funds_tooltip, update_funds)
+            update_funds
                 .run_if(resource_exists_and_changed::<Funds>.and(in_state(GameState::Main))),
         )
         .add_systems(
@@ -117,9 +121,6 @@ struct GameDateUi;
 struct FundsUi;
 
 #[derive(Component)]
-struct FundsTooltip;
-
-#[derive(Component)]
 #[require(Text, TextColor)]
 struct MeterDisplay<T: PartialOrd + ToString + Send + Sync + 'static> {
     value: T,
@@ -166,25 +167,16 @@ fn setup_map(
     cult_name: Res<CultName>,
     cult_symbol: Res<CultSymbol>,
 ) {
-    let tooltip_content = commands
-        .spawn((
-            FundsTooltip,
-            Node {
-                flex_direction: FlexDirection::Column,
-                border: UiRect::all(px(2)),
-                padding: UiRect::all(px(3)),
-                ..default()
-            },
-            BorderColor::all(BORDER_HIGHLIGHT),
-            BackgroundColor::from(BUTTON_BACKGROUND),
-            Visibility::Hidden,
-            ZIndex(1),
-        ))
-        .id();
-
     let text_font = TextFont::from_font_size(SUB_HEADING).with_font(font_handle.0.clone());
     let unicode_text_font =
         TextFont::from_font_size(SUB_HEADING).with_font(unicode_font_handle.0.clone());
+
+    let funds_tooltip = commands
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            ..default()
+        })
+        .id();
 
     commands
         .spawn(Node {
@@ -220,28 +212,22 @@ fn setup_map(
                         unicode_text_font.clone(),
                     ));
                     // Funds counter
-                    parent.spawn((
-                        Node {
-                            min_width: px(75),
-                            ..default()
-                        },
-                        text_font.clone(),
-                        // will be updated by funds_changed
-                        TextKey::new("funds-display").add_arg("funds", 0),
-                        TextColor::from(TEXT),
-                        FundsUi,
-                        Tooltip {
-                            content: TooltipContent::Custom(tooltip_content),
-                            placement: TooltipPlacement::CURSOR,
-                            activation: TooltipActivation::default(),
-                            dismissal: TooltipDismissal {
-                                // Not sure what units these are
-                                on_distance: 400.0,
-                                on_click: false,
+                    parent
+                        .spawn((
+                            Node {
+                                min_width: px(75),
+                                ..default()
                             },
-                            transfer: TooltipTransfer::default(),
-                        },
-                    ));
+                            Tooltip::new_custom(funds_tooltip),
+                        ))
+                        .with_child((
+                            text_font.clone(),
+                            // will be updated by funds_changed
+                            TextKey::new("funds-display").add_arg("funds", 0),
+                            TextColor::from(TEXT),
+                            FundsUi,
+                        ))
+                        .observe(on_funds_tooltip_inner_add);
                     // Game date display
                     parent.spawn((
                         Node {
@@ -375,6 +361,39 @@ fn setup_map(
         });
 }
 
+fn on_funds_tooltip_inner_add(
+    inner: On<Add, TooltipInner>,
+    mut commands: Commands,
+    tooltip_inners: Query<(&ChildOf, &TooltipInner)>,
+    incomes: Query<&Income>,
+    expenses: Query<&Expense>,
+    font_handle: Res<FontHandle>,
+) {
+    let (tooltip_box, tooltip_inner) = tooltip_inners.get(inner.entity).unwrap();
+    let tooltip_inner = tooltip_inner.0;
+    update_funds_tooltip(
+        tooltip_inner,
+        commands.reborrow(),
+        incomes,
+        expenses,
+        font_handle,
+    );
+    let observer = commands
+        .add_observer(
+            move |_: On<IncomeExpenseUpdatedEvent>,
+                  commands: Commands,
+                  incomes: Query<&Income>,
+                  expenses: Query<&Expense>,
+                  font_handle: Res<FontHandle>| {
+                update_funds_tooltip(tooltip_inner, commands, incomes, expenses, font_handle);
+            },
+        )
+        .id();
+
+    // observer despawn with the tooltip box upon tooltip close.
+    commands.entity(tooltip_box.0).add_child(observer);
+}
+
 fn update_game_date(
     game_date: Res<GameDate>,
     mut text_key: Single<&mut TextKey, With<GameDateUi>>,
@@ -498,10 +517,10 @@ fn update_game_speed_state(
 }
 
 fn update_funds_tooltip(
+    tooltip_inner: Entity,
     mut commands: Commands,
     incomes: Query<&Income>,
     expenses: Query<&Expense>,
-    tooltip: Single<Entity, With<FundsTooltip>>,
     font_handle: Res<FontHandle>,
 ) {
     fn income_expense_row(
@@ -533,8 +552,7 @@ fn update_funds_tooltip(
             });
     }
 
-    let tooltip = tooltip.entity();
-    commands.entity(tooltip).despawn_children();
+    commands.entity(tooltip_inner).despawn_children();
 
     // Completely refresh the tooltip contents
     let text_font = TextFont::from_font_size(NORMAL).with_font(font_handle.0.clone());
@@ -546,12 +564,12 @@ fn update_funds_tooltip(
             ..default()
         },
         BackgroundColor::from(YELLOW),
-        ChildOf(tooltip),
+        ChildOf(tooltip_inner),
     );
     commands.spawn((
         TextKey::new("income-tooltip-header"),
         text_font.clone(),
-        ChildOf(tooltip),
+        ChildOf(tooltip_inner),
     ));
     commands.spawn(hrule.clone());
 
@@ -567,7 +585,7 @@ fn update_funds_tooltip(
             let category = format!("income-category-{category}");
             income_expense_row(
                 commands.reborrow(),
-                tooltip,
+                tooltip_inner,
                 &text_font,
                 category,
                 *count,
@@ -578,7 +596,7 @@ fn update_funds_tooltip(
     commands.spawn((
         TextKey::new("expense-tooltip-header"),
         text_font.clone(),
-        ChildOf(tooltip),
+        ChildOf(tooltip_inner),
     ));
     commands.spawn(hrule);
     let mut expense_ledger: HashMap<ExpenseCategory, (FundsAmount, usize)> = HashMap::default();
@@ -593,7 +611,7 @@ fn update_funds_tooltip(
             let category = format!("expense-category-{category}");
             income_expense_row(
                 commands.reborrow(),
-                tooltip,
+                tooltip_inner,
                 &text_font,
                 category,
                 *count,

@@ -8,7 +8,11 @@ pub fn plugin(app: &mut App) {
 }
 
 #[cfg(feature = "dev")]
-fn listen_dev_keys(keys: Res<ButtonInput<KeyCode>>, mut funds: ResMut<Funds>) {
+fn listen_dev_keys(
+    keys: Res<ButtonInput<KeyCode>>,
+    mut funds: ResMut<Funds>,
+    game_state: Res<State<GameState>>,
+) {
     if keys.just_pressed(KeyCode::KeyF) {
         if keys.pressed(KeyCode::AltLeft) {
             // Alt + F
@@ -18,5 +22,11 @@ fn listen_dev_keys(keys: Res<ButtonInput<KeyCode>>, mut funds: ResMut<Funds>) {
             // Ctrl + F
             funds.0 -= 100000;
         }
+    } else if keys.just_pressed(KeyCode::KeyG)
+        && keys.pressed(KeyCode::AltLeft)
+        && *game_state.get() == GameState::MainMenu
+    {
+        // Alt + G
+        todo!()
     }
 }

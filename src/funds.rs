@@ -52,8 +52,24 @@ pub enum IncomeCategory {
     Crime,
 }
 
+#[derive(Debug, Event, Clone, Copy)]
+pub struct IncomeExpenseUpdatedEvent;
+
 fn setup_funds(mut commands: Commands) {
     commands.insert_resource(Funds(STARTING_FUNDS));
+
+    commands.add_observer(|_: On<Insert, Income>, mut commands: Commands| {
+        commands.trigger(IncomeExpenseUpdatedEvent);
+    });
+    commands.add_observer(|_: On<Remove, Income>, mut commands: Commands| {
+        commands.trigger(IncomeExpenseUpdatedEvent);
+    });
+    commands.add_observer(|_: On<Insert, Expense>, mut commands: Commands| {
+        commands.trigger(IncomeExpenseUpdatedEvent);
+    });
+    commands.add_observer(|_: On<Remove, Expense>, mut commands: Commands| {
+        commands.trigger(IncomeExpenseUpdatedEvent);
+    });
 }
 
 fn update_funds(mut funds: ResMut<Funds>, incomes: Query<&Income>, expenses: Query<&Expense>) {

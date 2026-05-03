@@ -11,7 +11,7 @@ use crate::{
     ui::{
         Selected,
         dialog::{Dialog, DialogConfirm, DialogConfirmed},
-        scroll::listen_scroll,
+        scroll::on_scroll,
     },
 };
 
@@ -77,7 +77,7 @@ pub fn open_load_game_popup(
             },
             ChildOf(container),
         ))
-        .observe(listen_scroll)
+        .observe(on_scroll)
         .id();
     commands
         .spawn((
