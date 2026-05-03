@@ -593,6 +593,7 @@ fn update_funds_tooltip(
             );
         }
     }
+    commands.spawn(hrule.clone());
     commands.spawn((
         TextKey::new("expense-tooltip-header"),
         text_font.clone(),

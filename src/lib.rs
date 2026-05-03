@@ -13,6 +13,7 @@ mod rng;
 mod save_load;
 mod state;
 mod suspicion;
+mod tasks;
 mod text;
 mod time;
 mod ui;

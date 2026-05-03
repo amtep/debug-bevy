@@ -28,6 +28,7 @@ pub fn main_loop() {
                 crate::text::plugin,
                 crate::regions::plugin,
                 crate::bases::plugin,
+                crate::tasks::plugin,
                 crate::rng::plugin,
                 crate::funds::plugin,
                 crate::ui::plugin,

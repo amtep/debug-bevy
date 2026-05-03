@@ -12,6 +12,7 @@ use crate::{
     regions::{BasePlot, Region},
     rng::RandomSource,
     state::{GameState, MainSetupSet},
+    tasks::{DEFAULT_TASK, MinionsTask, PriestsTask},
 };
 
 const BASETYPES_ASSET_PATH: &str = "data/define.basetypes.toml";
@@ -56,7 +57,11 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// A marker component for bases in the game state.
 #[derive(Component, Reflect, Clone)]
 #[reflect(Component)]
-#[require(Save)]
+#[require(
+    Save,
+    PriestsTask(String::from(DEFAULT_TASK)),
+    MinionsTask(String::from(DEFAULT_TASK))
+)]
 pub struct Base(pub String);
 
 fn new_game(

@@ -1,0 +1,20 @@
+[gig-work]
+priests-allowed = true
+minions-allowed = true
+profit-per-day = 50
+profit-category = "jobs"
+
+[petty-crime]
+minions-allowed = true
+profit-per-day = 75
+profit-category = "crime"
+suspicion = { police = 1 }
+
+[recruitment]
+priests-allowed = true
+minions-allowed = true
+recruit-progress = 1
+
+[research]
+priests-allowed = true
+research = 1

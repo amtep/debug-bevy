@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use moonshine_save::save::Save;
+use serde::Deserialize;
 use strum::{EnumIter, IntoStaticStr};
 
 use crate::{
@@ -45,8 +46,11 @@ pub enum ExpenseCategory {
 #[require(Save)]
 pub struct Income(pub FundsAmount, pub IncomeCategory);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter, IntoStaticStr, Reflect)]
-#[strum(serialize_all = "lowercase")]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter, IntoStaticStr, Reflect, Deserialize,
+)]
+#[strum(serialize_all = "kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum IncomeCategory {
     Jobs,
     Crime,

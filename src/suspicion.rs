@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use rand::RngExt;
 use rand_distr::Poisson;
+use serde::Deserialize;
 
 use crate::{
     bases::{Base, BasetypesAsset, BasetypesHandle},
@@ -20,6 +21,15 @@ pub fn plugin(app: &mut App) {
         update_suspicion
             .run_if(resource_exists_and_changed::<GameDate>.and(in_state(GameState::Main))),
     );
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum SuspicionType {
+    Intelligence,
+    Scientific,
+    Police,
+    Media,
 }
 
 // global
