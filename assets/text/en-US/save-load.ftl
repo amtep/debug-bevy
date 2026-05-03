@@ -25,6 +25,6 @@ load-game =
     .title = Select Saved Game
     .confirm = Load
     .confirm-tooltip = Select a saved game first!
-	.cancel = Back
+    .cancel = Back
 
 saved-game-date = last played { DATETIME($date, dateStyle: "medium", timeStyle: "short") }
