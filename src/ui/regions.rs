@@ -173,6 +173,7 @@ fn on_region_click(
     let iter = base_types
         .iter()
         .filter(|(_, settings)| {
+            // TODO: use settings.hidden along with trigger to only show on certain conditions.
             settings.regions.is_empty() || settings.regions.contains(&region.name)
         })
         .map(|(name, _)| MenuItem {
@@ -199,9 +200,9 @@ fn on_region_click(
                 let menu_clicked = menu_clickeds.get(menu_clicked.entity).unwrap();
                 let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
 
-                if menu_clicked.0.starts_with("acquire-") {
+                if let Some(clicked) = menu_clicked.0.strip_prefix("acquire-") {
                     for (name, settings) in base_types.iter() {
-                        if name == menu_clicked.0.strip_prefix("acquire-").unwrap() {
+                        if name == clicked {
                             let entity = commands
                                 .spawn(Node {
                                     flex_direction: FlexDirection::Column,

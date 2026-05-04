@@ -106,7 +106,7 @@ pub fn listen_tooltip_timers(
                 Node {
                     left: px(10),
                     top: percent(100),
-                    max_width: px(250),
+                    max_width: px(200),
                     margin: UiRect::top(px(TOOLTIP_Y)),
                     position_type: PositionType::Absolute,
                     border: UiRect::all(px(1)),

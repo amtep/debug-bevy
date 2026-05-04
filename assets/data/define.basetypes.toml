@@ -26,3 +26,13 @@ initial-cost = 500000
 police-suspicion = 2
 media-suspicion = 3
 regions = ["europe"]
+hidden = true
+
+[ballroom]
+max-pop = 100
+cost-per-day = 1000
+initial-cost = 1_000_000
+police-suspicion = 0
+media-suspicion = 5
+region = ["north-america"]
+hidden = true

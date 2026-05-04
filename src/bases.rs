@@ -48,6 +48,8 @@ pub struct BasetypeSettings {
     pub media_suspicion: u32,
     #[serde(default)]
     pub regions: Vec<String>,
+    #[serde(default)]
+    pub hidden: bool,
 }
 
 fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
