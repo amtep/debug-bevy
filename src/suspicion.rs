@@ -55,6 +55,9 @@ fn setup_main(mut commands: Commands) {
     commands.init_resource::<ScientificSuspicion>();
 }
 
+#[expect(clippy::cast_possible_truncation, reason = "it's random values anyway")]
+#[expect(clippy::cast_sign_loss, reason = "it's random values anyway")]
+#[expect(clippy::cast_precision_loss, reason = "it's random values anyway")]
 fn update_suspicion(
     mut intel_suspicion: ResMut<IntelligenceSuspicion>,
     mut scien_suspicion: ResMut<ScientificSuspicion>,
@@ -70,7 +73,7 @@ fn update_suspicion(
 
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
 
-    for (mut police_suspicion, mut media_suspicion, children) in regions.iter_mut() {
+    for (mut police_suspicion, mut media_suspicion, children) in &mut regions {
         let mut police = 0;
         let mut media = 0;
 

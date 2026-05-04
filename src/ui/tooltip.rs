@@ -84,7 +84,7 @@ pub fn setup_observe_tooltips(mut commands: Commands) {
     commands.add_observer(on_tooltip_out);
 }
 
-const TOOLTIP_Y: i32 = 5;
+const TOOLTIP_Y: f32 = 5.0;
 
 pub fn listen_tooltip_timers(
     mut commands: Commands,
@@ -93,7 +93,7 @@ pub fn listen_tooltip_timers(
     tooltips: Query<&Tooltip>,
     font_handle: Res<FontHandle>,
 ) {
-    for (tooltip_entity, mut timer) in tooltip_timers.iter_mut() {
+    for (tooltip_entity, mut timer) in &mut tooltip_timers {
         timer.0.tick(time.delta());
 
         if timer.0.is_finished() {
@@ -188,7 +188,7 @@ fn on_tooltip_out(
             commands.entity(placeholder.0).add_child(entity);
         }
         commands.entity(tooltip_box).try_despawn();
-    };
+    }
 
     commands
         .entity(out.entity)
@@ -217,7 +217,7 @@ pub fn override_tooltip_position(
 ) {
     let (window_width, window_height) = (window.width(), window.height());
     for (parent, global_transform, mut transform, mut visibility, computed_node) in
-        tooltip_boxes.iter_mut()
+        &mut tooltip_boxes
     {
         if *visibility == Visibility::Hidden {
             let translation = global_transform.translation;
@@ -225,6 +225,7 @@ pub fn override_tooltip_position(
             let width = computed_node.size.x;
             let height = computed_node.size.y;
 
+            #[expect(clippy::useless_let_if_seq, reason = "this is doing something else")]
             let mut is_visible = true;
 
             if x + width / 2.0 > window_width {
@@ -233,12 +234,13 @@ pub fn override_tooltip_position(
                 is_visible = false;
             }
 
+            #[expect(clippy::suboptimal_flops, reason = "looks better this way")]
             if y + height / 2.0 > window_height {
                 // place the tooltip box above the parent of the tooltip
                 // but if the tooltip box grows, then it might cover the parent
                 transform.translation.y = px(-(height
                     + compute_nodes.get(parent.0).unwrap().size.y
-                    + (TOOLTIP_Y * 2) as f32)
+                    + (TOOLTIP_Y * 2.0))
                     * computed_node.inverse_scale_factor);
                 is_visible = false;
             }

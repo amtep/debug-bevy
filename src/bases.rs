@@ -131,8 +131,7 @@ pub fn spawn_base(
     let cost = followers_settings
         .0
         .get("general")
-        .map(|v| v.cost_per_day)
-        .unwrap_or(0);
+        .map_or(0, |v| v.cost_per_day);
     for follower in &[Follower::Priest, Follower::Goon, Follower::Minion] {
         let follower_e = commands
             .spawn((

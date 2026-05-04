@@ -57,7 +57,7 @@ pub enum GameSpeed {
 }
 
 impl GameSpeed {
-    fn get(self) -> f32 {
+    const fn get(self) -> f32 {
         match self {
             GameSpeed::Normal => 1.0,
             GameSpeed::Fast => 2.0,

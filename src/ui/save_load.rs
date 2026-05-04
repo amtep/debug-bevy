@@ -105,8 +105,8 @@ pub fn open_load_game_popup(
             },
             BackgroundColor(BORDER.into()),
         ));
-    let text_font = TextFont::from_font_size(NORMAL).with_font(font.clone());
-    let unicode_font = TextFont::from_font_size(NORMAL).with_font(unicode_font.clone());
+    let text_font = TextFont::from_font_size(NORMAL).with_font(font);
+    let unicode_font = TextFont::from_font_size(NORMAL).with_font(unicode_font);
     for (campaign, metadata, content) in v {
         commands
             .spawn((

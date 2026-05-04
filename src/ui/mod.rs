@@ -444,7 +444,7 @@ fn update_suspicion(
 fn update_meter_display<T: PartialOrd + ToString + Send + Sync + 'static>(
     mut meters: Query<(&mut Text, &mut TextColor, &MeterDisplay<T>), Changed<MeterDisplay<T>>>,
 ) {
-    for (mut text, mut text_color, meter) in meters.iter_mut() {
+    for (mut text, mut text_color, meter) in &mut meters {
         text.0 = meter.value.to_string();
 
         if meter.low_threshold < meter.high_threshold {
@@ -508,7 +508,7 @@ fn update_game_speed_state(
         &GameSpeedAction,
     )>,
 ) {
-    for (mut text_color, mut image, &speed_action) in game_speed_buttons.iter_mut() {
+    for (mut text_color, mut image, &speed_action) in &mut game_speed_buttons {
         let is_active = speed_action == GameSpeedAction::TogglePause && current_game_speed.paused
             || speed_action == GameSpeedAction::SetSpeed(current_game_speed.speed)
                 && !current_game_speed.paused;

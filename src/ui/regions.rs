@@ -176,9 +176,9 @@ fn on_region_click(
         })
         .map(|(name, _)| MenuItem {
             enabled: is_any_base_plot_vacant,
-            text: format!("acquire-{}", name).into(),
+            text: format!("acquire-{name}").into(),
             tooltip: if is_any_base_plot_vacant {
-                format!("acquire-{}-tooltip", name).into()
+                format!("acquire-{name}-tooltip").into()
             } else {
                 "acquire-tooltip-no-vacant-base-plot".into()
             },
@@ -199,8 +199,9 @@ fn on_region_click(
                 let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
 
                 if let Some(clicked) = menu_clicked.0.strip_prefix("acquire-") {
-                    for (name, settings) in base_types.iter() {
+                    for (name, settings) in base_types {
                         if name == clicked {
+                            #[expect(clippy::cast_precision_loss, reason = "can't be helped")]
                             let entity = commands
                                 .spawn(Node {
                                     flex_direction: FlexDirection::Column,
@@ -421,7 +422,7 @@ pub fn update_regional_suspicion(
     >,
 ) {
     for (views, police, media) in regions.iter() {
-        for view in views.0.iter() {
+        for view in &views.0 {
             if let Ok(mut police_suspicion_meter) = police_suspicion_uis.get_mut(*view) {
                 police_suspicion_meter.value = police.0;
             }

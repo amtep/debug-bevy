@@ -226,10 +226,7 @@ fn on_dialog_add(
                                     .insert(InteractionDisabled);
                                 if let Some(confirm_disabled) = confirm_disabled.clone() {
                                     commands.entity(confirm_button.0).insert(
-                                        Tooltip::new_text_color(
-                                            confirm_disabled.clone(),
-                                            TEXT_NEGATIVE,
-                                        ),
+                                        Tooltip::new_text_color(confirm_disabled, TEXT_NEGATIVE),
                                     );
                                 }
                             }

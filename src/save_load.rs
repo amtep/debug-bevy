@@ -251,15 +251,15 @@ fn list_save_files() -> Result<(PathBuf, Vec<OsString>), SaveLoadError> {
     ) {
         let save_dir = pd.data_dir().join("saves");
         create_dir_all(&save_dir)
-            .map_err(|e| SaveLoadError::CreateDirError(save_dir.to_owned(), e))?;
+            .map_err(|e| SaveLoadError::CreateDirError(save_dir.clone(), e))?;
         for entry in
-            read_dir(&save_dir).map_err(|e| SaveLoadError::ReadDirError(save_dir.to_owned(), e))?
+            read_dir(&save_dir).map_err(|e| SaveLoadError::ReadDirError(save_dir.clone(), e))?
         {
-            let entry = entry.map_err(|e| SaveLoadError::ReadEntryError(save_dir.to_owned(), e))?;
+            let entry = entry.map_err(|e| SaveLoadError::ReadEntryError(save_dir.clone(), e))?;
             if entry.path().extension() != Some(&OsString::from(EXTENSION)) {
                 continue;
             }
-            v.push(entry.file_name().to_owned());
+            v.push(entry.file_name().clone());
         }
         Ok((save_dir, v))
     } else {
@@ -286,9 +286,7 @@ fn calc_new_campaign_index() -> Result<usize, SaveLoadError> {
 }
 
 pub fn any_save_file_exists() -> bool {
-    list_save_files()
-        .map(|(_, list)| !list.is_empty())
-        .unwrap_or_default()
+    list_save_files().is_ok_and(|(_, list)| !list.is_empty())
 }
 
 pub fn scan_saved_games() -> Result<Vec<(Campaign, SaveMetadata, Vec<u8>)>, SaveLoadError> {

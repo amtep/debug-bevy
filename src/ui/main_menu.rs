@@ -55,7 +55,7 @@ pub fn setup_main_menu(
             |event: On<CultSymbolChanged>,
              mut commands: Commands,
              mut cult_symbols: Query<(&mut TextColor, &CultSym)>| {
-                for (mut text_color, sym) in cult_symbols.iter_mut() {
+                for (mut text_color, sym) in &mut cult_symbols {
                     if sym.0 == event.0 {
                         text_color.0 = TEXT_NEUTRAL.into();
                     } else {

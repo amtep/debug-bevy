@@ -85,7 +85,7 @@ fn setup_main(
     regions_asset: Res<Assets<RegionsAsset>>,
 ) {
     let regions = &regions_asset.get(regions_handle.0.id()).unwrap().0;
-    for (name, settings) in regions.iter() {
+    for (name, settings) in regions {
         commands
             .spawn((
                 Region { name: name.clone() },

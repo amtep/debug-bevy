@@ -74,14 +74,20 @@ impl From<f64> for TextArgValue {
     }
 }
 
+#[expect(clippy::cast_precision_loss, reason = "can't help it here")]
 impl From<FundsAmount> for TextArgValue {
     fn from(value: FundsAmount) -> Self {
         TextArgValue::Number(value as f64)
     }
 }
 
+#[expect(clippy::fallible_impl_from, reason = "valid dates won't fail")]
 impl From<NaiveDate> for TextArgValue {
     fn from(value: NaiveDate) -> Self {
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "not a problem for valid dates"
+        )]
         if let Ok(date) = Date::try_new_iso(value.year(), value.month() as u8, value.day() as u8) {
             TextArgValue::Datetime(DateTime {
                 date,
@@ -97,8 +103,13 @@ impl From<NaiveDate> for TextArgValue {
     }
 }
 
+#[expect(clippy::fallible_impl_from, reason = "valid dates won't fail")]
 impl From<chrono::DateTime<Utc>> for TextArgValue {
     fn from(value: chrono::DateTime<Utc>) -> Self {
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "not a problem for valid dates"
+        )]
         if let Ok(date) = Date::try_new_iso(value.year(), value.month() as u8, value.day() as u8) {
             TextArgValue::Datetime(DateTime {
                 date,
@@ -142,7 +153,7 @@ impl TextKey {
     }
 
     pub fn replace_arg(&mut self, arg: &'static str, value: impl Into<TextArgValue>) -> &mut Self {
-        for (a, v) in self.1.iter_mut() {
+        for (a, v) in &mut self.1 {
             if *a == arg {
                 *v = value.into();
                 break;
@@ -289,6 +300,7 @@ fn format_funds(mut f: f64) -> String {
             i += 1;
         }
         // Keep 3 significant digits, unless f is way over the Q range
+        #[expect(clippy::bool_to_int_with_if)]
         let precision = if f < 10.0 {
             2
         } else if f < 100.0 {
