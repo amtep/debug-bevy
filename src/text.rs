@@ -284,7 +284,7 @@ fn format_funds(mut f: f64) -> String {
     } else {
         let magnifiers = &["", "k", "M", "B", "T", "Q"];
         let mut i = 0;
-        while f > 1_000.0 && i + 1 < magnifiers.len() {
+        while f >= 1000.0 && i + 1 < magnifiers.len() {
             f /= 1000.0;
             i += 1;
         }
