@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     bases::{Base, BasetypesAsset, BasetypesHandle, spawn_base},
     constants::ui::*,
-    followers::Follower,
+    followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
     funds::Funds,
     regions::{BasePlot, Location, Region},
     rng::RandomSource,
@@ -131,8 +131,6 @@ pub fn setup(
 
     commands.add_observer(on_location_reloaded);
     commands.add_observer(on_spawn_base);
-    commands.add_observer(on_changed_follower::<Insert>);
-    commands.add_observer(on_changed_follower::<Replace>);
 }
 
 // INFO: Assume only the location has changed, while none is added or removed.
@@ -273,8 +271,10 @@ fn on_region_click(
                                                base_plots: Query<Has<Children>, With<BasePlot>>,
                                                base_types_handle: Res<BasetypesHandle>,
                                                base_types_asset: Res<Assets<BasetypesAsset>>,
+                                               followers_handle: Res<FollowersHandle>,
+                                               followers_asset: Res<Assets<FollowersAsset>>,
                                                random_source: ResMut<RandomSource>| {
-                                            spawn_base(commands, funds, region_entity, regions, base_type.clone(), base_plots, base_types_handle, base_types_asset, random_source);
+                                            spawn_base(commands, funds, region_entity, regions, base_type.clone(), base_plots, base_types_handle, base_types_asset, followers_handle, followers_asset, random_source);
                                 });
                         }
                     }
@@ -346,56 +346,61 @@ fn on_spawn_base(
         });
 }
 
-fn on_changed_follower<E: EntityEvent>(
-    event: On<E, Follower>,
+pub fn changed_follower_count(
     mut commands: Commands,
-    parents: Query<&ChildOf>,
     children: Query<&Children>,
-    followers: Query<&Follower>,
+    followers: Populated<(&ChildOf, &Follower, Mut<FollowerCount>)>,
     base_views: Query<&Views, With<Base>>,
     base_uis: Query<&BaseUi>,
     follower_lists: Query<&FollowerList>,
     unicode_font_handle: Res<UnicodeFontHandle>,
 ) {
-    let base = parents.get(event.event_target()).unwrap().0;
-    let base_views = base_views.get(base).unwrap();
-    let base_ui = base_views
-        .iter()
-        .find(|view| base_uis.contains(*view))
-        .unwrap();
-    let follower_list = children
-        .get(base_ui)
-        .unwrap()
-        .iter()
-        .find(|fl| follower_lists.contains(*fl))
-        .unwrap();
+    for (ChildOf(base), _, count) in &followers {
+        if !count.is_changed() {
+            continue;
+        }
+        let base_views = base_views.get(*base).unwrap();
+        let base_ui = base_views
+            .iter()
+            .find(|view| base_uis.contains(*view))
+            .unwrap();
+        let follower_list = children
+            .get(base_ui)
+            .unwrap()
+            .iter()
+            .find(|fl| follower_lists.contains(*fl))
+            .unwrap();
 
-    commands.entity(follower_list).despawn_children();
+        commands.entity(follower_list).despawn_children();
 
-    let mut followers: Vec<Follower> = children
-        .get(base)
-        .unwrap()
-        .iter()
-        .map(|follower| *followers.get(follower).unwrap())
-        .collect();
+        let mut followers: Vec<(Follower, FollowerCount)> = children
+            .get(*base)
+            .unwrap()
+            .iter()
+            .map(|follower| {
+                let (_, f, count) = followers.get(follower).unwrap();
+                (*f, *count)
+            })
+            .collect();
 
-    followers.sort_unstable();
+        followers.sort_unstable_by_key(|(f, _)| *f);
 
-    let text_font = TextFont::from_font_size(SMALL).with_font(unicode_font_handle.0.clone());
+        let text_font = TextFont::from_font_size(SMALL).with_font(unicode_font_handle.0.clone());
 
-    let bundles: Vec<_> = followers
-        .iter()
-        .map(|f| {
-            let text = match f {
-                Follower::Priest => Text::new("☉"),
-                Follower::Goon => Text::new("♁"),
-                Follower::Minion => Text::new("☿"),
-            };
-            (ChildOf(follower_list), text, text_font.clone())
-        })
-        .collect();
+        let bundles: Vec<_> = followers
+            .iter()
+            .map(|(f, count)| {
+                let text = match f {
+                    Follower::Priest => Text::new("☉".repeat(count.0)),
+                    Follower::Goon => Text::new("♁".repeat(count.0)),
+                    Follower::Minion => Text::new("☿".repeat(count.0)),
+                };
+                (ChildOf(follower_list), text, text_font.clone())
+            })
+            .collect();
 
-    commands.spawn_batch(bundles);
+        commands.spawn_batch(bundles);
+    }
 }
 
 pub fn update_regional_suspicion(

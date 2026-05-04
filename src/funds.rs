@@ -29,10 +29,12 @@ pub type FundsAmount = i64;
 #[reflect(Resource)]
 pub struct Funds(pub FundsAmount);
 
+/// The third field is the number of budget entries represented by this component,
+/// to be shown in the funds tooltip.
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 #[require(Save)]
-pub struct Expense(pub FundsAmount, pub ExpenseCategory);
+pub struct Expense(pub FundsAmount, pub ExpenseCategory, pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter, IntoStaticStr, Reflect)]
 #[strum(serialize_all = "lowercase")]
@@ -41,10 +43,12 @@ pub enum ExpenseCategory {
     Bases,
 }
 
+/// The third field is the number of budget entries represented by this component,
+/// to be shown in the funds tooltip.
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 #[require(Save)]
-pub struct Income(pub FundsAmount, pub IncomeCategory);
+pub struct Income(pub FundsAmount, pub IncomeCategory, pub usize);
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter, IntoStaticStr, Reflect, Deserialize,
@@ -77,10 +81,10 @@ fn setup_funds(mut commands: Commands) {
 }
 
 fn update_funds(mut funds: ResMut<Funds>, incomes: Query<&Income>, expenses: Query<&Expense>) {
-    for Income(amount, _) in incomes {
-        funds.0 += amount;
+    for Income(amount, _, count) in incomes {
+        funds.0 += amount * (*count as FundsAmount);
     }
-    for Expense(amount, _) in expenses {
-        funds.0 -= amount;
+    for Expense(amount, _, count) in expenses {
+        funds.0 -= amount * (*count as FundsAmount);
     }
 }

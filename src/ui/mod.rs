@@ -20,6 +20,7 @@ use crate::{
         dialog::{Dialog, setup_observe_dialogs},
         main_menu::setup_main_menu,
         menu::setup_observe_menus,
+        regions::changed_follower_count,
         tooltip::{
             Tooltip, TooltipInner, listen_tooltip_timers, override_tooltip_position,
             setup_observe_tooltips,
@@ -85,6 +86,10 @@ pub fn plugin(app: &mut App) {
             update_game_speed_state.run_if(
                 resource_exists_and_changed::<CurrentGameSpeed>.and(in_state(GameState::Main)),
             ),
+        )
+        .add_systems(
+            Update,
+            changed_follower_count.run_if(in_state(GameState::Main)),
         )
         .add_systems(
             PostUpdate,
@@ -583,10 +588,10 @@ fn update_funds_tooltip(
     commands.spawn(hrule.clone());
 
     let mut income_ledger: HashMap<IncomeCategory, (FundsAmount, usize)> = HashMap::default();
-    for Income(amount, category) in incomes {
+    for Income(amount, category, icount) in incomes {
         let (funds, count) = income_ledger.entry(*category).or_default();
-        *funds += amount;
-        *count += 1;
+        *funds += amount * (*icount as FundsAmount);
+        *count += icount;
     }
     for category in IncomeCategory::iter() {
         if let Some((funds, count)) = income_ledger.get(&category) {
@@ -610,10 +615,10 @@ fn update_funds_tooltip(
     ));
     commands.spawn(hrule);
     let mut expense_ledger: HashMap<ExpenseCategory, (FundsAmount, usize)> = HashMap::default();
-    for Expense(amount, category) in expenses {
+    for Expense(amount, category, ecount) in expenses {
         let (funds, count) = expense_ledger.entry(*category).or_default();
-        *funds += amount;
-        *count += 1;
+        *funds += amount * (*ecount as FundsAmount);
+        *count += ecount;
     }
     for category in ExpenseCategory::iter() {
         if let Some((funds, count)) = expense_ledger.get(&category) {

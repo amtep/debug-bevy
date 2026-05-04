@@ -7,12 +7,13 @@ use rand::{RngExt, seq::IndexedRandom};
 use serde_derive::Deserialize;
 
 use crate::{
+    followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
     funds::{Expense, ExpenseCategory, Funds, FundsAmount},
     main_menu::{LoadedGame, NewGame},
     regions::{BasePlot, Region},
     rng::RandomSource,
     state::{GameState, MainSetupSet},
-    tasks::{DEFAULT_TASK, MinionsTask, PriestsTask},
+    tasks::{DEFAULT_TASK, Task},
 };
 
 const BASETYPES_ASSET_PATH: &str = "data/define.basetypes.toml";
@@ -59,11 +60,7 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// A marker component for bases in the game state.
 #[derive(Component, Reflect, Clone)]
 #[reflect(Component)]
-#[require(
-    Save,
-    PriestsTask(String::from(DEFAULT_TASK)),
-    MinionsTask(String::from(DEFAULT_TASK))
-)]
+#[require(Save)]
 pub struct Base(pub String);
 
 fn new_game(
@@ -82,7 +79,7 @@ fn new_game(
     let apartment = base_types.get(DEFAULT_BASETYPE).unwrap();
     commands.entity(base_plot).with_child((
         Base(DEFAULT_BASETYPE.into()),
-        Expense(apartment.cost_per_day, ExpenseCategory::Bases),
+        Expense(apartment.cost_per_day, ExpenseCategory::Bases, 1),
     ));
 }
 
@@ -95,6 +92,8 @@ pub fn spawn_base(
     base_plots: Query<Has<Children>, With<BasePlot>>,
     base_types_handle: Res<BasetypesHandle>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
+    followers_handle: Res<FollowersHandle>,
+    followers_asset: Res<Assets<FollowersAsset>>,
     mut random_source: ResMut<RandomSource>,
 ) {
     let vacant_base_plots: Vec<Entity> = regions
@@ -111,12 +110,42 @@ pub fn spawn_base(
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
     let base_type_settings = base_types.get(&base_type).unwrap();
 
-    commands.entity(*base_plot).with_child((
-        Base(base_type),
-        Expense(base_type_settings.cost_per_day, ExpenseCategory::Bases),
-    ));
-    // Assume initial funds are sufficient.
+    if funds.0 < base_type_settings.initial_cost {
+        warn!(
+            "not enough funds to acquire {base_type} base ({} < {})",
+            funds.0, base_type_settings.initial_cost
+        );
+        return;
+    }
+
+    let base = commands
+        .spawn((
+            Base(base_type),
+            Expense(base_type_settings.cost_per_day, ExpenseCategory::Bases, 1),
+            ChildOf(*base_plot),
+        ))
+        .id();
     funds.0 -= base_type_settings.initial_cost;
+
+    let followers_settings = &followers_asset.get(followers_handle.0.id()).unwrap();
+    let cost = followers_settings
+        .0
+        .get("general")
+        .map(|v| v.cost_per_day)
+        .unwrap_or(0);
+    for follower in &[Follower::Priest, Follower::Goon, Follower::Minion] {
+        let follower_e = commands
+            .spawn((
+                *follower,
+                FollowerCount(0),
+                Expense(cost, ExpenseCategory::Followers, 0),
+                ChildOf(base),
+            ))
+            .id();
+        if *follower != Follower::Goon {
+            commands.spawn((Task(String::from(DEFAULT_TASK)), ChildOf(follower_e)));
+        }
+    }
 }
 
 fn loaded_game(mut commands: Commands, bases: Query<(Entity, &Base)>) {

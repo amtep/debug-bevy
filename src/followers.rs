@@ -8,8 +8,8 @@ use serde::Deserialize;
 
 use crate::{
     bases::Base,
-    funds::{Expense, ExpenseCategory, FundsAmount},
-    main_menu::{LoadedGame, NewGame},
+    funds::{Expense, FundsAmount},
+    main_menu::NewGame,
     rng::RandomSource,
     state::{GameState, MainSetupSet},
 };
@@ -21,27 +21,25 @@ pub fn plugin(app: &mut App) {
         .add_systems(OnEnter(GameState::Load), setup_load)
         .add_systems(
             OnEnter(GameState::Main),
-            (
-                new_game.run_if(resource_exists::<NewGame>),
-                loaded_game.run_if(resource_exists::<LoadedGame>),
-            )
+            new_game
+                .run_if(resource_exists::<NewGame>)
                 .in_set(MainSetupSet::Followers),
         );
 }
 
 #[derive(Deserialize, Asset, TypePath)]
-struct FollowersAsset(HashMap<String, GeneralFollowerSettings>);
+pub struct FollowersAsset(pub HashMap<String, GeneralFollowerSettings>);
 
 #[derive(Resource)]
-struct FollowersHandle(Handle<FollowersAsset>);
+pub struct FollowersHandle(pub Handle<FollowersAsset>);
 
 /// These are the general settings for all follower types.
 /// Once there are also specific follower settings, there
 /// will need to be an enum to distinguish them.
 #[derive(Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "kebab-case")]
-struct GeneralFollowerSettings {
-    cost_per_day: FundsAmount,
+pub struct GeneralFollowerSettings {
+    pub cost_per_day: FundsAmount,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Reflect)]
@@ -53,47 +51,35 @@ pub enum Follower {
     Minion,
 }
 
+#[derive(
+    Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Reflect,
+)]
+#[reflect(Component)]
+pub struct FollowerCount(pub usize);
+
 fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(FollowersHandle(asset_server.load(FOLLOWERS_ASSET_PATH)));
 }
 
 /// Create the starting priest for the cult.
 fn new_game(
-    mut commands: Commands,
     bases: Query<Entity, With<Base>>,
-    followers_handle: Res<FollowersHandle>,
-    followers_asset: Res<Assets<FollowersAsset>>,
+    followers: Query<(&ChildOf, &Follower, &mut FollowerCount, &mut Expense)>,
     mut random_source: ResMut<RandomSource>,
 ) {
     info!("Creating starting priest");
     let i = random_source.0.random_range(0..bases.count());
     let base = bases.iter().nth(i).unwrap();
 
-    // SAFETY: this will be called after the Load state, where everything is loaded.
-    let settings = &followers_asset.get(followers_handle.0.id()).unwrap();
-    let cost = settings
-        .0
-        .get("general")
-        .map(|v| v.cost_per_day)
-        .unwrap_or(0);
-
     // Generally we should check whether the base has room
     // for another follower, but this is a new game and it
     // will be empty.
 
-    // INFO: need to ensure the children relationship target is updated BEFORE the follower.
-    commands
-        .spawn((ChildOf(base), Expense(cost, ExpenseCategory::Followers)))
-        .insert(Follower::Priest);
-}
-
-fn loaded_game(mut commands: Commands, followers: Query<(Entity, &Follower)>) {
-    for (entity, follower) in followers {
-        // Remove and re-insert the Follower component in order to trigger the
-        // Add observer that builds the base UI.
-        commands
-            .entity(entity)
-            .remove::<Follower>()
-            .insert(*follower);
+    for (ChildOf(parent), follower, mut count, mut expense) in followers {
+        if *parent != base || *follower != Follower::Priest {
+            continue;
+        }
+        count.0 += 1;
+        expense.2 = count.0;
     }
 }

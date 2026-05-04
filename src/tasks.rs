@@ -6,7 +6,7 @@ use moonshine_save::save::Save;
 use serde_derive::Deserialize;
 
 use crate::{
-    followers::Follower,
+    followers::FollowerCount,
     funds::{FundsAmount, Income, IncomeCategory},
     state::GameState,
     suspicion::SuspicionType,
@@ -51,85 +51,41 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(TasksHandle(asset_server.load(TASKS_ASSET_PATH)));
 }
 
-/// A component to be added to a base entity, representing what the priests in that base are doing.
+/// A component added as a child of a Follower entity, to mark this as a task those followers are doing.
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 #[require(Save)]
-pub struct PriestsTask(pub String);
-
-/// A component to be added to a base entity, representing what the minions in that base are doing.
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-#[require(Save)]
-pub struct MinionsTask(pub String);
+pub struct Task(pub String);
 
 fn switch_tasks(
     mut commands: Commands,
     tasks: Res<TasksHandle>,
     asset: Res<Assets<TasksAsset>>,
-    changed_priests: Query<(Entity, &PriestsTask, &Children), Changed<PriestsTask>>,
-    changed_minions: Query<(Entity, &MinionsTask, &Children), Changed<MinionsTask>>,
-    followers: Query<&Follower>,
+    changed: Populated<(Entity, &ChildOf, &Task), Changed<Task>>,
+    followers: Query<&FollowerCount>,
 ) {
     // SAFETY: followers are only spawned after all assets are loaded.
     let settings_hash = asset.get(tasks.0.id()).unwrap();
-    for (base, PriestsTask(task), children) in changed_priests {
+    for (task_e, ChildOf(parent), Task(task)) in changed {
         let Some(settings) = settings_hash.0.get(task) else {
-            error!("Priests task {task} not known");
+            error!("Task {task} not known");
             continue;
         };
-        switch_task(
-            commands.reborrow(),
-            base,
-            task,
-            settings,
-            children,
-            followers,
-            Follower::Priest,
-        );
-    }
-    for (base, MinionsTask(task), children) in changed_minions {
-        let Some(settings) = settings_hash.0.get(task) else {
-            error!("Minions task {task} not known");
+        let Ok(count) = followers.get(*parent) else {
+            error!("Task without Follower parent");
             continue;
         };
-        switch_task(
-            commands.reborrow(),
-            base,
-            task,
-            settings,
-            children,
-            followers,
-            Follower::Minion,
-        );
-    }
-}
-
-fn switch_task(
-    mut commands: Commands,
-    _base: Entity,
-    _task: &String,
-    settings: &TaskSettings,
-    children: &[Entity],
-    followers: Query<&Follower>,
-    ftype: Follower,
-) {
-    // Handle task income
-    for child in children {
-        if let Ok(follower) = followers.get(*child)
-            && *follower == ftype
+        // Handle task income
+        if let Some(cat) = settings.profit_category
+            && settings.profit_per_day > 0
         {
-            if let Some(cat) = settings.profit_category
-                && settings.profit_per_day > 0
-            {
-                commands
-                    .entity(*child)
-                    .insert(Income(settings.profit_per_day, cat));
-            } else {
-                commands.entity(*child).remove::<Income>();
-            }
+            commands
+                .entity(task_e)
+                .insert(Income(settings.profit_per_day, cat, count.0));
+        } else {
+            commands.entity(task_e).remove::<Income>();
         }
+        // TODO: handle recruitment
+        // TODO: handle research
     }
-    // TODO: handle recruitment
-    // TODO: handle research
 }
