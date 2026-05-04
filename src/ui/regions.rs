@@ -288,13 +288,17 @@ fn on_spawn_base(
     event: On<Insert, Base>,
     mut commands: Commands,
     bases: Query<(&ChildOf, &Base)>,
+    base_types_handle: Res<BasetypesHandle>,
+    base_types_asset: Res<Assets<BasetypesAsset>>,
     base_plots: Query<(&ChildOf, &Views), With<BasePlot>>,
     regions: Query<&Views, With<Region>>,
     mut region_suspicion_uis: Query<&mut Node, With<RegionSuspicionUi>>,
     base_plot_uis: Query<&BasePlotUi>,
-    font_handle: Res<FontHandle>,
+    asset_server: Res<AssetServer>,
 ) {
-    let (base_plot, base_type) = bases.get(event.entity).unwrap();
+    let (base_plot, base) = bases.get(event.entity).unwrap();
+    let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
+    let base_type = base_types.get(&base.0).unwrap();
     let (region, base_plot_views) = base_plots.get(base_plot.0).unwrap();
     let region_views = regions.get(region.0).unwrap();
     let mut region_suspicion_ui_node = region_views
@@ -332,9 +336,16 @@ fn on_spawn_base(
         .observe(on_label_out)
         .with_children(|parent| {
             parent.spawn((
-                TextKey::new(format!("basetype-{}", base_type.0)),
-                TextFont::from_font_size(NORMAL).with_font(font_handle.0.clone()),
-                TextLayout::new_with_justify(Justify::Center),
+                Node {
+                    width: px(32),
+                    height: px(32),
+                    ..default()
+                },
+                ImageNode {
+                    image: asset_server.load(format!("textures/{}.png", base.0)),
+                    color: color(&base_type.color).into(),
+                    ..default()
+                },
             ));
             parent.spawn((
                 FollowerList,

@@ -51,6 +51,7 @@ pub struct BasetypeSettings {
     pub regions: Vec<String>,
     #[serde(default)]
     pub hidden: bool,
+    pub color: String,
 }
 
 fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {

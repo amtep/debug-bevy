@@ -4,6 +4,7 @@ cost-per-day = 20
 initial-cost = 2000
 police-suspicion = 1
 media-suspicion = 1
+color = "white"
 
 [old-farmhouse]
 max-pop = 20
@@ -11,6 +12,7 @@ cost-per-day = 60
 initial-cost = 100000
 police-suspicion = 0
 media-suspicion = 1
+color = "green"
 
 [abandoned-hospital]
 max-pop = 40
@@ -18,21 +20,24 @@ cost-per-day = 100
 initial-cost = 50000
 police-suspicion = 2
 media-suspicion = 1
+color = "blue"
 
 [castle]
 max-pop = 50
 cost-per-day = 500
-initial-cost = 500000
+initial-cost = 5_000_000
 police-suspicion = 2
 media-suspicion = 3
 regions = ["europe"]
 hidden = true
+color = "red"
 
 [ballroom]
-max-pop = 100
-cost-per-day = 1000
-initial-cost = 1_000_000
+max-pop = 1000
+cost-per-day = 100_000
+initial-cost = 400_000_000
 police-suspicion = 0
-media-suspicion = 5
-region = ["north-america"]
+media-suspicion = 10
+regions = ["north-america"]
 hidden = true
+color = "yellow"

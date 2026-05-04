@@ -75,4 +75,19 @@ pub mod ui {
     pub const ZINDEX_MENU: i32 = 50;
     pub const ZINDEX_DIALOG: i32 = 100;
     pub const ZINDEX_TOOLTIP: i32 = 150;
+
+    pub fn color(color: &str) -> Srgba {
+        match color {
+            "white" => WHITE,
+            "dark grey" => DARK_GREY,
+            "grey" => GREY,
+            "black" => BLACK,
+            "yellow" => YELLOW,
+            "green" => GREEN,
+            "orange" => ORANGE,
+            "red" => RED,
+            "blue" => BLUE,
+            _ => unreachable!(),
+        }
+    }
 }
