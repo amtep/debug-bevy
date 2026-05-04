@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 use crate::constants::ui::*;
 use crate::text::TextKey;
@@ -57,7 +58,6 @@ impl Tooltip {
     }
 }
 
-/// Placeholder entity before the tooltip box is instantiated.
 #[derive(Component, Clone, Copy)]
 pub struct TooltipOpen(pub Entity);
 
@@ -74,13 +74,17 @@ pub struct TooltipTimer(Timer);
 struct TooltipPlaceholder(Entity);
 
 pub fn setup_observe_tooltips(mut commands: Commands) {
+    // hide the tooltip custom entity when it is not open.
     let placeholder = commands.spawn(Visibility::Hidden).id();
     commands.insert_resource(TooltipPlaceholder(placeholder));
     commands.init_resource::<TooltipSetting>();
+    commands.add_observer(on_tooltip_add);
     commands.add_observer(on_tooltip_remove);
     commands.add_observer(on_tooltip_over);
     commands.add_observer(on_tooltip_out);
 }
+
+const TOOLTIP_Y: i32 = 5;
 
 pub fn listen_tooltip_timers(
     mut commands: Commands,
@@ -103,12 +107,13 @@ pub fn listen_tooltip_timers(
                     left: px(10),
                     top: percent(100),
                     max_width: px(250),
-                    margin: UiRect::top(px(5)),
+                    margin: UiRect::top(px(TOOLTIP_Y)),
                     position_type: PositionType::Absolute,
                     border: UiRect::all(px(1)),
                     padding: UiRect::all(px(2)),
                     ..default()
                 },
+                Visibility::Hidden,
                 GlobalZIndex(ZINDEX_TOOLTIP),
                 BackgroundColor::from(TOOLTIP_BACKGROUND),
                 BorderColor::all(BORDER),
@@ -140,6 +145,17 @@ pub fn listen_tooltip_timers(
                 .entity(tooltip_entity)
                 .insert(TooltipOpen(box_entity));
         }
+    }
+}
+
+fn on_tooltip_add(
+    add: On<Add, Tooltip>,
+    mut commands: Commands,
+    tooltips: Query<&Tooltip>,
+    placeholder: Res<TooltipPlaceholder>,
+) {
+    if let TooltipContent::Custom(entity) = tooltips.get(add.entity).unwrap().content {
+        commands.entity(placeholder.0).add_child(entity);
     }
 }
 
@@ -183,4 +199,53 @@ fn on_tooltip_remove(remove: On<Remove, Tooltip>, mut commands: Commands) {
     commands
         .entity(remove.entity)
         .try_remove::<(TooltipTimer, TooltipOpen, TooltipInner)>();
+}
+
+pub fn override_tooltip_position(
+    mut tooltip_boxes: Query<
+        (
+            &ChildOf,
+            &UiGlobalTransform,
+            &mut UiTransform,
+            &mut Visibility,
+            &ComputedNode,
+        ),
+        With<TooltipBox>,
+    >,
+    compute_nodes: Query<&ComputedNode>,
+    window: Single<&Window, With<PrimaryWindow>>,
+) {
+    let (window_width, window_height) = (window.width(), window.height());
+    for (parent, global_transform, mut transform, mut visibility, computed_node) in
+        tooltip_boxes.iter_mut()
+    {
+        if *visibility == Visibility::Hidden {
+            let translation = global_transform.translation;
+            let (x, y) = (translation.x, translation.y);
+            let width = computed_node.size.x;
+            let height = computed_node.size.y;
+
+            let mut is_visible = true;
+
+            if x + width / 2.0 > window_width {
+                transform.translation.x =
+                    px((window_width - width / 2.0 - x) * computed_node.inverse_scale_factor);
+                is_visible = false;
+            }
+
+            if y + height / 2.0 > window_height {
+                // place the tooltip box above the parent of the tooltip
+                // but if the tooltip box grows, then it might cover the parent
+                transform.translation.y = px(-(height
+                    + compute_nodes.get(parent.0).unwrap().size.y
+                    + (TOOLTIP_Y * 2) as f32)
+                    * computed_node.inverse_scale_factor);
+                is_visible = false;
+            }
+
+            if is_visible {
+                *visibility = Visibility::Inherited;
+            }
+        }
+    }
 }

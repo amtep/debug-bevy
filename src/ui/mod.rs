@@ -20,7 +20,10 @@ use crate::{
         dialog::{Dialog, setup_observe_dialogs},
         main_menu::setup_main_menu,
         menu::setup_observe_menus,
-        tooltip::{Tooltip, TooltipInner, listen_tooltip_timers, setup_observe_tooltips},
+        tooltip::{
+            Tooltip, TooltipInner, listen_tooltip_timers, override_tooltip_position,
+            setup_observe_tooltips,
+        },
     },
 };
 
@@ -88,6 +91,12 @@ pub fn plugin(app: &mut App) {
             update_meter_display::<u32>
                 .run_if(in_state(GameState::Main))
                 .before(UiSystems::Prepare),
+        )
+        .add_systems(
+            PostUpdate,
+            override_tooltip_position
+                .run_if(not(in_state(GameState::Load)))
+                .after(UiSystems::Layout),
         );
 }
 
