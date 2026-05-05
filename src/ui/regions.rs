@@ -373,10 +373,8 @@ fn on_spawn_base(
                     Node {
                         position_type: PositionType::Absolute,
                         top: percent(100),
-                        margin: UiRect::top(px(4)),
-                        border: UiRect::all(px(1)),
-                        border_radius: BorderRadius::all(px(2)),
-                        padding: UiRect::all(px(1)),
+                        margin: UiRect::top(px(3)),
+                        border: UiRect::bottom(px(1)),
                         ..default()
                     },
                     Visibility::Hidden,
