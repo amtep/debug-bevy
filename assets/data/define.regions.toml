@@ -21,13 +21,13 @@ base-plots = {
 
 [europe]
 x = 54
-y = 22
+y = 22.5
 base-plots = {
     balkan = { x = 56, y = 29 },
     iberia = { x = 49, y = 28 },
     britain = { x = 49, y = 20 },
     scandinavia = { x = 54, y = 14 },
-    eastern-europe = { x = 60, y = 19 },
+    eastern-europe = { x = 60, y = 22 },
 }
 
 [africa]
@@ -40,29 +40,39 @@ base-plots = {
     horn-of-africa = { x = 61, y = 44 },
 }
 
-[south-west-asia]
-x = 70
-y = 31
+[western-asia]
+x = 69
+y = 22
 base-plots = {
-    india = { x = 72, y = 38 },
-    arabia = { x = 64, y = 36 },
-    levant = { x = 60, y = 32 },
-    caucasus = { x = 63, y = 25 },
+    central = { x = 68, y = 29 },
+    arabia = { x = 64, y = 37 },
+    levant = { x = 60, y = 31 },
+    india = { x = 72, y = 37 },
 }
 
-[east-asia]
-x = 80
-y = 28
+[eastern-asia]
+x = 86
+y = 42
 base-plots = {
-    singapore = { x = 79, y = 48 },
-    china = { x = 82, y = 35 },
+    indonesia = { x = 80, y = 52 },
+    shanghai = { x = 83, y = 33 },
+    indochina = { x = 79, y = 42 },
     japan = { x = 88, y = 29 },
 }
 
 [australia]
-x = 89
-y = 62
+x = 87
+y = 61
 base-plots = {
     australia = { x = 91, y = 69 },
     aotearoa = { x = 98, y = 73 },
 }
+
+[antarctica]
+x = 60
+y = 92
+base-plots = {
+    australia = { x = 91, y = 69 },
+    aotearoa = { x = 98, y = 73 },
+}
+hidden = true

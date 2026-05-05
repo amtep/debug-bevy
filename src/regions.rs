@@ -45,6 +45,8 @@ pub struct Location {
 pub struct RegionSettings {
     #[serde(flatten)]
     pub location: Location,
+    #[serde(default)]
+    pub hidden: bool,
     pub base_plots: HashMap<String, Location>,
 }
 
@@ -86,18 +88,20 @@ fn setup_main(
 ) {
     let regions = &regions_asset.get(regions_handle.0.id()).unwrap().0;
     for (name, settings) in regions {
-        commands
-            .spawn((
-                Region { name: name.clone() },
-                settings.location,
-                PoliceSuspicion(0),
-                MediaSuspicion(0),
-            ))
-            .with_children(|parent| {
-                for (name, location) in &settings.base_plots {
-                    parent.spawn((BasePlot { name: name.clone() }, *location));
-                }
-            });
+        if !settings.hidden {
+            commands
+                .spawn((
+                    Region { name: name.clone() },
+                    settings.location,
+                    PoliceSuspicion(0),
+                    MediaSuspicion(0),
+                ))
+                .with_children(|parent| {
+                    for (name, location) in &settings.base_plots {
+                        parent.spawn((BasePlot { name: name.clone() }, *location));
+                    }
+                });
+        }
     }
 }
 
