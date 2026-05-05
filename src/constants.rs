@@ -64,8 +64,8 @@ pub mod ui {
     pub const HEADING: f32 = 24.0;
     pub const SUB_HEADING: f32 = 20.0;
     pub const LARGE: f32 = 16.0;
-    pub const NORMAL: f32 = 13.0;
-    pub const SMALL: f32 = 10.0;
+    pub const NORMAL: f32 = 14.5;
+    pub const SMALL: f32 = 13.0;
 
     pub const ICON_PAUSE: &str = "textures/pause.png";
     pub const ICON_PLAY: &str = "textures/play.png";
