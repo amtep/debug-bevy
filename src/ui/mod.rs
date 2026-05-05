@@ -190,13 +190,27 @@ fn setup_map(
             ..default()
         })
         .with_children(|parent| {
+            parent.spawn((
+                ImageNode {
+                    image: asset_server.load(TEXTURE_EARTH_BACKGROUND),
+                    image_mode: NodeImageMode::Stretch,
+                    ..default()
+                },
+                Node {
+                    width: percent(100),
+                    height: percent(100),
+                    ..default()
+                },
+                MapUi,
+            ));
             // Top status bar
             parent
                 .spawn((
                     Node {
                         width: percent(100.0),
+                        position_type: PositionType::Absolute,
                         border: UiRect::vertical(px(2)),
-                        align_items: AlignItems::FlexEnd,
+                        padding: UiRect::all(px(2)),
                         justify_content: JustifyContent::Center,
                         ..default()
                     },
@@ -362,19 +376,6 @@ fn setup_map(
                         ))
                         .observe(on_game_speed_clicked);
                 });
-            parent.spawn((
-                ImageNode {
-                    image: asset_server.load(TEXTURE_EARTH_BACKGROUND),
-                    image_mode: NodeImageMode::Stretch,
-                    ..default()
-                },
-                Node {
-                    width: percent(100.0),
-                    flex_grow: 1.0,
-                    ..default()
-                },
-                MapUi,
-            ));
         });
 }
 
