@@ -5,9 +5,12 @@ use bevy_common_assets::toml::TomlAssetPlugin;
 use moonshine_save::save::Save;
 use rand::{RngExt, seq::IndexedRandom};
 use serde_derive::Deserialize;
+use strum::IntoEnumIterator;
 
 use crate::{
-    followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
+    followers::{
+        Follower, FollowerCount, FollowersAsset, FollowersHandle, GeneralFollowerSettings,
+    },
     funds::{Expense, ExpenseCategory, Funds, FundsAmount},
     main_menu::{LoadedGame, NewGame},
     regions::{BasePlot, Region},
@@ -65,28 +68,69 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
 pub struct Base(pub String);
 
 fn new_game(
-    mut commands: Commands,
+    commands: Commands,
     base_types_handle: Res<BasetypesHandle>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
     mut random_source: ResMut<RandomSource>,
     base_plots: Query<Entity, With<BasePlot>>,
+    followers_handle: Res<FollowersHandle>,
+    followers_asset: Res<Assets<FollowersAsset>>,
 ) {
     info!("Creating starting base");
     let i = random_source.0.random_range(0..base_plots.count());
     let base_plot = base_plots.iter().nth(i).unwrap();
 
-    let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
     // TODO: don't hardcode this string
-    let apartment = base_types.get(DEFAULT_BASETYPE).unwrap();
-    commands.entity(base_plot).with_child((
-        Base(DEFAULT_BASETYPE.into()),
-        Expense(apartment.cost_per_day, ExpenseCategory::Bases, 1),
-    ));
+    let apartment = &base_types_asset.get(base_types_handle.0.id()).unwrap().0[DEFAULT_BASETYPE];
+    let general = &followers_asset.get(followers_handle.0.id()).unwrap().0["general"];
+    spawn_base_inner(
+        commands,
+        base_plot,
+        DEFAULT_BASETYPE.into(),
+        apartment,
+        general,
+        None,
+    );
+}
+
+#[expect(clippy::trivially_copy_pass_by_ref)]
+fn spawn_base_inner(
+    mut commands: Commands,
+    base_plot: Entity,
+    base_type: String,
+    base_type_settings: &BasetypeSettings,
+    follower_settings: &GeneralFollowerSettings,
+    funds: Option<ResMut<Funds>>,
+) {
+    let base = commands
+        .spawn((
+            Base(base_type),
+            Expense(base_type_settings.cost_per_day, ExpenseCategory::Bases, 1),
+            ChildOf(base_plot),
+        ))
+        .id();
+    if let Some(mut funds) = funds {
+        funds.0 -= base_type_settings.initial_cost;
+    }
+    let cost = follower_settings.cost_per_day;
+    for follower in Follower::iter() {
+        let follower_e = commands
+            .spawn((
+                ChildOf(base),
+                follower,
+                Expense(cost, ExpenseCategory::Followers, 0),
+            ))
+            .insert(FollowerCount(0))
+            .id();
+        if follower != Follower::Goon {
+            commands.spawn((Task(String::from(DEFAULT_TASK)), ChildOf(follower_e)));
+        }
+    }
 }
 
 pub fn spawn_base(
-    mut commands: Commands,
-    mut funds: ResMut<Funds>,
+    commands: Commands,
+    funds: ResMut<Funds>,
     region: Entity,
     regions: Query<&Children, With<Region>>,
     base_type: String,
@@ -119,33 +163,16 @@ pub fn spawn_base(
         return;
     }
 
-    let base = commands
-        .spawn((
-            Base(base_type),
-            Expense(base_type_settings.cost_per_day, ExpenseCategory::Bases, 1),
-            ChildOf(*base_plot),
-        ))
-        .id();
-    funds.0 -= base_type_settings.initial_cost;
+    let general = &followers_asset.get(followers_handle.0.id()).unwrap().0["general"];
 
-    let followers_settings = &followers_asset.get(followers_handle.0.id()).unwrap();
-    let cost = followers_settings
-        .0
-        .get("general")
-        .map_or(0, |v| v.cost_per_day);
-    for follower in &[Follower::Priest, Follower::Goon, Follower::Minion] {
-        let follower_e = commands
-            .spawn((
-                *follower,
-                FollowerCount(0),
-                Expense(cost, ExpenseCategory::Followers, 0),
-                ChildOf(base),
-            ))
-            .id();
-        if *follower != Follower::Goon {
-            commands.spawn((Task(String::from(DEFAULT_TASK)), ChildOf(follower_e)));
-        }
-    }
+    spawn_base_inner(
+        commands,
+        *base_plot,
+        base_type,
+        base_type_settings,
+        general,
+        Some(funds),
+    );
 }
 
 fn loaded_game(mut commands: Commands, bases: Query<(Entity, &Base)>) {

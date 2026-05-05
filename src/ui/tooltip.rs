@@ -38,16 +38,15 @@ pub struct Tooltip {
 }
 
 impl Tooltip {
-    #[expect(dead_code)]
-    pub fn new_text(text: TextKey) -> Self {
+    pub fn new_text(text: impl Into<TextKey>) -> Self {
         Self {
-            content: TooltipContent::Text(text, TEXT.into()),
+            content: TooltipContent::Text(text.into(), TEXT.into()),
         }
     }
 
-    pub fn new_text_color(text: TextKey, color: impl Into<Color>) -> Self {
+    pub fn new_text_color(text: impl Into<TextKey>, color: impl Into<Color>) -> Self {
         Self {
-            content: TooltipContent::Text(text, TextColor::from(color.into())),
+            content: TooltipContent::Text(text.into(), TextColor::from(color.into())),
         }
     }
 

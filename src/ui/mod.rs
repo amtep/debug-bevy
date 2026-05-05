@@ -20,7 +20,6 @@ use crate::{
         dialog::{Dialog, setup_observe_dialogs},
         main_menu::setup_main_menu,
         menu::setup_observe_menus,
-        regions::changed_follower_count,
         tooltip::{
             Tooltip, TooltipInner, listen_tooltip_timers, override_tooltip_position,
             setup_observe_tooltips,
@@ -88,10 +87,6 @@ pub fn plugin(app: &mut App) {
             ),
         )
         .add_systems(
-            Update,
-            changed_follower_count.run_if(in_state(GameState::Main)),
-        )
-        .add_systems(
             PostUpdate,
             update_meter_display::<u32>
                 .run_if(in_state(GameState::Main))
@@ -149,12 +144,6 @@ struct IntelligenceSuspicionUi;
 
 #[derive(Component)]
 struct ScientificSuspicionUi;
-
-#[derive(Component)]
-struct BaseUi;
-
-#[derive(Component)]
-struct FollowerList;
 
 fn setup_fonts(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(FontHandle(asset_server.load(FONT_PATH)));
@@ -216,15 +205,16 @@ fn setup_map(
                 ))
                 .with_children(|parent| {
                     // Cult symbol
-                    parent.spawn((
-                        Node {
+                    parent
+                        .spawn(Node {
                             margin: UiRect::right(px(5)),
                             ..default()
-                        },
-                        Text::new(cult_symbol.0),
-                        TextColor::from(TEXT),
-                        unicode_text_font.clone(),
-                    ));
+                        })
+                        .with_child((
+                            Text::new(cult_symbol.0),
+                            TextColor::from(TEXT),
+                            unicode_text_font.clone(),
+                        ));
                     // Funds counter
                     parent
                         .spawn((
@@ -243,61 +233,74 @@ fn setup_map(
                         ))
                         .observe(on_funds_tooltip_inner_add);
                     // Game date display
-                    parent.spawn((
-                        Node {
+                    parent
+                        .spawn(Node {
                             min_width: px(125),
                             ..default()
-                        },
-                        text_font.clone(),
-                        TextColor::from(TEXT),
-                        // will be updated by update_game_date
-                        TextKey::new("game-date-display").add_arg("date", game_date.0),
-                        GameDateUi,
-                    ));
+                        })
+                        .with_child((
+                            text_font.clone(),
+                            TextColor::from(TEXT),
+                            // will be updated by update_game_date
+                            TextKey::new("game-date-display").add_arg("date", game_date.0),
+                            GameDateUi,
+                        ));
                     // Suspicion meters
-                    parent.spawn((
-                        Node {
-                            min_width: px(50),
-                            ..default()
-                        },
-                        text_font.clone(),
-                        TextLayout::new_with_justify(Justify::Right),
-                        MeterDisplay::<u32> {
-                            value: 0,
-                            low_threshold: 34,
-                            high_threshold: 67,
-                        },
-                        IntelligenceSuspicionUi,
-                    ));
-                    parent.spawn((
-                        Node {
-                            min_width: px(50),
-                            ..default()
-                        },
-                        text_font.clone(),
-                        TextLayout::new_with_justify(Justify::Right),
-                        MeterDisplay::<u32> {
-                            value: 0,
-                            low_threshold: 34,
-                            high_threshold: 67,
-                        },
-                        ScientificSuspicionUi,
-                    ));
+                    parent
+                        .spawn((
+                            Node {
+                                min_width: px(50),
+                                justify_content: JustifyContent::FlexEnd,
+                                ..default()
+                            },
+                            Tooltip::new_text("intelligence-suspicion-tooltip"),
+                        ))
+                        .with_child((
+                            text_font.clone(),
+                            TextColor::from(TEXT),
+                            MeterDisplay::<u32> {
+                                value: 0,
+                                low_threshold: 34,
+                                high_threshold: 67,
+                            },
+                            IntelligenceSuspicionUi,
+                        ));
+                    parent
+                        .spawn((
+                            Node {
+                                min_width: px(50),
+                                justify_content: JustifyContent::FlexEnd,
+                                ..default()
+                            },
+                            Tooltip::new_text("scientific-suspicion-tooltip"),
+                        ))
+                        .with_child((
+                            text_font.clone(),
+                            TextLayout::new_with_justify(Justify::Right),
+                            TextColor::from(TEXT),
+                            MeterDisplay::<u32> {
+                                value: 0,
+                                low_threshold: 34,
+                                high_threshold: 67,
+                            },
+                            ScientificSuspicionUi,
+                        ));
                     // Separate left-aligned and right-aligned status fields
                     parent.spawn(Node {
                         flex_grow: 1.0,
                         ..default()
                     });
-                    parent.spawn((
-                        Node {
+                    parent
+                        .spawn(Node {
                             margin: UiRect::right(px(10)),
                             align_self: AlignSelf::Center,
                             ..default()
-                        },
-                        Text::new(&cult_name.0),
-                        TextColor::from(TEXT),
-                        TextFont::from_font_size(SMALL).with_font(font_handle.0.clone()),
-                    ));
+                        })
+                        .with_child((
+                            Text::new(&cult_name.0),
+                            TextColor::from(TEXT),
+                            TextFont::from_font_size(SMALL).with_font(font_handle.0.clone()),
+                        ));
                     parent
                         .spawn((
                             Button,
@@ -569,7 +572,7 @@ fn update_funds_tooltip(
     commands.entity(tooltip_inner).despawn_children();
 
     // Completely refresh the tooltip contents
-    let text_font = TextFont::from_font_size(NORMAL).with_font(font_handle.0.clone());
+    let text_font = TextFont::from_font_size(SMALL).with_font(font_handle.0.clone());
     let hrule = (
         Node {
             min_width: percent(80),

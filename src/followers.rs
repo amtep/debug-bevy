@@ -3,14 +3,13 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 use bevy_common_assets::toml::TomlAssetPlugin;
 use moonshine_save::save::Save;
-use rand::RngExt;
 use serde::Deserialize;
+use strum::EnumIter;
 
 use crate::{
     bases::Base,
     funds::{Expense, FundsAmount},
-    main_menu::NewGame,
-    rng::RandomSource,
+    main_menu::{LoadedGame, NewGame},
     state::{GameState, MainSetupSet},
 };
 
@@ -21,8 +20,10 @@ pub fn plugin(app: &mut App) {
         .add_systems(OnEnter(GameState::Load), setup_load)
         .add_systems(
             OnEnter(GameState::Main),
-            new_game
-                .run_if(resource_exists::<NewGame>)
+            (
+                new_game.run_if(resource_exists::<NewGame>),
+                loaded_game.run_if(resource_exists::<LoadedGame>),
+            )
                 .in_set(MainSetupSet::Followers),
         );
 }
@@ -42,7 +43,7 @@ pub struct GeneralFollowerSettings {
     pub cost_per_day: FundsAmount,
 }
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Reflect)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, EnumIter, Reflect)]
 #[reflect(Component)]
 #[require(Save)]
 pub enum Follower {
@@ -63,23 +64,35 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 /// Create the starting priest for the cult.
 fn new_game(
-    bases: Query<Entity, With<Base>>,
-    followers: Query<(&ChildOf, &Follower, &mut FollowerCount, &mut Expense)>,
-    mut random_source: ResMut<RandomSource>,
+    mut commands: Commands,
+    base: Single<&Children, With<Base>>,
+    mut followers: Query<(&Follower, &FollowerCount, &mut Expense)>,
 ) {
     info!("Creating starting priest");
-    let i = random_source.0.random_range(0..bases.count());
-    let base = bases.iter().nth(i).unwrap();
 
     // Generally we should check whether the base has room
     // for another follower, but this is a new game and it
     // will be empty.
 
-    for (ChildOf(parent), follower, mut count, mut expense) in followers {
-        if *parent != base || *follower != Follower::Priest {
-            continue;
+    for child in base.iter() {
+        if let Ok((follower, follower_count, mut expense)) = followers.get_mut(child)
+            && *follower == Follower::Priest
+        {
+            let mut follower_count = *follower_count;
+            *follower_count += 1;
+            commands.entity(child).insert(follower_count);
+            expense.2 += 1;
         }
-        count.0 += 1;
-        expense.2 = count.0;
+    }
+}
+
+fn loaded_game(mut commands: Commands, follower_counts: Query<(Entity, &FollowerCount)>) {
+    for (entity, follower_count) in follower_counts {
+        // Remove and re-insert the Base in order to trigger the Add observer
+        // that builds the base UI.
+        commands
+            .entity(entity)
+            .remove::<FollowerCount>()
+            .insert(*follower_count);
     }
 }

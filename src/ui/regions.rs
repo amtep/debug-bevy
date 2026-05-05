@@ -10,7 +10,7 @@ use crate::{
     suspicion::{MediaSuspicion, PoliceSuspicion},
     text::TextKey,
     ui::{
-        BaseUi, FollowerList, UnicodeFontHandle,
+        UnicodeFontHandle,
         dialog::{Dialog, DialogConfirmed},
         menu::{Menu, MenuClicked, MenuEntry, MenuItem},
     },
@@ -35,6 +35,17 @@ struct RegionUi;
 #[derive(Component)]
 pub struct BasePlotUi;
 
+#[derive(Component)]
+pub struct BaseUi {
+    follower_list: Entity,
+}
+
+#[derive(Component)]
+pub struct FollowerListUi;
+
+#[derive(Component)]
+pub struct FollowerListBoxUi;
+
 pub fn setup(
     mut commands: Commands,
     map_ui: Single<Entity, With<MapUi>>,
@@ -53,7 +64,7 @@ pub fn setup(
                     left: percent(location.x),
                     top: percent(location.y),
                     flex_direction: FlexDirection::Column,
-                    border: UiRect::all(px(1)),
+                    border: UiRect::all(px(1.5)),
                     border_radius: BorderRadius::all(px(10)),
                     padding: UiRect::all(px(5)),
                     align_items: AlignItems::Center,
@@ -131,6 +142,7 @@ pub fn setup(
 
     commands.add_observer(on_location_reloaded);
     commands.add_observer(on_spawn_base);
+    commands.add_observer(on_follower_count_insert);
 }
 
 // INFO: Assume only the location has changed, while none is added or removed.
@@ -295,6 +307,7 @@ fn on_spawn_base(
     mut region_suspicion_uis: Query<&mut Node, With<RegionSuspicionUi>>,
     base_plot_uis: Query<&BasePlotUi>,
     asset_server: Res<AssetServer>,
+    unicode_font_handle: Res<UnicodeFontHandle>,
 ) {
     let (base_plot, base) = bases.get(event.entity).unwrap();
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
@@ -316,20 +329,27 @@ fn on_spawn_base(
         .find(|view| base_plot_uis.contains(*view))
         .unwrap();
 
+    let follower_list = commands
+        .spawn((
+            TextFont::from_font_size(SMALL).with_font(unicode_font_handle.0.clone()),
+            Text::default(),
+            FollowerListUi,
+        ))
+        .id();
+
     commands
         .spawn((
             ChildOf(base_plot_ui),
             ViewOf(event.entity),
-            BaseUi,
+            BaseUi { follower_list },
             Node {
                 flex_direction: FlexDirection::Column,
-                border: UiRect::all(px(1)),
+                border: UiRect::all(px(2)),
                 border_radius: BorderRadius::all(px(5)),
-                padding: UiRect::horizontal(px(2)),
                 align_items: AlignItems::Center,
                 ..default()
             },
-            BorderColor::all(WHITE),
+            BorderColor::all(BORDER),
             BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(0.75)),
         ))
         .observe(on_label_over)
@@ -347,72 +367,88 @@ fn on_spawn_base(
                     ..default()
                 },
             ));
-            parent.spawn((
-                FollowerList,
-                Node {
-                    flex_direction: FlexDirection::Row,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
-            ));
+
+            parent
+                .spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        top: percent(100),
+                        margin: UiRect::top(px(4)),
+                        border: UiRect::all(px(1)),
+                        border_radius: BorderRadius::all(px(2)),
+                        padding: UiRect::all(px(1)),
+                        ..default()
+                    },
+                    Visibility::Hidden,
+                    FollowerListBoxUi,
+                    BorderColor::all(BORDER),
+                    BackgroundColor::from(BLACK),
+                ))
+                .add_child(follower_list)
+                .observe(|mut click: On<Pointer<Click>>| {
+                    click.propagate(false);
+                })
+                .observe(|mut over: On<Pointer<Over>>| {
+                    over.propagate(false);
+                })
+                .observe(|mut out: On<Pointer<Out>>| {
+                    out.propagate(false);
+                });
         });
 }
 
-pub fn changed_follower_count(
-    mut commands: Commands,
-    children: Query<&Children>,
-    followers: Populated<(&ChildOf, &Follower, Mut<FollowerCount>)>,
+pub fn on_follower_count_insert(
+    insert: On<Insert, FollowerCount>,
+    bases: Query<&Children, With<Base>>,
+    followers: Query<(&Follower, &FollowerCount)>,
+    follower_counts: Query<&ChildOf, With<FollowerCount>>,
     base_views: Query<&Views, With<Base>>,
     base_uis: Query<&BaseUi>,
-    follower_lists: Query<&FollowerList>,
-    unicode_font_handle: Res<UnicodeFontHandle>,
+    mut follower_list_uis: Query<(&mut Text, &ChildOf), With<FollowerListUi>>,
+    mut follower_list_box_uis: Query<&mut Visibility, With<FollowerListBoxUi>>,
 ) {
-    for (ChildOf(base), _, count) in &followers {
-        if !count.is_changed() {
-            continue;
-        }
-        let base_views = base_views.get(*base).unwrap();
-        let base_ui = base_views
-            .iter()
-            .find(|view| base_uis.contains(*view))
-            .unwrap();
-        let follower_list = children
-            .get(base_ui)
-            .unwrap()
-            .iter()
-            .find(|fl| follower_lists.contains(*fl))
-            .unwrap();
+    let base = follower_counts.get(insert.entity).unwrap();
+    let base_views = base_views.get(base.0).unwrap();
+    let follower_list = base_views
+        .iter()
+        .find_map(|view| base_uis.get(view).ok())
+        .unwrap()
+        .follower_list;
+    let (mut follower_list_text, follower_list_box) =
+        follower_list_uis.get_mut(follower_list).unwrap();
 
-        commands.entity(follower_list).despawn_children();
+    let mut followers: Vec<(Follower, FollowerCount)> = bases
+        .get(base.0)
+        .unwrap()
+        .iter()
+        .filter_map(|f| followers.get(f).ok().map(|(f, c)| (*f, *c)))
+        .collect();
 
-        let mut followers: Vec<(Follower, FollowerCount)> = children
-            .get(*base)
-            .unwrap()
-            .iter()
-            .map(|follower| {
-                let (_, f, count) = followers.get(follower).unwrap();
-                (*f, *count)
-            })
-            .collect();
+    followers.sort_unstable_by_key(|(f, _)| *f);
 
-        followers.sort_unstable_by_key(|(f, _)| *f);
+    let new_text = followers.iter().fold(String::new(), |mut text, (f, c)| {
+        let iter = std::iter::repeat_n(
+            match f {
+                Follower::Priest => '☉',
+                Follower::Goon => '♁',
+                Follower::Minion => '☿',
+            },
+            **c,
+        );
 
-        let text_font = TextFont::from_font_size(SMALL).with_font(unicode_font_handle.0.clone());
+        text.extend(iter);
+        text
+    });
 
-        let bundles: Vec<_> = followers
-            .iter()
-            .map(|(f, count)| {
-                let text = match f {
-                    Follower::Priest => Text::new("☉".repeat(count.0)),
-                    Follower::Goon => Text::new("♁".repeat(count.0)),
-                    Follower::Minion => Text::new("☿".repeat(count.0)),
-                };
-                (ChildOf(follower_list), text, text_font.clone())
-            })
-            .collect();
-
-        commands.spawn_batch(bundles);
+    let mut follower_list_box_visibility =
+        follower_list_box_uis.get_mut(follower_list_box.0).unwrap();
+    if new_text.is_empty() {
+        *follower_list_box_visibility = Visibility::Hidden;
+    } else {
+        *follower_list_box_visibility = Visibility::Inherited;
     }
+
+    follower_list_text.0 = new_text;
 }
 
 pub fn update_regional_suspicion(
