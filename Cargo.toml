@@ -35,8 +35,6 @@ features = [
     "2d",
     # This is because the main map background asset is a jpg
     "jpeg",
-    # Only x11 support is default on linux
-    "wayland",
     # for scrollbars
     "experimental_bevy_ui_widgets",
 ]
