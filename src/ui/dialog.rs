@@ -424,7 +424,7 @@ fn listen_dialog_confirm(
     dialog: Query<&Dialog>,
     has_disableds: Query<Has<InteractionDisabled>>,
 ) {
-    if keys.just_pressed(KeyCode::Enter) {
+    if keys.any_just_pressed([KeyCode::Enter, KeyCode::Escape]) && dialog_roots.count() > 0 {
         #[allow(clippy::cast_possible_truncation)]
         let top = (dialog_roots.count() - 1) as i32;
         let (dialog_root, dialog_entity, confirm_button) = dialog_roots
@@ -433,14 +433,18 @@ fn listen_dialog_confirm(
                 (z_index.0 == top).then_some((entity, dialog_root.0, confirm_button.0))
             })
             .unwrap();
-        if !has_disableds.get(confirm_button).unwrap() {
-            commands.entity(dialog_entity).insert(DialogConfirmed);
-            commands.entity(dialog_root).despawn();
 
-            let dialog = dialog.get(dialog_entity).unwrap();
-            if dialog.pause {
-                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
+        if keys.just_pressed(KeyCode::Enter) {
+            if has_disableds.get(confirm_button).unwrap() {
+                return;
             }
+            commands.entity(dialog_entity).insert(DialogConfirmed);
+        }
+
+        commands.entity(dialog_root).despawn();
+        let dialog = dialog.get(dialog_entity).unwrap();
+        if dialog.pause {
+            commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
         }
     }
 }
