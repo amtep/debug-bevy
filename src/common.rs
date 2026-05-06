@@ -6,7 +6,7 @@ pub struct CultName(pub String);
 
 #[derive(Resource, Reflect)]
 #[reflect(Resource)]
-pub struct CultSymbol(pub char);
+pub struct CultSymbol(pub usize);
 
 #[derive(Resource, Default)]
 pub struct Dev;

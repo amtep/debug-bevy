@@ -3,23 +3,26 @@ use bevy_ui_text_input::{TextInputBuffer, TextInputMode, TextInputNode, TextInpu
 
 use crate::{
     common::{CultName, CultSymbol},
-    constants::ui::*,
+    constants::{
+        files::{CULT_SYMBOL_PATH, CULT_SYMBOLS},
+        ui::*,
+    },
     main_menu::NewGame,
     save_load::any_save_file_exists,
     state::GameState,
     text::TextKey,
     ui::{
-        DisplayFontHandle, FontHandle, UnicodeFontHandle,
+        DisplayFontHandle, FontHandle,
         dialog::{Dialog, DialogConfirm, DialogConfirmed},
         save_load::{load_most_recent_game, open_load_game_popup},
     },
 };
 
 #[derive(Component)]
-struct CultSym(char);
+struct CultSym(usize);
 
 #[derive(Event)]
-struct CultSymbolChanged(char);
+struct CultSymbolChanged(usize);
 
 pub fn setup_main_menu(
     mut commands: Commands,
@@ -122,8 +125,8 @@ pub fn setup_main_menu(
                     parent.spawn(button("main-menu-button-new-game")).observe(
                         move |click: On<Pointer<Click>>,
                          mut commands: Commands,
-                         font_handle: Res<FontHandle>,
-                         unicode_font_handle: Res<UnicodeFontHandle>| {
+                         asset_server: Res<AssetServer>,
+                         font_handle: Res<FontHandle>| {
                             if click.button == PointerButton::Primary {
 
                                 let mut entity_commands = commands.spawn(Node {
@@ -170,11 +173,12 @@ pub fn setup_main_menu(
                                         margin: UiRect::all(px(10.0)),
                                         ..default()
                                     }).with_children(|parent| {
-                                        for symbol in ['✭', '✥', '✯', '❂', '♔', '♛', '❤', '⚜'] {
+                                        for (symbol_nr, symbol) in CULT_SYMBOLS.iter().enumerate() {
+                                            let handle = asset_server.load(format!("{CULT_SYMBOL_PATH}/{symbol}"));
                                             parent.spawn((
                                                 Node {
-                                                    width: px(120),
-                                                    height: px(120),
+                                                    width: px(128),
+                                                    height: px(128),
                                                     border: UiRect::all(px(5)),
                                                     border_radius: BorderRadius::all(px(10)),
                                                     align_items: AlignItems::Center,
@@ -186,15 +190,22 @@ pub fn setup_main_menu(
                                                 BackgroundColor::from(BUTTON_BACKGROUND),
                                                 children![
                                                     (
-                                                        Text::new(symbol),
-                                                        CultSym(symbol),
-                                                        TextColor::from(TEXT),
-                                                        TextFont::from_font_size(72.0).with_font(unicode_font_handle.0.clone()),
+                                                        Node {
+                                                            width: percent(100),
+                                                            height: percent(100),
+                                                            ..default()
+                                                        },
+                                                        ImageNode {
+                                                            image: handle.clone(),
+                                                            image_mode: NodeImageMode::Stretch,
+                                                            ..default()
+                                                        },
+                                                        CultSym(symbol_nr),
                                                     )
                                                 ]
                                             )).observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
                                                 if click.button == PointerButton::Primary {
-                                                    commands.trigger(CultSymbolChanged(symbol));
+                                                    commands.trigger(CultSymbolChanged(symbol_nr));
                                                     commands.entity(entity).insert(DialogConfirm(true));
                                                 }
                                             });
@@ -228,9 +239,10 @@ pub fn setup_main_menu(
                         parent.spawn(button("main-menu-button-load-game")).observe(
                             |click: On<Pointer<Click>>,
                             mut commands: Commands,
-                            font: Res<FontHandle>, unicode_font: Res<UnicodeFontHandle>| {
+                            asset_server: Res<AssetServer>,
+                            font: Res<FontHandle>| {
                                 if click.button == PointerButton::Primary {
-                                    open_load_game_popup(commands.reborrow(), font.0.clone(), unicode_font.0.clone());
+                                    open_load_game_popup(commands.reborrow(), asset_server, font.0.clone());
                                 }
                             },
                         );

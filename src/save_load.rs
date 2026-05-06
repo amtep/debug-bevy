@@ -56,7 +56,7 @@ pub fn plugin(app: &mut App) {
 pub struct SaveMetadata {
     pub save_timestamp: DateTime<Utc>,
     pub cult_name: String,
-    pub cult_symbol: char,
+    pub cult_symbol: usize,
     pub game_date: NaiveDate,
     pub funds: FundsAmount,
 }

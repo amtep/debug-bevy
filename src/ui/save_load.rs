@@ -4,7 +4,10 @@ use bevy::{
 };
 
 use crate::{
-    constants::ui::{BORDER, NORMAL, TEXT},
+    constants::{
+        files::{CULT_SYMBOL_PATH, CULT_SYMBOLS},
+        ui::{BORDER, NORMAL, TEXT},
+    },
     save_load::{Campaign, load, scan_saved_games},
     state::GameState,
     text::TextKey,
@@ -46,8 +49,8 @@ fn warn_no_load() -> Dialog {
 
 pub fn open_load_game_popup(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     font: Handle<Font>,
-    unicode_font: Handle<Font>,
 ) {
     let mut v = match scan_saved_games() {
         Err(e) => {
@@ -106,7 +109,6 @@ pub fn open_load_game_popup(
             BackgroundColor(BORDER.into()),
         ));
     let text_font = TextFont::from_font_size(NORMAL).with_font(font);
-    let unicode_font = TextFont::from_font_size(NORMAL).with_font(unicode_font);
     for (campaign, metadata, content) in v {
         commands
             .spawn((
@@ -126,9 +128,18 @@ pub fn open_load_game_popup(
                         Node::default(),
                         children![
                             (
-                                Text(format!("{} ", metadata.cult_symbol)),
-                                unicode_font.clone(),
-                                TextColor(TEXT.into()),
+                                Node {
+                                    width: px(16),
+                                    height: px(16),
+                                    ..default()
+                                },
+                                ImageNode {
+                                    image: asset_server.load(format!(
+                                        "{CULT_SYMBOL_PATH}/{}",
+                                        CULT_SYMBOLS[metadata.cult_symbol]
+                                    )),
+                                    ..default()
+                                }
                             ),
                             (
                                 Text(metadata.cult_name),

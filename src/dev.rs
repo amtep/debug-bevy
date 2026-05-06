@@ -42,7 +42,7 @@ fn listen_dev_keys_main_menu(
     {
         // Alt + G
         commands.insert_resource(CultName("DEV".into()));
-        commands.insert_resource(CultSymbol('D'));
+        commands.insert_resource(CultSymbol(0));
         commands.init_resource::<Dev>();
         commands.init_resource::<NewGame>();
         next_state.set(GameState::Main);

@@ -5,7 +5,10 @@ use strum::IntoEnumIterator;
 
 use crate::{
     common::{CultName, CultSymbol, Dev},
-    constants::ui::*,
+    constants::{
+        files::{CULT_SYMBOL_PATH, CULT_SYMBOLS},
+        ui::*,
+    },
     funds::{
         Expense, ExpenseCategory, Funds, FundsAmount, Income, IncomeCategory,
         IncomeExpenseUpdatedEvent,
@@ -164,15 +167,12 @@ fn read_window_resized_messages(
 fn setup_map(
     mut commands: Commands,
     font_handle: Res<FontHandle>,
-    unicode_font_handle: Res<UnicodeFontHandle>,
     asset_server: Res<AssetServer>,
     game_date: Res<GameDate>,
     cult_name: Res<CultName>,
     cult_symbol: Res<CultSymbol>,
 ) {
     let text_font = TextFont::from_font_size(SUB_HEADING).with_font(font_handle.0.clone());
-    let unicode_text_font =
-        TextFont::from_font_size(SUB_HEADING).with_font(unicode_font_handle.0.clone());
 
     let funds_tooltip = commands
         .spawn(Node {
@@ -221,19 +221,24 @@ fn setup_map(
                     // Cult symbol
                     parent
                         .spawn(Node {
+                            width: px(32),
+                            height: px(32),
                             margin: UiRect::right(px(5)),
                             ..default()
                         })
-                        .with_child((
-                            Text::new(cult_symbol.0),
-                            TextColor::from(TEXT),
-                            unicode_text_font.clone(),
-                        ));
+                        .with_child(ImageNode {
+                            image: asset_server.load(format!(
+                                "{CULT_SYMBOL_PATH}/{}",
+                                CULT_SYMBOLS[cult_symbol.0]
+                            )),
+                            ..default()
+                        });
                     // Funds counter
                     parent
                         .spawn((
                             Node {
                                 min_width: px(75),
+                                align_self: AlignSelf::Center,
                                 ..default()
                             },
                             Tooltip::new_custom(funds_tooltip),
@@ -250,6 +255,7 @@ fn setup_map(
                     parent
                         .spawn(Node {
                             min_width: px(125),
+                            align_self: AlignSelf::Center,
                             ..default()
                         })
                         .with_child((
@@ -264,6 +270,7 @@ fn setup_map(
                         .spawn((
                             Node {
                                 min_width: px(50),
+                                align_self: AlignSelf::Center,
                                 justify_content: JustifyContent::FlexEnd,
                                 ..default()
                             },
@@ -283,6 +290,7 @@ fn setup_map(
                         .spawn((
                             Node {
                                 min_width: px(50),
+                                align_self: AlignSelf::Center,
                                 justify_content: JustifyContent::FlexEnd,
                                 ..default()
                             },

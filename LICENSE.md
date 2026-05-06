@@ -16,6 +16,15 @@ Data: Marc Imhoff/NASA GSFC, Christopher Elvidge/NOAA NGDC; Image: Craig Mayhew 
 
 Obtained from https://commons.wikimedia.org/wiki/File:Earth%27s_City_Lights_by_DMSP,_1994-1995_(large).jpg
 
+# Cult symbols license
+
+Files: `assets/textures/cult_symbols/kii*.jpg` `resources/cult_symbols/kii*.jpg`
+
+Copyright 2026 kerokii_ <worldmendercomics@gmail.com>  
+Link: [ko-fi](https://ko-fi.com/kero_kii)
+
+Also provided under the GPL3 or later.
+
 # Fonts
 
 ## DancingScript font license

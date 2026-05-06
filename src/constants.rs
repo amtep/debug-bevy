@@ -10,6 +10,14 @@ pub mod files {
     pub const PROJECT_DIR_QUALIFIER: &str = "";
     pub const PROJECT_DIR_ORGANIZATION: &str = "amtep";
     pub const PROJECT_DIR_APPLICATION: &str = "Apocalyptosis";
+
+    pub const CULT_SYMBOL_PATH: &str = "textures/cult_symbols";
+    /// Asset filenames in `CULT_SYMBOL_PATH`.
+    /// There should be 8, to fit the new game screen.
+    pub const CULT_SYMBOLS: [&str; 8] = [
+        "kii1.png", "kii2.png", "kii3.png", "kii4.png", "kii5.png", "kii6.png", "kii7.png",
+        "kii8.png",
+    ];
 }
 
 pub mod ui {
@@ -88,7 +96,7 @@ pub mod ui {
             "red" => RED,
             "blue" => BLUE,
             _ => {
-                warn!("unknown color '{color}''");
+                warn!("unknown color '{color}'");
                 WHITE
             }
         }
