@@ -1,12 +1,13 @@
 [north-america]
-x = 23
-y = 28
+x = 18
+y = 22
 base-plots = {
     canada = { x = 29, y = 22 },
     so-cal = { x = 16, y = 30 },
     new-york-city = { x = 30, y = 29 },
     mexico = { x = 22, y = 38 },
     caribbean = { x = 31, y = 39 },
+    chicago = { x = 25, y = 27 },
 }
 
 [south-america]
@@ -20,14 +21,15 @@ base-plots = {
 }
 
 [europe]
-x = 54
-y = 22.5
+x = 44
+y = 19
 base-plots = {
     balkan = { x = 56, y = 29 },
     iberia = { x = 49, y = 28 },
-    britain = { x = 49, y = 20 },
-    scandinavia = { x = 54, y = 14 },
-    eastern-europe = { x = 60, y = 22 },
+    britain = { x = 50, y = 21 },
+    scandinavia = { x = 54, y = 15 },
+    central-europe = { x = 54, y = 22 },
+    eastern-europe = { x = 60, y = 21 },
 }
 
 [africa]
@@ -60,19 +62,19 @@ base-plots = {
     japan = { x = 88, y = 29 },
 }
 
-[australia]
-x = 87
-y = 61
+[oceania]
+x = 92
+y = 59
 base-plots = {
     australia = { x = 91, y = 69 },
     aotearoa = { x = 98, y = 73 },
+    hawaii = { x = 6, y = 38 },
 }
 
 [antarctica]
 x = 60
 y = 92
 base-plots = {
-    australia = { x = 91, y = 69 },
-    aotearoa = { x = 98, y = 73 },
+    adelie = { x = 65, y = 93 },
 }
 hidden = true

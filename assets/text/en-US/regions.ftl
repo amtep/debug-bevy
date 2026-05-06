@@ -4,5 +4,5 @@ region-europe = Europe
 region-africa = Africa
 region-western-asia = Western Asia
 region-eastern-asia = Eastern Asia
-region-australia = Australia
+region-oceania = Oceania
 region-antarctica = Antarctica
