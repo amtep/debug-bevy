@@ -5,13 +5,14 @@ use bevy::{
 
 use crate::{
     constants::ui::*,
+    state::GameState,
     text::TextKey,
     time::{GameSpeedAction, GameSpeedChangedEvent},
     ui::{FontHandle, tooltip::Tooltip},
 };
 
 #[derive(Component)]
-struct DialogRoot;
+struct DialogRoot(Entity);
 
 #[derive(Component)]
 struct DialogInner;
@@ -47,6 +48,28 @@ struct ConfirmButton(Entity);
 
 #[derive(Component)]
 struct DialogBackground(u32);
+
+pub fn plugin(app: &mut App) {
+    app.add_systems(OnExit(GameState::Load), setup_observe_dialogs)
+        .add_systems(Update, listen_dialog_confirm);
+}
+
+fn setup_observe_dialogs(mut commands: Commands) {
+    commands.add_observer(on_dialog_add);
+    commands.spawn((
+        Node {
+            width: percent(100),
+            height: percent(100),
+            ..default()
+        },
+        Visibility::Hidden,
+        GlobalZIndex(ZINDEX_DIALOG),
+        FocusPolicy::Block,
+        DialogBackground(0),
+    ));
+    commands.add_observer(on_dialog_root_add);
+    commands.add_observer(on_dialog_root_remove);
+}
 
 impl Dialog {
     pub fn new() -> Self {
@@ -120,23 +143,6 @@ impl Dialog {
     }
 }
 
-pub fn setup_observe_dialogs(mut commands: Commands) {
-    commands.add_observer(on_dialog_add);
-    commands.spawn((
-        Node {
-            width: percent(100),
-            height: percent(100),
-            ..default()
-        },
-        Visibility::Hidden,
-        GlobalZIndex(ZINDEX_DIALOG),
-        FocusPolicy::Block,
-        DialogBackground(0),
-    ));
-    commands.add_observer(on_dialog_root_add);
-    commands.add_observer(on_dialog_root_remove);
-}
-
 fn on_dialog_add(
     add: On<Add, Dialog>,
     mut commands: Commands,
@@ -157,7 +163,7 @@ fn on_dialog_add(
     let dialog_root = commands
         .spawn((
             ChildOf(*dialog_background),
-            DialogRoot,
+            DialogRoot(dialog_entity),
             Node {
                 left: percent(50 + index),
                 top: percent(50 + index),
@@ -214,7 +220,9 @@ fn on_dialog_add(
         |drag: On<Pointer<Drag>>,
          mut ui_transforms: Query<&mut UiTransform, With<DialogInner>>,
          ui_scale: Res<UiScale>| {
-            if let Ok(mut transform) = ui_transforms.get_mut(drag.entity) {
+            if drag.button == PointerButton::Primary
+                && let Ok(mut transform) = ui_transforms.get_mut(drag.entity)
+            {
                 let Val::Px(x) = transform.translation.x else {
                     unreachable!()
                 };
@@ -406,5 +414,33 @@ fn on_dialog_root_remove(
     dialog_background.1.0 -= 1;
     if dialog_background.1.0 == 0 {
         *dialog_background.0 = Visibility::Hidden;
+    }
+}
+
+fn listen_dialog_confirm(
+    mut commands: Commands,
+    keys: Res<ButtonInput<KeyCode>>,
+    dialog_roots: Query<(Entity, &ZIndex, &DialogRoot, &ConfirmButton)>,
+    dialog: Query<&Dialog>,
+    has_disableds: Query<Has<InteractionDisabled>>,
+) {
+    if keys.just_pressed(KeyCode::Enter) {
+        #[allow(clippy::cast_possible_truncation)]
+        let top = (dialog_roots.count() - 1) as i32;
+        let (dialog_root, dialog_entity, confirm_button) = dialog_roots
+            .iter()
+            .find_map(|(entity, z_index, dialog_root, confirm_button)| {
+                (z_index.0 == top).then_some((entity, dialog_root.0, confirm_button.0))
+            })
+            .unwrap();
+        if !has_disableds.get(confirm_button).unwrap() {
+            commands.entity(dialog_entity).insert(DialogConfirmed);
+            commands.entity(dialog_root).despawn();
+
+            let dialog = dialog.get(dialog_entity).unwrap();
+            if dialog.pause {
+                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
+            }
+        }
     }
 }

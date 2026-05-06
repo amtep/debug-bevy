@@ -18,7 +18,7 @@ use crate::{
     time::{CurrentGameSpeed, GameDate, GameSpeed, GameSpeedAction, GameSpeedChangedEvent},
     ui::{
         buttons::setup_observe_buttons,
-        dialog::{Dialog, setup_observe_dialogs},
+        dialog::Dialog,
         main_menu::setup_main_menu,
         menu::setup_observe_menus,
         tooltip::{
@@ -38,14 +38,14 @@ mod scroll;
 mod tooltip;
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(GameState::Load), setup_fonts)
+    app.add_plugins(dialog::plugin)
+        .add_systems(OnEnter(GameState::Load), setup_fonts)
         .init_resource::<UiScale>()
         .init_resource::<InputFocus>()
         .add_systems(
             OnExit(GameState::Load),
             (
                 setup_observe_buttons,
-                setup_observe_dialogs,
                 setup_observe_menus,
                 setup_observe_tooltips,
             ),
