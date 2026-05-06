@@ -183,7 +183,6 @@ dependencies = [
  "directories",
  "fluent",
  "fluent-datetime",
- "fluent-syntax",
  "icu",
  "line-numbers",
  "moonshine-save",

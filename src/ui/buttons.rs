@@ -73,6 +73,13 @@ pub fn setup_observe_buttons(mut commands: Commands) {
             }
         },
     );
+    commands.add_observer(
+        |mut drag: On<Pointer<Drag>>, buttons: Query<(), With<Button>>| {
+            if buttons.contains(drag.entity) {
+                drag.propagate(false);
+            }
+        },
+    );
 
     commands.add_observer(
         |add: On<Add, InteractionDisabled>,

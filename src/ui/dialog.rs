@@ -13,6 +13,9 @@ use crate::{
 #[derive(Component)]
 struct DialogRoot;
 
+#[derive(Component)]
+struct DialogInner;
+
 #[derive(Debug, Clone)]
 enum DialogBody {
     Text(TextKey),
@@ -41,6 +44,9 @@ pub struct DialogConfirm(pub bool);
 
 #[derive(Component)]
 struct ConfirmButton(Entity);
+
+#[derive(Component)]
+struct DialogBackground(u32);
 
 impl Dialog {
     pub fn new() -> Self {
@@ -116,60 +122,110 @@ impl Dialog {
 
 pub fn setup_observe_dialogs(mut commands: Commands) {
     commands.add_observer(on_dialog_add);
+    commands.spawn((
+        Node {
+            width: percent(100),
+            height: percent(100),
+            ..default()
+        },
+        Visibility::Hidden,
+        GlobalZIndex(ZINDEX_DIALOG),
+        FocusPolicy::Block,
+        DialogBackground(0),
+    ));
+    commands.add_observer(on_dialog_root_add);
+    commands.add_observer(on_dialog_root_remove);
 }
 
 fn on_dialog_add(
     add: On<Add, Dialog>,
     mut commands: Commands,
     dialogs: Query<&Dialog>,
+    dialog_roots: Query<&DialogRoot>,
+    dialog_background: Single<Entity, With<DialogBackground>>,
     font_handle: Res<FontHandle>,
 ) {
     let dialog_entity = add.entity;
     let dialog = dialogs.get(dialog_entity).unwrap().clone();
+    #[allow(clippy::cast_possible_truncation)]
+    let index = dialog_roots.count() as i32;
     let font = font_handle.0.clone();
     if dialog.pause {
         commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogOpen));
     }
 
-    let dialog_background = commands
+    let dialog_root = commands
         .spawn((
+            ChildOf(*dialog_background),
+            DialogRoot,
             Node {
-                width: percent(100),
-                height: percent(100),
-                ..default()
+                left: percent(50 + index),
+                top: percent(50 + index),
+                min_width: percent(25),
+                max_width: percent(50),
+                min_height: percent(50),
+                max_height: percent(75),
+                position_type: PositionType::Absolute,
+                ..Default::default()
             },
-            FocusPolicy::Block,
+            UiTransform {
+                translation: Val2::percent(-50.0, -50.0),
+                ..Default::default()
+            },
+            ZIndex(index),
+            Pickable::IGNORE,
         ))
+        .observe(
+            |press: On<Pointer<Press>>, mut dialog_roots: Query<&mut ZIndex, With<DialogRoot>>| {
+                let current_z_index = dialog_roots.get(press.entity).unwrap().0;
+                #[allow(clippy::cast_possible_truncation)]
+                let top_z_index = (dialog_roots.count() - 1) as i32;
+                if current_z_index != top_z_index {
+                    for mut z_index in &mut dialog_roots {
+                        if z_index.0 > current_z_index {
+                            z_index.0 -= 1;
+                        }
+                    }
+                    dialog_roots.get_mut(press.entity).unwrap().0 = top_z_index;
+                }
+            },
+        )
         .id();
 
     let mut entity_commands = commands.spawn((
-        ChildOf(dialog_background),
-        DialogRoot,
+        ChildOf(dialog_root),
         Node {
-            left: percent(50),
-            top: percent(50),
-            min_width: percent(25),
-            max_width: percent(50),
-            min_height: percent(50),
-            max_height: percent(75),
-            position_type: PositionType::Absolute,
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Center,
+            width: percent(100),
+            height: percent(100),
             border: UiRect::all(px(2)),
             border_radius: BorderRadius::all(px(10)),
             padding: UiRect::axes(px(20), px(5)),
-            ..Default::default()
-        },
-        UiTransform {
-            translation: Val2::percent(-50.0, -50.0),
-            ..Default::default()
+            ..default()
         },
         BorderColor::all(BORDER_HIGHLIGHT),
         BackgroundColor::from(DIALOG_BACKGROUND),
-        GlobalZIndex(ZINDEX_DIALOG),
+        DialogInner,
+        UiTransform::default(),
     ));
 
-    let dialog_root = entity_commands.id();
+    entity_commands.observe(
+        |drag: On<Pointer<Drag>>,
+         mut ui_transforms: Query<&mut UiTransform, With<DialogInner>>,
+         ui_scale: Res<UiScale>| {
+            if let Ok(mut transform) = ui_transforms.get_mut(drag.entity) {
+                let Val::Px(x) = transform.translation.x else {
+                    unreachable!()
+                };
+                let Val::Px(y) = transform.translation.y else {
+                    unreachable!()
+                };
+                transform.translation.x = px(x + drag.delta.x / ui_scale.0);
+                transform.translation.y = px(y + drag.delta.y / ui_scale.0);
+            }
+        },
+    );
 
     let hrule = (
         Node {
@@ -283,8 +339,7 @@ fn on_dialog_add(
                     parent.spawn(button(cancel_label)).observe(
                         move |click: On<Pointer<Click>>, mut commands: Commands| {
                             if click.button == PointerButton::Primary {
-                                commands.entity(dialog_entity).remove::<Dialog>();
-                                commands.entity(dialog_background).despawn();
+                                commands.entity(dialog_root).despawn();
                                 if dialog.pause {
                                     commands.trigger(GameSpeedChangedEvent(
                                         GameSpeedAction::DialogClose,
@@ -316,8 +371,7 @@ fn on_dialog_add(
                             && !has_disableds.get(click.entity).unwrap()
                         {
                             commands.entity(dialog_entity).insert(DialogConfirmed);
-                            commands.entity(dialog_entity).despawn();
-                            commands.entity(dialog_background).despawn();
+                            commands.entity(dialog_root).despawn();
                             if dialog.pause {
                                 commands
                                     .trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
@@ -333,4 +387,24 @@ fn on_dialog_add(
                     .insert(ConfirmButton(confirm_button));
             });
     });
+}
+
+fn on_dialog_root_add(
+    _: On<Add, DialogRoot>,
+    mut dialog_background: Single<(&mut Visibility, &mut DialogBackground)>,
+) {
+    dialog_background.1.0 += 1;
+    if *dialog_background.0 == Visibility::Hidden {
+        *dialog_background.0 = Visibility::Inherited;
+    }
+}
+
+fn on_dialog_root_remove(
+    _: On<Remove, DialogRoot>,
+    mut dialog_background: Single<(&mut Visibility, &mut DialogBackground)>,
+) {
+    dialog_background.1.0 -= 1;
+    if dialog_background.1.0 == 0 {
+        *dialog_background.0 = Visibility::Hidden;
+    }
 }
