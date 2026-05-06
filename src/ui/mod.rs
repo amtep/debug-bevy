@@ -4,9 +4,8 @@ use bevy::{input_focus::InputFocus, prelude::*, ui::UiSystems, window::WindowRes
 use strum::IntoEnumIterator;
 
 use crate::{
-    common::{CultName, CultSymbol},
+    common::{CultName, CultSymbol, Dev},
     constants::ui::*,
-    dev::Dev,
     funds::{
         Expense, ExpenseCategory, Funds, FundsAmount, Income, IncomeCategory,
         IncomeExpenseUpdatedEvent,

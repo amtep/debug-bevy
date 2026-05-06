@@ -7,9 +7,6 @@ use crate::{
     state::GameState,
 };
 
-#[derive(Resource, Default)]
-pub struct Dev;
-
 pub fn plugin(app: &mut App) {
     app.add_systems(Update, listen_dev_keys.run_if(in_state(GameState::Main)));
     app.add_systems(
