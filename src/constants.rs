@@ -13,7 +13,7 @@ pub mod files {
 }
 
 pub mod ui {
-    use bevy::color::Srgba;
+    use bevy::{color::Srgba, log::warn};
 
     pub const TEXTURE_EARTH_BACKGROUND: &str = "textures/earth_night.jpg";
 
@@ -87,7 +87,10 @@ pub mod ui {
             "orange" => ORANGE,
             "red" => RED,
             "blue" => BLUE,
-            _ => unreachable!(),
+            _ => {
+                warn!("unknown color '{color}''");
+                WHITE
+            }
         }
     }
 }
