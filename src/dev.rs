@@ -1,32 +1,53 @@
 use bevy::prelude::*;
 
-use crate::funds::Funds;
-use crate::state::GameState;
+use crate::{
+    common::{CultName, CultSymbol},
+    funds::Funds,
+    main_menu::NewGame,
+    state::GameState,
+};
+
+#[derive(Resource, Default)]
+pub struct Dev;
 
 pub fn plugin(app: &mut App) {
     app.add_systems(Update, listen_dev_keys.run_if(in_state(GameState::Main)));
+    app.add_systems(
+        Update,
+        listen_dev_keys_main_menu.run_if(in_state(GameState::MainMenu)),
+    );
 }
 
 #[cfg(feature = "dev")]
-fn listen_dev_keys(
-    keys: Res<ButtonInput<KeyCode>>,
-    mut funds: ResMut<Funds>,
-    game_state: Res<State<GameState>>,
-) {
+fn listen_dev_keys(keys: Res<ButtonInput<KeyCode>>, mut funds: ResMut<Funds>) {
     if keys.just_pressed(KeyCode::KeyF) {
         if keys.pressed(KeyCode::AltLeft) {
             // Alt + F
-            funds.0 += 100000;
+            funds.0 += 100_000;
         }
         if keys.pressed(KeyCode::ControlLeft) {
             // Ctrl + F
-            funds.0 -= 100000;
+            funds.0 -= 100_000;
         }
-    } else if keys.just_pressed(KeyCode::KeyG)
+    }
+}
+
+#[cfg(feature = "dev")]
+fn listen_dev_keys_main_menu(
+    mut commands: Commands,
+    keys: Res<ButtonInput<KeyCode>>,
+    game_state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    if keys.just_pressed(KeyCode::KeyG)
         && keys.pressed(KeyCode::AltLeft)
         && *game_state.get() == GameState::MainMenu
     {
         // Alt + G
-        todo!()
+        commands.insert_resource(CultName("DEV".into()));
+        commands.insert_resource(CultSymbol('D'));
+        commands.init_resource::<Dev>();
+        commands.init_resource::<NewGame>();
+        next_state.set(GameState::Main);
     }
 }

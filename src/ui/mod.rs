@@ -6,6 +6,7 @@ use strum::IntoEnumIterator;
 use crate::{
     common::{CultName, CultSymbol},
     constants::ui::*,
+    dev::Dev,
     funds::{
         Expense, ExpenseCategory, Funds, FundsAmount, Income, IncomeCategory,
         IncomeExpenseUpdatedEvent,
@@ -640,8 +641,8 @@ fn update_funds_tooltip(
     }
 }
 
-fn setup_intro(mut commands: Commands, new_game: Option<Res<NewGame>>) {
-    if new_game.is_some() {
+fn setup_intro(mut commands: Commands, new_game: Option<Res<NewGame>>, dev: Option<Res<Dev>>) {
+    if new_game.is_some() && dev.is_none() {
         commands.spawn(
             Dialog::new()
                 .with_pause()
