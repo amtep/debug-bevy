@@ -22,7 +22,7 @@ use crate::{
         buttons::setup_observe_buttons,
         dialog::Dialog,
         main_menu::setup_main_menu,
-        menu::setup_observe_menus,
+        menu::{override_menu_position, setup_observe_menus},
         tooltip::{
             Tooltip, TooltipInner, listen_tooltip_timers, override_tooltip_position,
             setup_observe_tooltips,
@@ -97,7 +97,7 @@ pub fn plugin(app: &mut App) {
         )
         .add_systems(
             PostUpdate,
-            override_tooltip_position
+            (override_tooltip_position, override_menu_position)
                 .run_if(not(in_state(GameState::Load)))
                 .after(UiSystems::Layout),
         );
@@ -215,14 +215,14 @@ fn setup_map(
                         ..default()
                     },
                     BorderColor::all(BORDER),
-                    BackgroundColor::from(BUTTON_BACKGROUND),
+                    BackgroundColor::from(THEME_DARK_PURPLE),
                 ))
                 .with_children(|parent| {
                     // Cult symbol
                     parent
                         .spawn(Node {
-                            width: px(32),
-                            height: px(32),
+                            width: px(24),
+                            height: px(24),
                             margin: UiRect::right(px(5)),
                             ..default()
                         })
@@ -231,6 +231,7 @@ fn setup_map(
                                 "{CULT_SYMBOL_PATH}/{}",
                                 CULT_SYMBOLS[cult_symbol.0]
                             )),
+                            color: THEME_DARK_PURPLE.into(),
                             ..default()
                         });
                     // Funds counter

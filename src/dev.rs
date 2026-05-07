@@ -15,7 +15,6 @@ pub fn plugin(app: &mut App) {
     );
 }
 
-#[cfg(feature = "dev")]
 fn listen_dev_keys(keys: Res<ButtonInput<KeyCode>>, mut funds: ResMut<Funds>) {
     if keys.just_pressed(KeyCode::KeyF) {
         if keys.pressed(KeyCode::AltLeft) {
@@ -29,7 +28,6 @@ fn listen_dev_keys(keys: Res<ButtonInput<KeyCode>>, mut funds: ResMut<Funds>) {
     }
 }
 
-#[cfg(feature = "dev")]
 fn listen_dev_keys_main_menu(
     mut commands: Commands,
     keys: Res<ButtonInput<KeyCode>>,

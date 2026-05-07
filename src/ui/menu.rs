@@ -1,10 +1,12 @@
-use bevy::{prelude::*, ui::InteractionDisabled};
+use bevy::{prelude::*, ui::InteractionDisabled, window::PrimaryWindow};
 
 use crate::{
     constants::ui::*,
     text::TextKey,
     ui::{FontHandle, tooltip::Tooltip},
 };
+
+const MENU_Y: f32 = 5.0;
 
 #[derive(Clone)]
 pub struct MenuItem {
@@ -109,7 +111,7 @@ fn on_menu_add(
             min_width: px(100),
             position_type: PositionType::Absolute,
             flex_direction: FlexDirection::Column,
-            margin: UiRect::top(px(5)),
+            margin: UiRect::top(px(MENU_Y)),
             border: UiRect::all(px(1)),
             border_radius: BorderRadius::all(px(2)),
             ..default()
@@ -117,6 +119,7 @@ fn on_menu_add(
         BackgroundColor::from(MENU_BACKGROUND),
         BorderColor::all(BORDER_HIGHLIGHT),
         GlobalZIndex(ZINDEX_MENU),
+        Visibility::Hidden,
     ));
 
     let hrule = (
@@ -203,4 +206,54 @@ fn on_menu_add(
         .observe(|mut out: On<Pointer<Out>>| {
             out.propagate(false);
         });
+}
+
+pub fn override_menu_position(
+    mut menu_roots: Query<
+        (
+            &ChildOf,
+            &UiGlobalTransform,
+            &mut UiTransform,
+            &mut Visibility,
+            &ComputedNode,
+        ),
+        With<MenuRootUi>,
+    >,
+    compute_nodes: Query<&ComputedNode>,
+    window: Single<&Window, With<PrimaryWindow>>,
+) {
+    let (window_width, window_height) = (window.width(), window.height());
+    for (parent, global_transform, mut transform, mut visibility, computed_node) in &mut menu_roots
+    {
+        if *visibility == Visibility::Hidden {
+            let translation = global_transform.translation;
+            let (x, y) = (translation.x, translation.y);
+            let width = computed_node.size.x;
+            let height = computed_node.size.y;
+
+            #[expect(clippy::useless_let_if_seq, reason = "this is doing something else")]
+            let mut is_visible = true;
+
+            if x + width / 2.0 > window_width {
+                transform.translation.x =
+                    px((window_width - width / 2.0 - x) * computed_node.inverse_scale_factor);
+                is_visible = false;
+            }
+
+            #[expect(clippy::suboptimal_flops, reason = "looks better this way")]
+            if y + height / 2.0 > window_height {
+                // place the tooltip box above the parent of the tooltip
+                // but if the tooltip box grows, then it might cover the parent
+                transform.translation.y = px(-(height
+                    + compute_nodes.get(parent.0).unwrap().size.y
+                    + (MENU_Y * 2.0))
+                    * computed_node.inverse_scale_factor);
+                is_visible = false;
+            }
+
+            if is_visible {
+                *visibility = Visibility::Inherited;
+            }
+        }
+    }
 }
