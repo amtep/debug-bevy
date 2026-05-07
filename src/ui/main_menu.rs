@@ -128,7 +128,6 @@ pub fn setup_main_menu(
                          asset_server: Res<AssetServer>,
                          font_handle: Res<FontHandle>| {
                             if click.button == PointerButton::Primary {
-
                                 let mut entity_commands = commands.spawn(Node {
                                     flex_direction: FlexDirection::Column,
                                     align_items: AlignItems::Center,
@@ -164,23 +163,21 @@ pub fn setup_main_menu(
                                 .with_children(|parent| {
                                     parent.spawn(Node {
                                         display: Display::Grid,
-                                        align_items: AlignItems::Stretch,
-                                        justify_items: JustifyItems::Stretch,
                                         grid_template_columns: RepeatedGridTrack::flex(4, 1.0),
                                         grid_template_rows: RepeatedGridTrack::flex(2, 1.0),
                                         row_gap: px(10),
                                         column_gap: px(10),
-                                        margin: UiRect::all(px(10.0)),
+                                        margin: UiRect::top(px(25)),
                                         ..default()
                                     }).with_children(|parent| {
                                         for (symbol_nr, symbol) in CULT_SYMBOLS.iter().enumerate() {
                                             let handle = asset_server.load(format!("{CULT_SYMBOL_PATH}/{symbol}"));
                                             parent.spawn((
                                                 Node {
-                                                    width: px(128),
-                                                    height: px(128),
-                                                    border: UiRect::all(px(5)),
-                                                    border_radius: BorderRadius::all(px(10)),
+                                                    width: px(64),
+                                                    height: px(64),
+                                                    border: UiRect::all(px(4)),
+                                                    border_radius: BorderRadius::all(px(4)),
                                                     align_items: AlignItems::Center,
                                                     justify_content: JustifyContent::Center,
                                                     ..default()
