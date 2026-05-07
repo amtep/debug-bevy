@@ -20,7 +20,7 @@ Obtained from https://commons.wikimedia.org/wiki/File:Earth%27s_City_Lights_by_D
 
 Files: `assets/textures/cult_symbols/kii*.jpg` `resources/cult_symbols/kii*.jpg`
 
-Copyright 2026 kerokii_ <worldmendercomics@gmail.com>  
+Copyright 2026 kerokii\_ <worldmendercomics@gmail.com>  
 Link: [ko-fi](https://ko-fi.com/kero_kii)
 
 Also provided under the GPL3 or later.
@@ -51,7 +51,7 @@ It is licensed under the SIL Open Font License, Version 1.1.
 
 The specific TTF font file was downloaded from [Fontshare](https://www.fontshare.com/fonts/lora)
 
-## SIL Open Font License
+### SIL Open Font License
 
 A copy of the license is provided under [LICENSE.OFL1.1](LICENSE.OFL1.1).
 
@@ -66,3 +66,13 @@ Bitstream Vera is a trademark of Bitstream, Inc.
 The DejaVu changes are in the public domain.
 
 A copy of the license is provided under [LICENSE.Bitstream](LICENSE.Bitstream).
+
+## Droid Sans Mono font license
+
+Files: `assets/fonts/DroidSansMono.ttf`
+
+The fonts are copyright (c) 2005-2008, The Android Open Source Project and licensed under the Apache License, Version 2.0.
+
+Downloaded from https://github.com/grays/droid-fonts
+
+A copy of the license is provided under [LICENSE.Apache-2.0](LICENSE.Apache-2.0)
