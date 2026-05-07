@@ -160,8 +160,7 @@ pub fn listen_tooltip_timers(
                                 parent.spawn((
                                     text.clone(),
                                     *color,
-                                    TextFont::from_font_size(SMALL)
-                                        .with_font(font_handle.0.clone()),
+                                    TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
                                 ));
                             }
                         })

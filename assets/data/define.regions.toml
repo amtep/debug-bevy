@@ -12,16 +12,16 @@ base-plots = {
 
 [south-america]
 x = 36
-y = 56
+y = 55
 base-plots = {
     guyanas = { x = 34, y = 47 },
     brazil = { x = 36, y = 63 },
-    andean = { x = 29, y = 49 },
+    andean = { x = 29, y = 48 },
     southern-cone = { x = 32, y = 70 },
 }
 
 [europe]
-x = 44
+x = 45
 y = 19
 base-plots = {
     balkan = { x = 56, y = 29 },

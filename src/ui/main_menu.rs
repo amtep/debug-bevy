@@ -47,7 +47,7 @@ pub fn setup_main_menu(
             BorderColor::all(WHITE),
             BackgroundColor::from(BUTTON_BACKGROUND),
             children![(
-                TextFont::from_font_size(40.0).with_font(font_handle.0.clone()),
+                TextFont::from_font_size(40.0).with_font(font_handle.clone()),
                 TextKey::new(key),
             )],
         )
@@ -100,7 +100,7 @@ pub fn setup_main_menu(
                 },
                 children![(
                     TextKey::new("main-menu-title"),
-                    TextFont::from_font_size(150.0).with_font(display_font_handle.0.clone()),
+                    TextFont::from_font_size(150.0).with_font(display_font_handle.clone()),
                     TextShadow::default(),
                 )],
             ));
@@ -155,7 +155,7 @@ pub fn setup_main_menu(
                                             margin: UiRect::all(px(10.0)),
                                             ..Default::default()
                                         },
-                                        TextFont::from_font_size(SUB_HEADING).with_font(font_handle.0.clone()),
+                                        TextFont::from_font_size(SUB_HEADING).with_font(font_handle.clone()),
                                         TextColor::from(TEXT_NEUTRAL),
                                         BackgroundColor::from(BLACK),
                                     )
@@ -237,9 +237,9 @@ pub fn setup_main_menu(
                             |click: On<Pointer<Click>>,
                             mut commands: Commands,
                             asset_server: Res<AssetServer>,
-                            font: Res<FontHandle>| {
+                            font_handle: Res<FontHandle>| {
                                 if click.button == PointerButton::Primary {
-                                    open_load_game_popup(commands.reborrow(), asset_server, font.0.clone());
+                                    open_load_game_popup(commands.reborrow(), asset_server, font_handle.clone());
                                 }
                             },
                         );

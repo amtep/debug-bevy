@@ -155,7 +155,7 @@ fn on_dialog_add(
     let dialog = dialogs.get(dialog_entity).unwrap().clone();
     #[allow(clippy::cast_possible_truncation)]
     let index = dialog_roots.count() as i32;
-    let font = font_handle.0.clone();
+    let font = font_handle.clone();
     if dialog.pause {
         commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogOpen));
     }

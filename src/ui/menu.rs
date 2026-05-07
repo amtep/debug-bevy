@@ -99,7 +99,7 @@ fn on_menu_add(
 ) {
     let menu_entity = add.entity;
     let menu = menus.get(menu_entity).unwrap().clone();
-    let font = font_handle.0.clone();
+    let font = font_handle.clone();
 
     let mut entity_commands = commands.entity(menu_entity);
 

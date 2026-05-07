@@ -85,7 +85,7 @@ pub fn setup(
             .with_children(|parent| {
                 parent.spawn((
                     region.get_text_key(),
-                    TextFont::from_font_size(SUB_HEADING).with_font(display_font_handle.0.clone()),
+                    TextFont::from_font_size(SUB_HEADING).with_font(display_font_handle.clone()),
                 ));
                 parent
                     .spawn((
@@ -111,7 +111,7 @@ pub fn setup(
                                     ..default()
                                 },
                                 TextLayout::new_with_justify(Justify::Center),
-                                TextFont::from_font_size(SMALL).with_font(font_handle.0.clone()),
+                                TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
                                 MeterDisplay::<u32> {
                                     value: 0,
                                     low_threshold: 34,
@@ -127,7 +127,7 @@ pub fn setup(
                                     ..default()
                                 },
                                 TextLayout::new_with_justify(Justify::Center),
-                                TextFont::from_font_size(SMALL).with_font(font_handle.0.clone()),
+                                TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
                                 MeterDisplay::<u32> {
                                     value: 0,
                                     low_threshold: 34,
@@ -257,7 +257,7 @@ fn on_region_click(
                                             TextKey::new(key).add_arg(arg, value),
                                             TextColor::from(TEXT),
                                             TextFont::from_font_size(LARGE)
-                                                .with_font(font_handle.0.clone()),
+                                                .with_font(font_handle.clone()),
                                         )
                                     };
 
@@ -360,7 +360,7 @@ fn on_spawn_base(
 
     let follower_list = commands
         .spawn((
-            TextFont::from_font_size(SMALL).with_font(unicode_font_handle.0.clone()),
+            TextFont::from_font_size(SMALL).with_font(unicode_font_handle.clone()),
             Text::default(),
             FollowerListUi,
         ))

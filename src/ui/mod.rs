@@ -114,14 +114,17 @@ struct ViewOf(Entity);
 #[relationship_target(relationship = ViewOf, linked_spawn)]
 struct Views(Vec<Entity>);
 
-#[derive(Resource)]
+#[derive(Resource, Deref)]
 pub struct FontHandle(pub Handle<Font>);
 
-#[derive(Resource)]
+#[derive(Resource, Deref)]
 pub struct DisplayFontHandle(pub Handle<Font>);
 
-#[derive(Resource)]
+#[derive(Resource, Deref)]
 pub struct UnicodeFontHandle(pub Handle<Font>);
+
+#[derive(Resource, Deref)]
+pub struct MonoFontHandle(pub Handle<Font>);
 
 #[derive(Component)]
 struct MapUi;
@@ -152,6 +155,7 @@ fn setup_fonts(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(FontHandle(asset_server.load(FONT_PATH)));
     commands.insert_resource(DisplayFontHandle(asset_server.load(FONT_DISPLAY_PATH)));
     commands.insert_resource(UnicodeFontHandle(asset_server.load(UNICODE_FONT_PATH)));
+    commands.insert_resource(MonoFontHandle(asset_server.load(MONO_FONT_PATH)));
 }
 
 fn read_window_resized_messages(
@@ -172,7 +176,7 @@ fn setup_map(
     cult_name: Res<CultName>,
     cult_symbol: Res<CultSymbol>,
 ) {
-    let text_font = TextFont::from_font_size(SUB_HEADING).with_font(font_handle.0.clone());
+    let text_font = TextFont::from_font_size(SUB_HEADING).with_font(font_handle.clone());
 
     let funds_tooltip = commands
         .spawn(Node {
@@ -322,7 +326,7 @@ fn setup_map(
                         .with_child((
                             Text::new(&cult_name.0),
                             TextColor::from(TEXT),
-                            TextFont::from_font_size(SMALL).with_font(font_handle.0.clone()),
+                            TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
                         ));
                     parent
                         .spawn((
@@ -582,7 +586,7 @@ fn update_funds_tooltip(
     commands.entity(tooltip_inner).despawn_children();
 
     // Completely refresh the tooltip contents
-    let text_font = TextFont::from_font_size(SMALL).with_font(font_handle.0.clone());
+    let text_font = TextFont::from_font_size(SMALL).with_font(font_handle.clone());
     let hrule = (
         Node {
             min_width: percent(80),
