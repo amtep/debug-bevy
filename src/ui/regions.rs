@@ -13,6 +13,7 @@ use crate::{
         UnicodeFontHandle,
         dialog::{Dialog, DialogConfirmed},
         menu::{Menu, MenuClicked, MenuEntry, MenuItem},
+        tooltip::Tooltip,
     },
 };
 
@@ -86,55 +87,67 @@ pub fn setup(
                     region.get_text_key(),
                     TextFont::from_font_size(SUB_HEADING).with_font(display_font_handle.0.clone()),
                 ));
-                parent.spawn((
-                    ViewOf(entity),
-                    RegionSuspicionUi,
-                    Node {
-                        top: percent(100),
-                        position_type: PositionType::Absolute,
-                        flex_direction: FlexDirection::Row,
-                        justify_content: JustifyContent::Center,
-                        display: Display::None,
-                        margin: UiRect::top(px(2)),
-                        column_gap: px(5),
-                        border: UiRect::bottom(px(1)),
-                        ..default()
-                    },
-                    BorderColor::all(BORDER),
-                    BackgroundColor::from(BLACK.with_alpha(0.5)),
-                    children![
-                        (
-                            Node {
-                                min_width: px(25),
-                                ..default()
-                            },
-                            TextLayout::new_with_justify(Justify::Center),
-                            TextFont::from_font_size(SMALL).with_font(font_handle.0.clone()),
-                            MeterDisplay::<u32> {
-                                value: 0,
-                                low_threshold: 34,
-                                high_threshold: 67,
-                            },
-                            PoliceSuspicionUi,
-                            ViewOf(entity),
-                        ),
-                        (
-                            Node {
-                                min_width: px(25),
-                                ..default()
-                            },
-                            TextLayout::new_with_justify(Justify::Center),
-                            TextFont::from_font_size(SMALL).with_font(font_handle.0.clone()),
-                            MeterDisplay::<u32> {
-                                value: 0,
-                                low_threshold: 34,
-                                high_threshold: 67,
-                            },
-                            MediaSuspicionUi,
-                            ViewOf(entity),
-                        )
-                    ],
-                ));
+                parent
+                    .spawn((
+                        ViewOf(entity),
+                        RegionSuspicionUi,
+                        Node {
+                            top: percent(100),
+                            position_type: PositionType::Absolute,
+                            flex_direction: FlexDirection::Row,
+                            justify_content: JustifyContent::Center,
+                            display: Display::None,
+                            margin: UiRect::top(px(2)),
+                            column_gap: px(5),
+                            border: UiRect::bottom(px(1)),
+                            ..default()
+                        },
+                        BorderColor::all(BORDER),
+                        BackgroundColor::from(BLACK.with_alpha(0.5)),
+                        children![
+                            (
+                                Node {
+                                    min_width: px(25),
+                                    ..default()
+                                },
+                                TextLayout::new_with_justify(Justify::Center),
+                                TextFont::from_font_size(SMALL).with_font(font_handle.0.clone()),
+                                MeterDisplay::<u32> {
+                                    value: 0,
+                                    low_threshold: 34,
+                                    high_threshold: 67,
+                                },
+                                PoliceSuspicionUi,
+                                ViewOf(entity),
+                                Tooltip::new_text("police-suspicion-tooltip")
+                            ),
+                            (
+                                Node {
+                                    min_width: px(25),
+                                    ..default()
+                                },
+                                TextLayout::new_with_justify(Justify::Center),
+                                TextFont::from_font_size(SMALL).with_font(font_handle.0.clone()),
+                                MeterDisplay::<u32> {
+                                    value: 0,
+                                    low_threshold: 34,
+                                    high_threshold: 67,
+                                },
+                                MediaSuspicionUi,
+                                ViewOf(entity),
+                                Tooltip::new_text("media-suspicion-tooltip")
+                            )
+                        ],
+                    ))
+                    .observe(|mut click: On<Pointer<Click>>| {
+                        click.propagate(false);
+                    })
+                    .observe(|mut over: On<Pointer<Over>>| {
+                        over.propagate(false);
+                    })
+                    .observe(|mut out: On<Pointer<Out>>| {
+                        out.propagate(false);
+                    });
             });
         for child in children {
             let location = base_plots.get(*child).unwrap();
@@ -397,7 +410,7 @@ fn on_spawn_base(
                     Visibility::Hidden,
                     FollowerListBoxUi,
                     BorderColor::all(BORDER),
-                    BackgroundColor::from(BLACK),
+                    BackgroundColor::from(BLACK.with_alpha(0.5)),
                 ))
                 .add_child(follower_list)
                 .observe(|mut click: On<Pointer<Click>>| {
