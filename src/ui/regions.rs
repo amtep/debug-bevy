@@ -90,14 +90,25 @@ pub fn setup(
                     ViewOf(entity),
                     RegionSuspicionUi,
                     Node {
+                        top: percent(100),
+                        position_type: PositionType::Absolute,
                         flex_direction: FlexDirection::Row,
                         justify_content: JustifyContent::Center,
-                        column_gap: px(10),
                         display: Display::None,
+                        margin: UiRect::top(px(2)),
+                        column_gap: px(5),
+                        border: UiRect::bottom(px(1)),
                         ..default()
                     },
+                    BorderColor::all(BORDER),
+                    BackgroundColor::from(BLACK.with_alpha(0.5)),
                     children![
                         (
+                            Node {
+                                min_width: px(25),
+                                ..default()
+                            },
+                            TextLayout::new_with_justify(Justify::Center),
                             TextFont::from_font_size(SMALL).with_font(font_handle.0.clone()),
                             MeterDisplay::<u32> {
                                 value: 0,
@@ -108,6 +119,11 @@ pub fn setup(
                             ViewOf(entity),
                         ),
                         (
+                            Node {
+                                min_width: px(25),
+                                ..default()
+                            },
+                            TextLayout::new_with_justify(Justify::Center),
                             TextFont::from_font_size(SMALL).with_font(font_handle.0.clone()),
                             MeterDisplay::<u32> {
                                 value: 0,

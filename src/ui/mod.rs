@@ -231,7 +231,7 @@ fn setup_map(
                                 "{CULT_SYMBOL_PATH}/{}",
                                 CULT_SYMBOLS[cult_symbol.0]
                             )),
-                            color: THEME_DARK_PURPLE.into(),
+                            color: WHITE.into(),
                             ..default()
                         });
                     // Funds counter

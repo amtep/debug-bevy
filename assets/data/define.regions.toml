@@ -44,7 +44,7 @@ base-plots = {
 
 [western-asia]
 x = 69
-y = 22
+y = 21
 base-plots = {
     central = { x = 68, y = 29 },
     arabia = { x = 64, y = 37 },

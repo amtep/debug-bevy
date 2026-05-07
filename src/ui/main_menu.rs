@@ -57,12 +57,12 @@ pub fn setup_main_menu(
         .add_observer(
             |event: On<CultSymbolChanged>,
              mut commands: Commands,
-             mut cult_symbols: Query<(&mut TextColor, &CultSym)>| {
-                for (mut text_color, sym) in &mut cult_symbols {
+             mut cult_symbols: Query<(&mut ImageNode, &CultSym)>| {
+                for (mut image_node, sym) in &mut cult_symbols {
                     if sym.0 == event.0 {
-                        text_color.0 = TEXT_NEUTRAL.into();
+                        image_node.color = TEXT_NEUTRAL.into();
                     } else {
-                        text_color.0 = TEXT.into();
+                        image_node.color = TEXT.into();
                     }
                 }
                 commands.insert_resource(CultSymbol(event.0));
