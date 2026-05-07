@@ -77,7 +77,7 @@ pub fn setup(
                 },
                 RegionUi,
                 BorderColor::all(BORDER),
-                BackgroundColor::from(MENU_BACKGROUND.with_alpha(0.75)),
+                BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(0.75)),
             ))
             .observe(on_label_over)
             .observe(on_label_out)
@@ -103,7 +103,7 @@ pub fn setup(
                             ..default()
                         },
                         BorderColor::all(BORDER),
-                        BackgroundColor::from(BLACK.with_alpha(0.5)),
+                        BackgroundColor::from(DARK_OVERLAY),
                         children![
                             (
                                 Node {
@@ -404,13 +404,13 @@ fn on_spawn_base(
                         top: percent(100),
                         margin: UiRect::top(px(2)),
                         border: UiRect::bottom(px(1)),
-                        padding: UiRect::all(px(1)),
+                        padding: UiRect::horizontal(px(1)),
                         ..default()
                     },
                     Visibility::Hidden,
                     FollowerListBoxUi,
                     BorderColor::all(BORDER),
-                    BackgroundColor::from(BLACK.with_alpha(0.5)),
+                    BackgroundColor::from(DARK_OVERLAY),
                 ))
                 .add_child(follower_list)
                 .observe(|mut click: On<Pointer<Click>>| {
@@ -427,6 +427,7 @@ fn on_spawn_base(
 
 pub fn on_follower_count_insert(
     insert: On<Insert, FollowerCount>,
+    mut commands: Commands,
     bases: Query<&Children, With<Base>>,
     followers: Query<(&Follower, &FollowerCount)>,
     follower_counts: Query<&ChildOf, With<FollowerCount>>,
@@ -455,14 +456,7 @@ pub fn on_follower_count_insert(
     followers.sort_unstable_by_key(|(f, _)| *f);
 
     let new_text = followers.iter().fold(String::new(), |mut text, (f, c)| {
-        let iter = std::iter::repeat_n(
-            match f {
-                Follower::Priest => '☉',
-                Follower::Goon => '♁',
-                Follower::Minion => '☿',
-            },
-            **c,
-        );
+        let iter = std::iter::repeat_n(f.to_symbol(), **c);
 
         text.extend(iter);
         text
@@ -477,6 +471,18 @@ pub fn on_follower_count_insert(
     }
 
     follower_list_text.0 = new_text;
+
+    commands
+        .entity(follower_list_box.0)
+        .insert(Tooltip::new_texts(
+            followers.iter().filter(|(_, c)| **c != 0).map(|(f, c)| {
+                let f: &str = f.into();
+                #[allow(clippy::cast_precision_loss)]
+                TextKey::new("follower-list-tooltip")
+                    .add_arg("count", **c as f64)
+                    .add_arg("follower-type", f)
+            }),
+        ));
 }
 
 pub fn update_regional_suspicion(

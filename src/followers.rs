@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_common_assets::toml::TomlAssetPlugin;
 use moonshine_save::save::Save;
 use serde::Deserialize;
-use strum::EnumIter;
+use strum::{EnumIter, IntoStaticStr};
 
 use crate::{
     bases::Base,
@@ -43,13 +43,26 @@ pub struct GeneralFollowerSettings {
     pub cost_per_day: FundsAmount,
 }
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, EnumIter, Reflect)]
+#[derive(
+    Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, EnumIter, IntoStaticStr, Reflect,
+)]
 #[reflect(Component)]
 #[require(Save)]
+#[strum(serialize_all = "kebab-case")]
 pub enum Follower {
     Priest,
     Goon,
     Minion,
+}
+
+impl Follower {
+    pub fn to_symbol(self) -> char {
+        match self {
+            Follower::Priest => '♀',
+            Follower::Goon => '♁',
+            Follower::Minion => '♂',
+        }
+    }
 }
 
 #[derive(

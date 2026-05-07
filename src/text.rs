@@ -49,6 +49,7 @@ pub fn plugin(app: &mut App) {
 /// There is the option of using `SyncCell` but I couldn't get that to work.
 #[derive(Debug, Clone)]
 pub enum TextArgValue {
+    String(String),
     /// This uses `f64` because that's what `FluentValue` uses.
     /// It's unfortunate, because we use `i64` internally.
     Number(f64),
@@ -58,6 +59,7 @@ pub enum TextArgValue {
 impl TextArgValue {
     fn fluent(&self) -> FluentValue<'_> {
         match self {
+            TextArgValue::String(s) => s.into(),
             TextArgValue::Number(n) => n.into(),
             TextArgValue::Datetime(d) => {
                 let mut d: FluentDateTime = (*d).into();
@@ -65,6 +67,18 @@ impl TextArgValue {
                 d.into()
             }
         }
+    }
+}
+
+impl From<&str> for TextArgValue {
+    fn from(value: &str) -> Self {
+        TextArgValue::String(value.into())
+    }
+}
+
+impl From<String> for TextArgValue {
+    fn from(value: String) -> Self {
+        TextArgValue::String(value)
     }
 }
 

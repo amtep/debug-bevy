@@ -60,9 +60,9 @@ pub fn setup_main_menu(
              mut cult_symbols: Query<(&mut ImageNode, &CultSym)>| {
                 for (mut image_node, sym) in &mut cult_symbols {
                     if sym.0 == event.0 {
-                        image_node.color = TEXT_NEUTRAL.into();
+                        image_node.color = BLUE.into();
                     } else {
-                        image_node.color = TEXT.into();
+                        image_node.color = WHITE.into();
                     }
                 }
                 commands.insert_resource(CultSymbol(event.0));
@@ -194,7 +194,7 @@ pub fn setup_main_menu(
                                                         },
                                                         ImageNode {
                                                             image: handle.clone(),
-                                                            image_mode: NodeImageMode::Stretch,
+                                                            color: WHITE.into(),
                                                             ..default()
                                                         },
                                                         CultSym(symbol_nr),

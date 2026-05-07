@@ -26,3 +26,22 @@ acquire-basetype-dialog-cost-per-day = Cost per day: { FUNDS($funds) }
 acquire-basetype-dialog-police-suspicion = Police suspicion: { $suspicion }
 acquire-basetype-dialog-media-suspicion = Media suspicion: { $suspicion }
 acquire-basetype-dialog-confirm-tooltip = not enough funds, { FUNDS($funds) } required!
+
+follower-type-priest = { $count ->
+    [one] Priest
+    *[other] Priests
+}
+follower-type-goon = { $count ->
+    [one] Goon
+    *[other] Goons
+}
+follower-type-minion = { $count ->
+    [one] Minion
+    *[other] Minions
+}
+
+follower-list-tooltip = { $count } { $follower-type ->
+    *[priest] { follower-type-priest }
+    [goon] { follower-type-goon }
+    [minion] { follower-type-minion }
+}

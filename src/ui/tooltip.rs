@@ -22,13 +22,13 @@ impl Default for TooltipSetting {
 
 #[derive(Clone)]
 pub enum TooltipContent {
-    Text(TextKey, TextColor),
+    Texts(Vec<(TextKey, TextColor)>),
     Custom(Entity),
 }
 
 impl Default for TooltipContent {
     fn default() -> Self {
-        Self::Text(TextKey::new("debug-tooltip"), TEXT.into())
+        Self::Texts(vec![(TextKey::new("debug-tooltip"), TEXT.into())])
     }
 }
 
@@ -40,13 +40,38 @@ pub struct Tooltip {
 impl Tooltip {
     pub fn new_text(text: impl Into<TextKey>) -> Self {
         Self {
-            content: TooltipContent::Text(text.into(), TEXT.into()),
+            content: TooltipContent::Texts(vec![(text.into(), TEXT.into())]),
         }
     }
 
     pub fn new_text_color(text: impl Into<TextKey>, color: impl Into<Color>) -> Self {
         Self {
-            content: TooltipContent::Text(text.into(), TextColor::from(color.into())),
+            content: TooltipContent::Texts(vec![(text.into(), TextColor::from(color.into()))]),
+        }
+    }
+
+    pub fn new_texts(texts: impl IntoIterator<Item = impl Into<TextKey>>) -> Self {
+        Self {
+            content: TooltipContent::Texts(
+                texts
+                    .into_iter()
+                    .map(|text| (text.into(), TEXT.into()))
+                    .collect(),
+            ),
+        }
+    }
+
+    #[expect(dead_code)]
+    pub fn new_text_colors(
+        text_colors: impl IntoIterator<Item = (impl Into<TextKey>, impl Into<Color>)>,
+    ) -> Self {
+        Self {
+            content: TooltipContent::Texts(
+                text_colors
+                    .into_iter()
+                    .map(|(text, color)| (text.into(), TextColor::from(color.into())))
+                    .collect(),
+            ),
         }
     }
 
@@ -120,17 +145,29 @@ pub fn listen_tooltip_timers(
             let box_entity = entity_commands.id();
 
             match &tooltip.content {
-                TooltipContent::Text(text_key, text_color) => {
-                    let text = entity_commands
+                TooltipContent::Texts(text_colors) => {
+                    let texts = entity_commands
                         .commands()
                         .spawn((
                             ChildOf(box_entity),
-                            text_key.clone(),
-                            *text_color,
-                            TextFont::from_font_size(SMALL).with_font(font_handle.0.clone()),
+                            Node {
+                                flex_direction: FlexDirection::Column,
+                                ..default()
+                            },
                         ))
+                        .with_children(|parent| {
+                            for (text, color) in text_colors {
+                                parent.spawn((
+                                    text.clone(),
+                                    *color,
+                                    TextFont::from_font_size(SMALL)
+                                        .with_font(font_handle.0.clone()),
+                                ));
+                            }
+                        })
                         .id();
-                    commands.entity(tooltip_entity).insert(TooltipInner(text));
+
+                    commands.entity(tooltip_entity).insert(TooltipInner(texts));
                 }
                 TooltipContent::Custom(entity) => {
                     entity_commands.add_child(*entity);
