@@ -110,24 +110,37 @@ fn on_menu_add(
     let menu = menus.get(menu_entity).unwrap().clone();
     let mut entity_commands = commands.entity(menu_entity);
 
-    entity_commands.insert((
-        MenuRootUi,
-        Node {
-            left: px(10),
-            top: percent(100),
-            min_width: px(100),
-            position_type: PositionType::Absolute,
-            flex_direction: FlexDirection::Column,
-            margin: UiRect::top(px(MENU_Y)),
-            border: UiRect::all(px(1)),
-            border_radius: BorderRadius::all(px(2)),
-            ..default()
-        },
-        BackgroundColor::from(MENU_BACKGROUND),
-        BorderColor::all(BORDER_HIGHLIGHT),
-        GlobalZIndex(ZINDEX_MENU),
-        Visibility::Hidden,
-    ));
+    entity_commands
+        .insert((
+            MenuRootUi,
+            Node {
+                left: px(10),
+                top: percent(100),
+                min_width: px(100),
+                position_type: PositionType::Absolute,
+                flex_direction: FlexDirection::Column,
+                margin: UiRect::top(px(MENU_Y)),
+                border: UiRect::all(px(1)),
+                border_radius: BorderRadius::all(px(2)),
+                ..default()
+            },
+            BackgroundColor::from(MENU_BACKGROUND),
+            BorderColor::all(BORDER_HIGHLIGHT),
+            GlobalZIndex(ZINDEX_MENU),
+            Visibility::Hidden,
+        ))
+        .observe(|mut click: On<Pointer<Click>>| {
+            click.propagate(false);
+        })
+        .observe(|mut press: On<Pointer<Press>>| {
+            press.propagate(false);
+        })
+        .observe(|mut over: On<Pointer<Over>>| {
+            over.propagate(false);
+        })
+        .observe(|mut out: On<Pointer<Out>>| {
+            out.propagate(false);
+        });
 
     let hrule = (
         Node {
@@ -205,16 +218,14 @@ fn on_menu_add(
                     })
                     .with_children(|parent| {
                         for (index, item) in entry.items.into_iter().enumerate() {
-                            let background_color = if index % 2 == 0 { WHITE.with_alpha(0.01) } else { Srgba::NONE };
                             let mut cmd = parent.spawn((
                                 MenuItemUi,
                                 Button,
                                 Node {
                                     flex_grow: 1.0,
-                                    padding: UiRect::axes(px(5), px(2)),
                                     ..default()
                                 },
-                                BackgroundColor::from(background_color),
+                                BackgroundColor::from(MENU_BACKGROUND),
                                 Tooltip::new_text_color(item.tooltip, if item.enabled { TEXT } else { TEXT_NEGATIVE })
                             ));
 
@@ -222,32 +233,40 @@ fn on_menu_add(
                                 cmd.insert(InteractionDisabled);
                             }
 
-                            let text = item.text.0.clone();
+                            if index % 2 == 0 {
+                                cmd.with_child((
+                                    Node {
+                                        position_type: PositionType::Absolute,
+                                        width: percent(100),
+                                        height: percent(100),
+                                        ..default()
+                                    },
+                                    BackgroundColor::from(WHITE.with_alpha(0.01))
+                                ));
+                            }
 
+
+                            let text = item.text.0.clone();
                             cmd.with_child((
+                                Node {
+                                    margin: UiRect::axes(px(5), px(2)),
+                                    ..default()
+                                },
                                 item.text,
                                 TextColor::from(if item.enabled { TEXT } else { TEXT_DISABLED }),
                                 font.clone(),
                                 TextLayout::new_with_no_wrap(),
-                                )).observe(move |mut click: On<Pointer<Click>>,
+                                )).observe(move |click: On<Pointer<Click>>,
                                                      mut commands: Commands,
                                                      has_disableds: Query<Has<InteractionDisabled>>| {
                                             if click.button == PointerButton::Primary && !has_disableds.get(click.entity).unwrap() {
                                                 commands.entity(menu_entity).insert(MenuClicked(text.clone()));
                                                 commands.entity(menu_entity).despawn();
                                             }
-                                            // prevent the click to reopen menu
-                                            click.propagate(false);
                                 });
                         }
                     });
             }
-        })
-        .observe(|mut over: On<Pointer<Over>>| {
-            over.propagate(false);
-        })
-        .observe(|mut out: On<Pointer<Out>>| {
-            out.propagate(false);
         });
 }
 

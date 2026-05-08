@@ -110,6 +110,9 @@ pub fn on_spawn_base(
                     BackgroundColor::from(DARK_OVERLAY),
                 ))
                 .add_child(follower_list)
+                .observe(|mut click: On<Pointer<Press>>| {
+                    click.propagate(false);
+                })
                 .observe(|mut click: On<Pointer<Click>>| {
                     click.propagate(false);
                 })

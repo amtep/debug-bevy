@@ -126,6 +126,9 @@ pub fn setup(
                             )
                         ],
                     ))
+                    .observe(|mut click: On<Pointer<Press>>| {
+                        click.propagate(false);
+                    })
                     .observe(|mut click: On<Pointer<Click>>| {
                         click.propagate(false);
                     })
