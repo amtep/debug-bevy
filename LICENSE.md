@@ -67,12 +67,11 @@ The DejaVu changes are in the public domain.
 
 A copy of the license is provided under [LICENSE.Bitstream](LICENSE.Bitstream).
 
-## Droid Sans Mono font license
+## Courier Prime font license
 
-Files: `assets/fonts/DroidSansMono.ttf`
+Files: `assets/fonts/CourierPrime-*.ttf`
 
-The fonts are copyright (c) 2005-2008, The Android Open Source Project and licensed under the Apache License, Version 2.0.
+Copyright 2015 The Courier Prime Project Authors (https://github.com/quoteunquoteapps/CourierPrime).
+This Font Software is licensed under the SIL Open Font License, Version 1.1 . This license is copied below, and is also available with a FAQ at: https://openfontlicense.org
 
-Downloaded from https://github.com/grays/droid-fonts
-
-A copy of the license is provided under [LICENSE.Apache-2.0](LICENSE.Apache-2.0)
+A copy of the license is provided under [LICENSE.OFL1.1](LICENSE.OFL1.1).

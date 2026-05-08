@@ -29,7 +29,7 @@ pub mod ui {
     pub const FONT_PATH: &str = "fonts/Lora-Variable.ttf";
     // A font spanning more unicode code points than usual
     pub const UNICODE_FONT_PATH: &str = "fonts/DejaVuSans.ttf";
-    pub const MONO_FONT_PATH: &str = "fonts/DroidSansMono.ttf";
+    pub const MONO_FONT_PATH: &str = "fonts/CourierPrime-Regular.ttf";
 
     pub const THEME_DARK_PURPLE: Srgba = Srgba::rgb(0.102, 0.055, 0.243); // #1A0E3E
     pub const THEME_INDIGO: Srgba = Srgba::rgb(0.122, 0.102, 0.439); // #1F1A70

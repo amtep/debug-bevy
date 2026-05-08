@@ -171,12 +171,17 @@ fn read_window_resized_messages(
 fn setup_map(
     mut commands: Commands,
     font_handle: Res<FontHandle>,
+    mono_font_handle: Res<MonoFontHandle>,
     asset_server: Res<AssetServer>,
     game_date: Res<GameDate>,
     cult_name: Res<CultName>,
     cult_symbol: Res<CultSymbol>,
 ) {
-    let text_font = TextFont::from_font_size(SUB_HEADING).with_font(font_handle.clone());
+    let mono_text_font = TextFont {
+        font: mono_font_handle.clone(),
+        font_size: SUB_HEADING,
+        ..default()
+    };
 
     let funds_tooltip = commands
         .spawn(Node {
@@ -213,81 +218,53 @@ fn setup_map(
                     Node {
                         width: percent(100.0),
                         position_type: PositionType::Absolute,
+                        align_items: AlignItems::End,
                         border: UiRect::vertical(px(2)),
-                        padding: UiRect::all(px(2)),
-                        justify_content: JustifyContent::Center,
+                        padding: UiRect::horizontal(px(2)),
                         ..default()
                     },
                     BorderColor::all(BORDER),
                     BackgroundColor::from(THEME_DARK_PURPLE),
                 ))
                 .with_children(|parent| {
-                    // Cult symbol
-                    parent
-                        .spawn(Node {
-                            width: px(24),
-                            height: px(24),
-                            margin: UiRect::right(px(5)),
-                            ..default()
-                        })
-                        .with_child(ImageNode {
-                            image: asset_server.load(format!(
-                                "{CULT_SYMBOL_PATH}/{}",
-                                CULT_SYMBOLS[cult_symbol.0]
-                            )),
-                            color: WHITE.into(),
-                            ..default()
-                        });
+                    parent.spawn(Node {
+                        width: px(75),
+                        ..default()
+                    });
                     // Funds counter
                     parent
                         .spawn((
                             Node {
-                                min_width: px(75),
-                                align_self: AlignSelf::Center,
+                                min_width: px(80),
                                 ..default()
                             },
                             Tooltip::new_custom(funds_tooltip),
                         ))
                         .with_child((
-                            text_font.clone(),
+                            mono_text_font.clone(),
                             // will be updated by funds_changed
                             TextKey::new("funds-display").add_arg("funds", 0),
                             TextColor::from(TEXT),
                             FundsUi,
                         ))
                         .observe(on_funds_tooltip_inner_add);
-                    // Game date display
-                    parent
-                        .spawn(Node {
-                            min_width: px(125),
-                            align_self: AlignSelf::Center,
-                            ..default()
-                        })
-                        .with_child((
-                            text_font.clone(),
-                            TextColor::from(TEXT),
-                            // will be updated by update_game_date
-                            TextKey::new("game-date-display").add_arg("date", game_date.0),
-                            GameDateUi,
-                        ));
                     // Suspicion meters
                     parent
                         .spawn((
                             Node {
                                 min_width: px(50),
-                                align_self: AlignSelf::Center,
-                                justify_content: JustifyContent::FlexEnd,
+                                justify_content: JustifyContent::Start,
                                 ..default()
                             },
                             Tooltip::new_text("intelligence-suspicion-tooltip"),
                         ))
                         .with_child((
-                            text_font.clone(),
+                            mono_text_font.clone(),
                             TextColor::from(TEXT),
                             MeterDisplay::<u32> {
                                 value: 0,
-                                low_threshold: 34,
-                                high_threshold: 67,
+                                low_threshold: 334,
+                                high_threshold: 667,
                             },
                             IntelligenceSuspicionUi,
                         ));
@@ -295,22 +272,34 @@ fn setup_map(
                         .spawn((
                             Node {
                                 min_width: px(50),
-                                align_self: AlignSelf::Center,
-                                justify_content: JustifyContent::FlexEnd,
+                                justify_content: JustifyContent::Start,
                                 ..default()
                             },
                             Tooltip::new_text("scientific-suspicion-tooltip"),
                         ))
                         .with_child((
-                            text_font.clone(),
+                            mono_text_font.clone(),
                             TextLayout::new_with_justify(Justify::Right),
                             TextColor::from(TEXT),
                             MeterDisplay::<u32> {
                                 value: 0,
-                                low_threshold: 34,
-                                high_threshold: 67,
+                                low_threshold: 334,
+                                high_threshold: 667,
                             },
                             ScientificSuspicionUi,
+                        ));
+                    // Game date display
+                    parent
+                        .spawn(Node {
+                            min_width: px(125),
+                            ..default()
+                        })
+                        .with_child((
+                            mono_text_font.clone(),
+                            TextColor::from(TEXT),
+                            // will be updated by update_game_date
+                            TextKey::new("game-date-display").add_arg("date", game_date.0),
+                            GameDateUi,
                         ));
                     // Separate left-aligned and right-aligned status fields
                     parent.spawn(Node {
@@ -319,8 +308,8 @@ fn setup_map(
                     });
                     parent
                         .spawn(Node {
-                            margin: UiRect::right(px(10)),
                             align_self: AlignSelf::Center,
+                            margin: UiRect::right(px(10)),
                             ..default()
                         })
                         .with_child((
@@ -388,6 +377,33 @@ fn setup_map(
                             },
                         ))
                         .observe(on_game_speed_clicked);
+                });
+            // Cult symbol
+            parent
+                .spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        width: px(72),
+                        height: px(72),
+                        padding: UiRect::all(px(4)),
+                        border: UiRect {
+                            bottom: px(4),
+                            right: px(4),
+                            ..default()
+                        },
+                        border_radius: BorderRadius::bottom_right(px(8)),
+                        ..default()
+                    },
+                    BackgroundColor::from(MENU_BACKGROUND),
+                    BorderColor::all(BORDER),
+                ))
+                .with_child(ImageNode {
+                    image: asset_server.load(format!(
+                        "{CULT_SYMBOL_PATH}/{}",
+                        CULT_SYMBOLS[cult_symbol.0]
+                    )),
+                    color: WHITE.into(),
+                    ..default()
                 });
         });
 }

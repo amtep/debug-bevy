@@ -10,7 +10,7 @@ use crate::{
     suspicion::{MediaSuspicion, PoliceSuspicion},
     text::TextKey,
     ui::{
-        UnicodeFontHandle,
+        MonoFontHandle, UnicodeFontHandle,
         dialog::{Dialog, DialogConfirmed},
         menu::{Menu, MenuClicked, MenuEntry, MenuItem},
         tooltip::Tooltip,
@@ -53,7 +53,7 @@ pub fn setup(
     regions: Query<(Entity, &Region, &Location, &Children)>,
     base_plots: Query<&Location, With<BasePlot>>,
     display_font_handle: Res<DisplayFontHandle>,
-    font_handle: Res<FontHandle>,
+    mono_font_handle: Res<MonoFontHandle>,
 ) {
     for (entity, region, location, children) in regions.iter() {
         commands
@@ -111,11 +111,11 @@ pub fn setup(
                                     ..default()
                                 },
                                 TextLayout::new_with_justify(Justify::Center),
-                                TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
+                                TextFont::from_font_size(SMALL).with_font(mono_font_handle.clone()),
                                 MeterDisplay::<u32> {
                                     value: 0,
-                                    low_threshold: 34,
-                                    high_threshold: 67,
+                                    low_threshold: 334,
+                                    high_threshold: 667,
                                 },
                                 PoliceSuspicionUi,
                                 ViewOf(entity),
@@ -127,11 +127,11 @@ pub fn setup(
                                     ..default()
                                 },
                                 TextLayout::new_with_justify(Justify::Center),
-                                TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
+                                TextFont::from_font_size(SMALL).with_font(mono_font_handle.clone()),
                                 MeterDisplay::<u32> {
                                     value: 0,
-                                    low_threshold: 34,
-                                    high_threshold: 67,
+                                    low_threshold: 334,
+                                    high_threshold: 667,
                                 },
                                 MediaSuspicionUi,
                                 ViewOf(entity),
