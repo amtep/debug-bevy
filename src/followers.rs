@@ -58,9 +58,12 @@ pub enum Follower {
 impl Follower {
     pub fn to_symbol(self) -> char {
         match self {
-            Follower::Priest => '♀',
-            Follower::Goon => '♁',
-            Follower::Minion => '♂',
+            // 2600 BLACK SUN WITH RAYS
+            Follower::Priest => '\u{2600}',
+            // 2608 THUNDERSTORM
+            Follower::Goon => '\u{2608}',
+            // 2644 SATURN
+            Follower::Minion => '\u{2644}',
         }
     }
 }
