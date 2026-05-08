@@ -36,33 +36,34 @@ const SEPARATOR: &[u8] = b"\n\nAPOCALYPTOSIS\n";
 const EXTENSION: &str = "save";
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(
-        Update,
-        (autosave, listen_save_keys).run_if(in_state(GameState::Main)),
-    )
-    .add_systems(
-        OnEnter(GameState::Main),
-        (
-            reinsert_component::<Base>,
-            reinsert_component::<FollowerCount>,
+    app.add_systems(Update, autosave.run_if(in_state(GameState::Main)))
+        .add_systems(
+            OnEnter(GameState::Main),
+            (
+                reinsert_component::<Base>,
+                reinsert_component::<FollowerCount>,
+            )
+                .chain()
+                .run_if(not(resource_exists::<NewGame>))
+                .in_set(MainSetupSet::Late),
         )
-            .chain()
-            .run_if(not(resource_exists::<NewGame>))
-            .in_set(MainSetupSet::Late),
-    )
-    .add_systems(
-        OnEnter(GameState::Main),
-        first_save
-            .run_if(resource_exists::<NewGame>)
-            .in_set(MainSetupSet::Save),
-    )
-    .insert_resource(AutosaveTimer(Timer::new(
-        AUTOSAVE_INTERVAL,
-        TimerMode::Repeating,
-    )))
-    .add_observer(save_on_default_event)
-    .add_observer(load_on_default_event);
+        .add_systems(
+            OnEnter(GameState::Main),
+            first_save
+                .run_if(resource_exists::<NewGame>)
+                .in_set(MainSetupSet::Save),
+        )
+        .insert_resource(AutosaveTimer(Timer::new(
+            AUTOSAVE_INTERVAL,
+            TimerMode::Repeating,
+        )))
+        .add_observer(on_save_directive)
+        .add_observer(save_on_default_event)
+        .add_observer(load_on_default_event);
 }
+
+#[derive(Event)]
+pub struct SaveDirective;
 
 #[derive(Serialize, Deserialize)]
 pub struct SaveMetadata {
@@ -142,7 +143,8 @@ fn save_inner(
     }
 }
 
-fn save(
+fn on_save_directive(
+    _: On<SaveDirective>,
     mut commands: Commands,
     campaign: Option<Res<Campaign>>,
     cult_name: Res<CultName>,
@@ -178,65 +180,14 @@ fn save(
     }
 }
 
-fn autosave(
-    mut commands: Commands,
-    time: Res<Time<Real>>,
-    mut timer: ResMut<AutosaveTimer>,
-    campaign: Option<Res<Campaign>>,
-    cult_name: Res<CultName>,
-    cult_symbol: Res<CultSymbol>,
-    game_date: Res<GameDate>,
-    funds: Res<Funds>,
-) {
+fn autosave(mut commands: Commands, time: Res<Time<Real>>, mut timer: ResMut<AutosaveTimer>) {
     if timer.tick(time.delta()).just_finished() {
-        save(
-            commands.reborrow(),
-            campaign,
-            cult_name,
-            cult_symbol,
-            game_date,
-            funds,
-        );
+        commands.trigger(SaveDirective);
     }
 }
 
-fn first_save(
-    mut commands: Commands,
-    campaign: Option<Res<Campaign>>,
-    cult_name: Res<CultName>,
-    cult_symbol: Res<CultSymbol>,
-    game_date: Res<GameDate>,
-    funds: Res<Funds>,
-) {
-    save(
-        commands.reborrow(),
-        campaign,
-        cult_name,
-        cult_symbol,
-        game_date,
-        funds,
-    );
-}
-
-fn listen_save_keys(
-    mut commands: Commands,
-    keys: Res<ButtonInput<KeyCode>>,
-    campaign: Option<Res<Campaign>>,
-    cult_name: Res<CultName>,
-    cult_symbol: Res<CultSymbol>,
-    game_date: Res<GameDate>,
-    funds: Res<Funds>,
-) {
-    if keys.just_pressed(KeyCode::F5) {
-        save(
-            commands.reborrow(),
-            campaign,
-            cult_name,
-            cult_symbol,
-            game_date,
-            funds,
-        );
-    }
+fn first_save(mut commands: Commands) {
+    commands.trigger(SaveDirective);
 }
 
 pub fn load(

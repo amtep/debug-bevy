@@ -33,6 +33,7 @@ use crate::{
 mod bases;
 mod buttons;
 mod dialog;
+mod esc_menu;
 mod main_menu;
 mod menu;
 mod regions;
@@ -41,7 +42,7 @@ mod scroll;
 mod tooltip;
 
 pub fn plugin(app: &mut App) {
-    app.add_plugins(dialog::plugin)
+    app.add_plugins((regions::plugin, dialog::plugin, esc_menu::plugin))
         .add_systems(OnEnter(GameState::Load), setup_fonts)
         .init_resource::<UiScale>()
         .init_resource::<InputFocus>()
@@ -198,13 +199,16 @@ fn setup_map(
         .id();
 
     commands
-        .spawn(Node {
-            flex_direction: FlexDirection::Column,
-            width: percent(100.0),
-            height: percent(100.0),
-            position_type: PositionType::Absolute,
-            ..default()
-        })
+        .spawn((
+            Node {
+                flex_direction: FlexDirection::Column,
+                width: percent(100.0),
+                height: percent(100.0),
+                position_type: PositionType::Absolute,
+                ..default()
+            },
+            DespawnOnExit(GameState::Main),
+        ))
         .with_children(|parent| {
             parent.spawn((
                 ImageNode {

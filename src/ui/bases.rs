@@ -5,6 +5,7 @@ use crate::{
     constants::ui::*,
     followers::{Follower, FollowerCount},
     regions::{BasePlot, Region},
+    state::GameState,
     text::TextKey,
     ui::{BasePlotUi, RegionSuspicionUi, UnicodeFontHandle, menu::Menu, tooltip::Tooltip},
 };
@@ -25,6 +26,7 @@ pub struct FollowerListBoxUi;
 pub fn on_spawn_base(
     event: On<Insert, Base>,
     mut commands: Commands,
+    state: Res<State<GameState>>,
     bases: Query<(&ChildOf, &Base)>,
     base_types_handle: Res<BasetypesHandle>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
@@ -35,6 +37,10 @@ pub fn on_spawn_base(
     asset_server: Res<AssetServer>,
     unicode_font_handle: Res<UnicodeFontHandle>,
 ) {
+    if *state != GameState::Main {
+        return;
+    }
+
     let (base_plot, base) = bases.get(event.entity).unwrap();
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
     let base_type = base_types.get(&base.0).unwrap();
@@ -146,6 +152,7 @@ fn on_base_click(
 pub fn on_follower_count_insert(
     insert: On<Insert, FollowerCount>,
     mut commands: Commands,
+    state: Res<State<GameState>>,
     bases: Query<&Children, With<Base>>,
     followers: Query<(&Follower, &FollowerCount)>,
     follower_counts: Query<&ChildOf, With<FollowerCount>>,
@@ -154,6 +161,10 @@ pub fn on_follower_count_insert(
     mut follower_list_uis: Query<(&mut Text, &ChildOf), With<FollowerListUi>>,
     mut follower_list_box_uis: Query<&mut Visibility, With<FollowerListBoxUi>>,
 ) {
+    if *state != GameState::Main {
+        return;
+    }
+
     let base = follower_counts.get(insert.entity).unwrap();
     let base_views = base_views.get(base.0).unwrap();
     let follower_list = base_views

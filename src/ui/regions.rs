@@ -20,6 +20,12 @@ use crate::{
 
 use super::{DisplayFontHandle, FontHandle, MapUi, MeterDisplay, ViewOf, Views};
 
+pub fn plugin(app: &mut App) {
+    app.add_observer(on_location_reloaded)
+        .add_observer(on_spawn_base)
+        .add_observer(on_follower_count_insert);
+}
+
 #[derive(Component)]
 pub struct PoliceSuspicionUi;
 
@@ -158,10 +164,6 @@ pub fn setup(
             ));
         }
     }
-
-    commands.add_observer(on_location_reloaded);
-    commands.add_observer(on_spawn_base);
-    commands.add_observer(on_follower_count_insert);
 }
 
 // INFO: Assume only the location has changed, while none is added or removed.
@@ -170,7 +172,10 @@ fn on_location_reloaded(
     parts: Query<(&Location, &Views)>,
     mut nodes: Query<&mut Node>,
 ) {
-    let (location, views) = parts.get(event.entity).unwrap();
+    let Ok((location, views)) = parts.get(event.entity) else {
+        // UI is not ready yet
+        return;
+    };
 
     for view in &views.0 {
         if let Ok(mut node) = nodes.get_mut(*view) {

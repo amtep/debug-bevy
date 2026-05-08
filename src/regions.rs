@@ -53,7 +53,7 @@ pub struct RegionSettings {
 
 #[derive(Component, Reflect)]
 #[reflect(Component)]
-#[require(Save)]
+#[require(Save, DespawnOnExit::<GameState>(GameState::Main))]
 pub struct Region {
     pub name: String,
 }

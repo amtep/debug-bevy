@@ -9,7 +9,7 @@ use serde_derive::Deserialize;
 use crate::{
     followers::FollowerCount,
     funds::{FundsAmount, Income, IncomeCategory},
-    state::{GameState, MainSetupSet},
+    state::GameState,
     suspicion::SuspicionType,
 };
 
@@ -20,10 +20,8 @@ pub const DEFAULT_TASK: &str = "gig-work";
 pub fn plugin(app: &mut App) {
     app.add_plugins(TomlAssetPlugin::<TasksAsset>::new(&["tasks.toml"]))
         .add_systems(OnEnter(GameState::Load), setup_load)
-        .add_systems(
-            OnEnter(GameState::Main),
-            setup.in_set(MainSetupSet::Default),
-        );
+        .add_observer(on_task_changed::<Task>)
+        .add_observer(on_task_changed::<FollowerCount>);
 }
 
 #[derive(Deserialize, Asset, TypePath)]
@@ -55,11 +53,6 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(TasksHandle(asset_server.load(TASKS_ASSET_PATH)));
 }
 
-fn setup(mut commands: Commands) {
-    commands.add_observer(on_task_changed::<Task>);
-    commands.add_observer(on_task_changed::<FollowerCount>);
-}
-
 /// A component added as a child of a Follower entity, to mark this as a task those followers are doing.
 #[derive(Component, Reflect)]
 #[reflect(Component)]
@@ -71,12 +64,17 @@ pub struct Task(pub String);
 fn on_task_changed<C: Component>(
     insert: On<Insert, C>,
     mut commands: Commands,
+    state: Res<State<GameState>>,
     task_handle: Res<TasksHandle>,
     task_assets: Res<Assets<TasksAsset>>,
     tasks: Query<(Entity, &ChildOf, &Task)>,
     followers: Query<&FollowerCount>,
     follower_children: Query<&Children, With<FollowerCount>>,
 ) {
+    if *state != GameState::Main {
+        return;
+    }
+
     let task_settings = &task_assets.get(task_handle.0.id()).unwrap().0;
 
     let entity = if C::is::<Task>() {

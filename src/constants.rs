@@ -97,6 +97,7 @@ pub mod ui {
     pub const ZINDEX_MENU: i32 = 50;
     pub const ZINDEX_DIALOG: i32 = 100;
     pub const ZINDEX_TOOLTIP: i32 = 200;
+    pub const ZINDEX_ESC_MENU: i32 = 1000;
 
     pub fn color(color: &str) -> Srgba {
         match color {
