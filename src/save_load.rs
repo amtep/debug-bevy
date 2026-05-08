@@ -17,13 +17,15 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::{
+    bases::Base,
     common::{CultName, CultSymbol},
     constants::{
         AUTOSAVE_INTERVAL,
         files::{PROJECT_DIR_APPLICATION, PROJECT_DIR_ORGANIZATION, PROJECT_DIR_QUALIFIER},
     },
+    followers::FollowerCount,
     funds::{Funds, FundsAmount},
-    main_menu::{LoadedGame, NewGame},
+    main_menu::NewGame,
     state::{GameState, MainSetupSet},
     suspicion::{IntelligenceSuspicion, ScientificSuspicion},
     time::GameDate,
@@ -37,6 +39,16 @@ pub fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (autosave, listen_save_keys).run_if(in_state(GameState::Main)),
+    )
+    .add_systems(
+        OnEnter(GameState::Main),
+        (
+            reinsert_component::<Base>,
+            reinsert_component::<FollowerCount>,
+        )
+            .chain()
+            .run_if(not(resource_exists::<NewGame>))
+            .in_set(MainSetupSet::Late),
     )
     .add_systems(
         OnEnter(GameState::Main),
@@ -239,7 +251,6 @@ pub fn load(
     info!("Loading game {}", *campaign);
     commands.trigger_load(LoadWorld::default_from_stream(Cursor::new(content)));
     commands.insert_resource(campaign);
-    commands.insert_resource(LoadedGame);
 }
 
 fn list_save_files() -> Result<(PathBuf, Vec<OsString>), SaveLoadError> {
@@ -323,4 +334,17 @@ pub fn scan_saved_games() -> Result<Vec<(Campaign, SaveMetadata, Vec<u8>)>, Save
         }
     }
     Ok(v)
+}
+
+fn reinsert_component<C: Component + Clone>(
+    mut commands: Commands,
+    components: Query<(Entity, &C)>,
+) {
+    for (entity, component) in components {
+        // Remove and re-insert the component to trigger Add/Insert component hooks.
+        commands
+            .entity(entity)
+            .remove::<C>()
+            .insert(component.clone());
+    }
 }

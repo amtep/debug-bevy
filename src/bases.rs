@@ -12,7 +12,7 @@ use crate::{
         Follower, FollowerCount, FollowersAsset, FollowersHandle, GeneralFollowerSettings,
     },
     funds::{Expense, ExpenseCategory, Funds, FundsAmount},
-    main_menu::{LoadedGame, NewGame},
+    main_menu::NewGame,
     regions::{BasePlot, Region},
     rng::RandomSource,
     state::{GameState, MainSetupSet},
@@ -28,10 +28,8 @@ pub fn plugin(app: &mut App) {
         .add_systems(OnEnter(GameState::Load), setup_load)
         .add_systems(
             OnEnter(GameState::Main),
-            (
-                new_game.run_if(resource_exists::<NewGame>),
-                loaded_game.run_if(resource_exists::<LoadedGame>),
-            )
+            new_game
+                .run_if(resource_exists::<NewGame>)
                 .in_set(MainSetupSet::Bases),
         );
 }
@@ -173,15 +171,4 @@ pub fn spawn_base(
         general,
         Some(funds),
     );
-}
-
-fn loaded_game(mut commands: Commands, bases: Query<(Entity, &Base)>) {
-    for (entity, base) in bases {
-        // Remove and re-insert the Base in order to trigger the Add observer
-        // that builds the base UI.
-        commands
-            .entity(entity)
-            .remove::<Base>()
-            .insert(base.clone());
-    }
 }

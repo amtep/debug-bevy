@@ -9,7 +9,7 @@ use strum::{EnumIter, IntoStaticStr};
 use crate::{
     bases::Base,
     funds::{Expense, FundsAmount},
-    main_menu::{LoadedGame, NewGame},
+    main_menu::NewGame,
     state::{GameState, MainSetupSet},
 };
 
@@ -20,10 +20,8 @@ pub fn plugin(app: &mut App) {
         .add_systems(OnEnter(GameState::Load), setup_load)
         .add_systems(
             OnEnter(GameState::Main),
-            (
-                new_game.run_if(resource_exists::<NewGame>),
-                loaded_game.run_if(resource_exists::<LoadedGame>),
-            )
+            new_game
+                .run_if(resource_exists::<NewGame>)
                 .in_set(MainSetupSet::Followers),
         );
 }
@@ -72,6 +70,7 @@ impl Follower {
     Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Reflect,
 )]
 #[reflect(Component)]
+#[component(immutable)]
 pub struct FollowerCount(pub usize);
 
 fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -82,7 +81,7 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn new_game(
     mut commands: Commands,
     base: Single<&Children, With<Base>>,
-    mut followers: Query<(&Follower, &FollowerCount, &mut Expense)>,
+    mut followers: Query<(&Follower, &FollowerCount, &Expense)>,
 ) {
     info!("Creating starting priest");
 
@@ -91,24 +90,15 @@ fn new_game(
     // will be empty.
 
     for child in base.iter() {
-        if let Ok((follower, follower_count, mut expense)) = followers.get_mut(child)
+        if let Ok((follower, follower_count, expense)) = followers.get_mut(child)
             && *follower == Follower::Priest
         {
             let mut follower_count = *follower_count;
             *follower_count += 1;
-            commands.entity(child).insert(follower_count);
+            let mut expense = expense.clone();
             expense.2 += 1;
+            commands.entity(child).insert(follower_count);
+            commands.entity(child).insert(expense);
         }
-    }
-}
-
-fn loaded_game(mut commands: Commands, follower_counts: Query<(Entity, &FollowerCount)>) {
-    for (entity, follower_count) in follower_counts {
-        // Remove and re-insert the Base in order to trigger the Add observer
-        // that builds the base UI.
-        commands
-            .entity(entity)
-            .remove::<FollowerCount>()
-            .insert(*follower_count);
     }
 }

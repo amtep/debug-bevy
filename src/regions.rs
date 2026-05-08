@@ -35,6 +35,7 @@ struct RegionsHandle(Handle<RegionsAsset>);
 
 #[derive(Debug, Deserialize, Clone, Copy, PartialEq, Component, Reflect)]
 #[reflect(Component)]
+#[component(immutable)]
 pub struct Location {
     pub x: f32,
     pub y: f32,

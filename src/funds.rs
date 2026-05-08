@@ -31,9 +31,10 @@ pub struct Funds(pub FundsAmount);
 
 /// The third field is the number of budget entries represented by this component,
 /// to be shown in the funds tooltip.
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Clone)]
 #[reflect(Component)]
 #[require(Save)]
+#[component(immutable)]
 pub struct Expense(pub FundsAmount, pub ExpenseCategory, pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter, IntoStaticStr, Reflect)]
@@ -45,9 +46,10 @@ pub enum ExpenseCategory {
 
 /// The third field is the number of budget entries represented by this component,
 /// to be shown in the funds tooltip.
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Clone)]
 #[reflect(Component)]
 #[require(Save)]
+#[component(immutable)]
 pub struct Income(pub FundsAmount, pub IncomeCategory, pub usize);
 
 #[derive(

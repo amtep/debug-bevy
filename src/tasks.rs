@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use bevy::prelude::*;
+use bevy::reflect::Is;
 use bevy_common_assets::toml::TomlAssetPlugin;
 use moonshine_save::save::Save;
 use serde_derive::Deserialize;
@@ -8,7 +9,7 @@ use serde_derive::Deserialize;
 use crate::{
     followers::FollowerCount,
     funds::{FundsAmount, Income, IncomeCategory},
-    state::GameState,
+    state::{GameState, MainSetupSet},
     suspicion::SuspicionType,
 };
 
@@ -19,7 +20,10 @@ pub const DEFAULT_TASK: &str = "gig-work";
 pub fn plugin(app: &mut App) {
     app.add_plugins(TomlAssetPlugin::<TasksAsset>::new(&["tasks.toml"]))
         .add_systems(OnEnter(GameState::Load), setup_load)
-        .add_systems(Update, switch_tasks);
+        .add_systems(
+            OnEnter(GameState::Main),
+            setup.in_set(MainSetupSet::Default),
+        );
 }
 
 #[derive(Deserialize, Asset, TypePath)]
@@ -51,41 +55,62 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(TasksHandle(asset_server.load(TASKS_ASSET_PATH)));
 }
 
+fn setup(mut commands: Commands) {
+    commands.add_observer(on_task_changed::<Task>);
+    commands.add_observer(on_task_changed::<FollowerCount>);
+}
+
 /// A component added as a child of a Follower entity, to mark this as a task those followers are doing.
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 #[require(Save)]
+#[component(immutable)]
 pub struct Task(pub String);
 
-fn switch_tasks(
+// update both on follower count change and task change
+fn on_task_changed<C: Component>(
+    insert: On<Insert, C>,
     mut commands: Commands,
-    tasks: Res<TasksHandle>,
-    asset: Res<Assets<TasksAsset>>,
-    changed: Populated<(Entity, &ChildOf, &Task), Changed<Task>>,
+    task_handle: Res<TasksHandle>,
+    task_assets: Res<Assets<TasksAsset>>,
+    tasks: Query<(Entity, &ChildOf, &Task)>,
     followers: Query<&FollowerCount>,
+    follower_children: Query<&Children, With<FollowerCount>>,
 ) {
-    // SAFETY: followers are only spawned after all assets are loaded.
-    let settings_hash = asset.get(tasks.0.id()).unwrap();
-    for (task_e, ChildOf(parent), Task(task)) in changed {
-        let Some(settings) = settings_hash.0.get(task) else {
-            error!("Task {task} not known");
-            continue;
-        };
-        let Ok(count) = followers.get(*parent) else {
-            error!("Task without Follower parent");
-            continue;
-        };
-        // Handle task income
-        if let Some(cat) = settings.profit_category
-            && settings.profit_per_day > 0
-        {
-            commands
-                .entity(task_e)
-                .insert(Income(settings.profit_per_day, cat, count.0));
-        } else {
-            commands.entity(task_e).remove::<Income>();
-        }
-        // TODO: handle recruitment
-        // TODO: handle research
+    let task_settings = &task_assets.get(task_handle.0.id()).unwrap().0;
+
+    let entity = if C::is::<Task>() {
+        insert.entity
+    } else if let Ok(children) = follower_children.get(insert.entity)
+        && let Some(task_entity) = children.iter().find(|e| tasks.contains(*e))
+    {
+        task_entity
+    } else {
+        return;
+    };
+
+    let (entity, ChildOf(parent), Task(task)) = tasks.get(entity).unwrap();
+
+    let Some(settings) = task_settings.get(task) else {
+        error!("Task {task} not known");
+        return;
+    };
+
+    let Ok(count) = followers.get(*parent) else {
+        error!("Task without Follower parent");
+        return;
+    };
+
+    // Handle task income
+    if let Some(cat) = settings.profit_category
+        && settings.profit_per_day > 0
+    {
+        commands
+            .entity(entity)
+            .insert(Income(settings.profit_per_day, cat, count.0));
+    } else {
+        commands.entity(entity).remove::<Income>();
     }
+    // TODO: handle recruitment
+    // TODO: handle research
 }
