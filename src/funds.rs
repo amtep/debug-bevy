@@ -20,7 +20,19 @@ pub fn plugin(app: &mut App) {
     .add_systems(
         FixedUpdate,
         update_funds.run_if(resource_exists_and_changed::<GameDate>.and(in_state(GameState::Main))),
-    );
+    )
+    .add_observer(|_: On<Insert, Income>, mut commands: Commands| {
+        commands.trigger(IncomeExpenseUpdatedEvent);
+    })
+    .add_observer(|_: On<Remove, Income>, mut commands: Commands| {
+        commands.trigger(IncomeExpenseUpdatedEvent);
+    })
+    .add_observer(|_: On<Insert, Expense>, mut commands: Commands| {
+        commands.trigger(IncomeExpenseUpdatedEvent);
+    })
+    .add_observer(|_: On<Remove, Expense>, mut commands: Commands| {
+        commands.trigger(IncomeExpenseUpdatedEvent);
+    });
 }
 
 pub type FundsAmount = i64;
@@ -67,19 +79,6 @@ pub struct IncomeExpenseUpdatedEvent;
 
 fn setup_funds(mut commands: Commands) {
     commands.insert_resource(Funds(STARTING_FUNDS));
-
-    commands.add_observer(|_: On<Insert, Income>, mut commands: Commands| {
-        commands.trigger(IncomeExpenseUpdatedEvent);
-    });
-    commands.add_observer(|_: On<Remove, Income>, mut commands: Commands| {
-        commands.trigger(IncomeExpenseUpdatedEvent);
-    });
-    commands.add_observer(|_: On<Insert, Expense>, mut commands: Commands| {
-        commands.trigger(IncomeExpenseUpdatedEvent);
-    });
-    commands.add_observer(|_: On<Remove, Expense>, mut commands: Commands| {
-        commands.trigger(IncomeExpenseUpdatedEvent);
-    });
 }
 
 fn update_funds(mut funds: ResMut<Funds>, incomes: Query<&Income>, expenses: Query<&Expense>) {
