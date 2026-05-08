@@ -45,7 +45,7 @@ pub fn setup_main_menu(
                 ..default()
             },
             BorderColor::all(WHITE),
-            BackgroundColor::from(BUTTON_BACKGROUND),
+            BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(OVERLAY_ALPHA)),
             children![(
                 TextFont::from_font_size(40.0).with_font(font_handle.clone()),
                 TextKey::new(key),
@@ -140,7 +140,7 @@ pub fn setup_main_menu(
                                         TextInputNode {
                                             mode: TextInputMode::SingleLine,
                                             justification: Justify::Center,
-                                            max_chars: Some(20),
+                                            max_chars: Some(32),
                                             clear_on_submit: false,
                                             unfocus_on_submit: false,
                                             ..Default::default()

@@ -18,9 +18,7 @@ use crate::{
     },
 };
 
-use super::{
-    DisplayFontHandle, FontHandle, MapUi, MeterDisplay, ViewOf, Views, on_label_out, on_label_over,
-};
+use super::{DisplayFontHandle, FontHandle, MapUi, MeterDisplay, ViewOf, Views};
 
 #[derive(Component)]
 pub struct PoliceSuspicionUi;
@@ -59,12 +57,11 @@ pub fn setup(
                     translation: Val2::percent(-50.0, -50.0),
                     ..default()
                 },
+                Button,
                 RegionUi,
                 BorderColor::all(BORDER),
-                BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(0.75)),
+                BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(OVERLAY_ALPHA)),
             ))
-            .observe(on_label_over)
-            .observe(on_label_out)
             .observe(on_region_click)
             .with_children(|parent| {
                 parent.spawn((

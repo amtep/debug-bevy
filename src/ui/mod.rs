@@ -526,24 +526,6 @@ fn on_game_speed_clicked(
     }
 }
 
-fn on_label_over(
-    event: On<Pointer<Over>>,
-    mut label_colors: Query<(&mut BackgroundColor, &mut BorderColor)>,
-) {
-    let (mut background_color, mut border_color) = label_colors.get_mut(event.entity).unwrap();
-    border_color.set_all(BORDER_HIGHLIGHT);
-    background_color.0.set_alpha(1.0);
-}
-
-fn on_label_out(
-    event: On<Pointer<Out>>,
-    mut label_colors: Query<(&mut BackgroundColor, &mut BorderColor)>,
-) {
-    let (mut background_color, mut border_color) = label_colors.get_mut(event.entity).unwrap();
-    border_color.set_all(BORDER);
-    background_color.0.set_alpha(0.75);
-}
-
 fn update_game_speed_state(
     current_game_speed: Res<CurrentGameSpeed>,
     mut game_speed_buttons: Query<(

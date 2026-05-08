@@ -9,7 +9,7 @@ use crate::{
     ui::{BasePlotUi, RegionSuspicionUi, UnicodeFontHandle, menu::Menu, tooltip::Tooltip},
 };
 
-use super::{ViewOf, Views, on_label_out, on_label_over};
+use super::{ViewOf, Views};
 
 #[derive(Component)]
 pub struct BaseUi {
@@ -75,11 +75,10 @@ pub fn on_spawn_base(
                 align_items: AlignItems::Center,
                 ..default()
             },
+            Button,
             BorderColor::all(BORDER),
-            BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(0.75)),
+            BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(OVERLAY_ALPHA)),
         ))
-        .observe(on_label_over)
-        .observe(on_label_out)
         .observe(on_base_click)
         .with_children(|parent| {
             parent.spawn((

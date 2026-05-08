@@ -21,7 +21,9 @@ pub fn setup_observe_buttons(mut commands: Commands) {
                 buttons.get_mut(over.entity)
                 && !has_interaction_disabled
             {
-                background.0 = BUTTON_HOVER_BACKGROUND.into();
+                background.0 = BUTTON_HOVER_BACKGROUND
+                    .with_alpha(background.0.alpha())
+                    .into();
                 if let Some(mut border) = border {
                     border.set_all(BORDER_HIGHLIGHT);
                 }
@@ -44,7 +46,7 @@ pub fn setup_observe_buttons(mut commands: Commands) {
                 buttons.get_mut(out.entity)
                 && !has_interaction_disabled
             {
-                background.0 = BUTTON_BACKGROUND.into();
+                background.0 = BUTTON_BACKGROUND.with_alpha(background.0.alpha()).into();
                 if let Some(mut border) = border {
                     border.set_all(BORDER);
                 }
@@ -58,7 +60,7 @@ pub fn setup_observe_buttons(mut commands: Commands) {
                 && let Ok((mut background, has_interaction_disabled)) = buttons.get_mut(press.entity)
                 && !has_interaction_disabled
             {
-                background.0 = BUTTON_PRESSED_BACKGROUND.into();
+                background.0 = BUTTON_PRESSED_BACKGROUND.with_alpha(background.0.alpha()).into();
             }
         },
     );
@@ -68,7 +70,7 @@ pub fn setup_observe_buttons(mut commands: Commands) {
                 && let Ok((mut background, mut button, has_interaction_disabled)) = buttons.get_mut(click.entity)
                 && !has_interaction_disabled
             {
-                background.0 = BUTTON_HOVER_BACKGROUND.into();
+                background.0 = BUTTON_HOVER_BACKGROUND.with_alpha(background.0.alpha()).into();
                 button.set_changed();
             }
         },
@@ -88,8 +90,8 @@ pub fn setup_observe_buttons(mut commands: Commands) {
             With<Button>,
         >,
          mut text_colors: Query<&mut TextColor>| {
-            if let Ok((children, mut backgroun_color, border_color)) = buttons.get_mut(add.entity) {
-                backgroun_color.0 = BUTTON_BACKGROUND.into();
+            if let Ok((children, mut background, border_color)) = buttons.get_mut(add.entity) {
+                background.0 = BUTTON_BACKGROUND.with_alpha(background.0.alpha()).into();
                 if let Some(mut border_color) = border_color {
                     border_color.set_all(BORDER);
                 }
@@ -109,10 +111,8 @@ pub fn setup_observe_buttons(mut commands: Commands) {
             With<Button>,
         >,
          mut text_colors: Query<&mut TextColor>| {
-            if let Ok((children, mut backgroun_color, border_color)) =
-                buttons.get_mut(remove.entity)
-            {
-                backgroun_color.0 = BUTTON_BACKGROUND.into();
+            if let Ok((children, mut background, border_color)) = buttons.get_mut(remove.entity) {
+                background.0 = BUTTON_BACKGROUND.with_alpha(background.0.alpha()).into();
                 if let Some(mut border_color) = border_color {
                     border_color.set_all(BORDER);
                 }

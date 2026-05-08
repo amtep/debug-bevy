@@ -60,14 +60,16 @@ pub mod ui {
 
     pub const TOOLTIP_BACKGROUND: Srgba = DARK_GREY;
 
+    pub const OVERLAY_ALPHA: f32 = 0.75;
+
     pub const DARK_OVERLAY: Srgba = Srgba {
-        alpha: 0.75,
+        alpha: OVERLAY_ALPHA,
         ..BLACK
     };
 
     #[expect(dead_code)]
     pub const LIGHT_OVERLAY: Srgba = Srgba {
-        alpha: 0.75,
+        alpha: OVERLAY_ALPHA,
         ..WHITE
     };
 
