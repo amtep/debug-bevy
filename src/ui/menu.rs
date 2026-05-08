@@ -49,12 +49,18 @@ impl MenuEntry {
 
 #[derive(Component, Default, Clone)]
 pub struct Menu {
+    title: Option<TextKey>,
     entries: Vec<MenuEntry>,
 }
 
 impl Menu {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn with_title(mut self, title: impl Into<TextKey>) -> Self {
+        self.title = Some(title.into());
+        self
     }
 
     pub fn with_entry(mut self, entry: MenuEntry) -> Self {
@@ -79,6 +85,9 @@ impl Menu {
 pub struct MenuRootUi;
 
 #[derive(Component)]
+struct MenuTitleUi;
+
+#[derive(Component)]
 struct MenuHeadingUi;
 
 #[derive(Component)]
@@ -99,8 +108,6 @@ fn on_menu_add(
 ) {
     let menu_entity = add.entity;
     let menu = menus.get(menu_entity).unwrap().clone();
-    let font = font_handle.clone();
-
     let mut entity_commands = commands.entity(menu_entity);
 
     entity_commands.insert((
@@ -124,7 +131,7 @@ fn on_menu_add(
 
     let hrule = (
         Node {
-            width: auto(),
+            min_width: px(20),
             height: px(1),
             align_self: AlignSelf::Center,
             margin: UiRect::right(px(2)),
@@ -134,8 +141,43 @@ fn on_menu_add(
         BackgroundColor::from(BORDER_HIGHLIGHT),
     );
 
+    let short_hrule = (
+        Node {
+            width: px(5),
+            height: px(1),
+            align_self: AlignSelf::Center,
+            margin: UiRect::horizontal(px(1)),
+            ..default()
+        },
+        BackgroundColor::from(BORDER),
+    );
+
+    let font = TextFont::from_font_size(SMALL).with_font(font_handle.clone());
+
     entity_commands
         .with_children(move |parent| {
+            if let Some(title) = menu.title {
+                parent.spawn((
+                    Node {
+                        width: percent(100),
+                        flex_direction: FlexDirection::Row,
+                        justify_content: JustifyContent::Center,
+                        padding: UiRect::axes(px(5), px(2)),
+                        ..default()
+                    },
+                    BackgroundColor::from(DARK_OVERLAY),
+                    MenuTitleUi,
+                ))
+                .with_child(short_hrule.clone())
+                .with_child((
+                    title,
+                    TextFont::from_font_size(NORMAL).with_font(font_handle.clone()),
+                    TextColor::from(TEXT),
+                    TextLayout::new_with_no_wrap(),
+                ))
+                .with_child(short_hrule);
+            }
+
             for entry in menu.entries {
                 parent
                     .spawn((
@@ -151,7 +193,8 @@ fn on_menu_add(
                         parent.spawn((
                             entry.heading,
                             TextColor::from(TEXT_HIGHLIGHT),
-                            TextFont::from_font_size(SMALL).with_font(font.clone()),
+                            font.clone(),
+                            TextLayout::new_with_no_wrap(),
                         ));
                     });
 
@@ -167,7 +210,7 @@ fn on_menu_add(
                                 MenuItemUi,
                                 Button,
                                 Node {
-                                    width: percent(100),
+                                    flex_grow: 1.0,
                                     padding: UiRect::axes(px(5), px(2)),
                                     ..default()
                                 },
@@ -184,7 +227,7 @@ fn on_menu_add(
                             cmd.with_child((
                                 item.text,
                                 TextColor::from(if item.enabled { TEXT } else { TEXT_DISABLED }),
-                                TextFont::from_font_size(SMALL).with_font(font.clone()),
+                                font.clone(),
                                 TextLayout::new_with_no_wrap(),
                                 )).observe(move |mut click: On<Pointer<Click>>,
                                                      mut commands: Commands,

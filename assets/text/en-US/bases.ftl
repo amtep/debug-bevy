@@ -1,8 +1,6 @@
 basetype-apartment = Apartment
 basetype-old-farmhouse = Old Farmhouse
-basetype-abandoned-hospital =
-    Abandoned
-    Hospital
+basetype-abandoned-hospital = Abandoned Hospital
 basetype-castle = Castle
 
 menu-region-bases = Bases

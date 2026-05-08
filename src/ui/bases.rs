@@ -6,10 +6,7 @@ use crate::{
     followers::{Follower, FollowerCount},
     regions::{BasePlot, Region},
     text::TextKey,
-    ui::{
-        BasePlotUi, RegionSuspicionUi, UnicodeFontHandle,
-        tooltip::Tooltip,
-    },
+    ui::{BasePlotUi, RegionSuspicionUi, UnicodeFontHandle, menu::Menu, tooltip::Tooltip},
 };
 
 use super::{ViewOf, Views, on_label_out, on_label_over};
@@ -83,6 +80,7 @@ pub fn on_spawn_base(
         ))
         .observe(on_label_over)
         .observe(on_label_out)
+        .observe(on_base_click)
         .with_children(|parent| {
             parent.spawn((
                 Node {
@@ -123,6 +121,24 @@ pub fn on_spawn_base(
                     out.propagate(false);
                 });
         });
+}
+
+fn on_base_click(
+    click: On<Pointer<Click>>,
+    mut commands: Commands,
+    base_uis: Query<&ViewOf, With<BaseUi>>,
+    bases: Query<&Base>,
+) {
+    if click.button != PointerButton::Primary {
+        return;
+    }
+
+    let base = base_uis.get(click.entity).unwrap().0;
+    let base = &bases.get(base).unwrap().0;
+
+    commands
+        .entity(click.entity)
+        .with_child(Menu::new().with_title(format!("basetype-{base}")));
 }
 
 pub fn on_follower_count_insert(
