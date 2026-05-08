@@ -30,6 +30,7 @@ use crate::{
     },
 };
 
+mod bases;
 mod buttons;
 mod dialog;
 mod main_menu;
@@ -115,16 +116,16 @@ struct ViewOf(Entity);
 struct Views(Vec<Entity>);
 
 #[derive(Resource, Deref)]
-pub struct FontHandle(pub Handle<Font>);
+struct FontHandle(pub Handle<Font>);
 
 #[derive(Resource, Deref)]
-pub struct DisplayFontHandle(pub Handle<Font>);
+struct DisplayFontHandle(pub Handle<Font>);
 
 #[derive(Resource, Deref)]
-pub struct UnicodeFontHandle(pub Handle<Font>);
+struct UnicodeFontHandle(pub Handle<Font>);
 
 #[derive(Resource, Deref)]
-pub struct MonoFontHandle(pub Handle<Font>);
+struct MonoFontHandle(pub Handle<Font>);
 
 #[derive(Component)]
 struct MapUi;
@@ -134,6 +135,12 @@ struct GameDateUi;
 
 #[derive(Component)]
 struct FundsUi;
+
+#[derive(Component)]
+struct BasePlotUi;
+
+#[derive(Component)]
+struct RegionSuspicionUi;
 
 #[derive(Component)]
 #[require(Text, TextColor)]
@@ -235,6 +242,7 @@ fn setup_map(
                     parent
                         .spawn((
                             Node {
+                                padding: UiRect::top(px(2)),
                                 min_width: px(80),
                                 ..default()
                             },
@@ -252,6 +260,7 @@ fn setup_map(
                     parent
                         .spawn((
                             Node {
+                                padding: UiRect::top(px(2)),
                                 min_width: px(50),
                                 justify_content: JustifyContent::Start,
                                 ..default()
@@ -271,6 +280,7 @@ fn setup_map(
                     parent
                         .spawn((
                             Node {
+                                padding: UiRect::top(px(2)),
                                 min_width: px(50),
                                 justify_content: JustifyContent::Start,
                                 ..default()
@@ -291,6 +301,7 @@ fn setup_map(
                     // Game date display
                     parent
                         .spawn(Node {
+                            padding: UiRect::top(px(2)),
                             min_width: px(125),
                             ..default()
                         })
