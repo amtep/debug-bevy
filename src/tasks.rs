@@ -25,28 +25,28 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Deserialize, Asset, TypePath)]
-struct TasksAsset(pub HashMap<String, TaskSettings>);
+pub struct TasksAsset(pub HashMap<String, TaskSettings>);
 
 #[derive(Resource)]
-struct TasksHandle(pub Handle<TasksAsset>);
+pub struct TasksHandle(pub Handle<TasksAsset>);
 
 #[derive(Deserialize, Debug, Clone, Reflect)]
 #[serde(rename_all = "kebab-case")]
-struct TaskSettings {
+pub struct TaskSettings {
     #[serde(default)]
-    priests_allowed: bool,
+    pub priests_allowed: bool,
     #[serde(default)]
-    minions_allowed: bool,
+    pub minions_allowed: bool,
     #[serde(default)]
-    profit_per_day: FundsAmount,
+    pub profit_per_day: FundsAmount,
     #[serde(default)]
-    profit_category: Option<IncomeCategory>,
+    pub profit_category: Option<IncomeCategory>,
     #[serde(default)]
-    suspicion: HashMap<SuspicionType, u32>,
+    pub suspicion: HashMap<SuspicionType, u32>,
     #[serde(default)]
-    recruit_progress: usize,
+    pub recruit_progress: usize,
     #[serde(default)]
-    research: usize,
+    pub research: usize,
 }
 
 fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
