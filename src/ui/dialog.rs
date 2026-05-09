@@ -7,7 +7,7 @@ use crate::{
     constants::ui::*,
     state::GameState,
     text::TextKey,
-    time::{GameSpeedAction, GameSpeedChangedEvent},
+    time::ForcePause,
     ui::{FontHandle, tooltip::Tooltip},
 };
 
@@ -156,9 +156,6 @@ fn on_dialog_add(
     #[allow(clippy::cast_possible_truncation)]
     let index = dialog_roots.count() as i32;
     let font = font_handle.clone();
-    if dialog.pause {
-        commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiOpen));
-    }
 
     let dialog_root = commands
         .spawn((
@@ -197,6 +194,10 @@ fn on_dialog_add(
             },
         )
         .id();
+
+    if dialog.pause {
+        commands.entity(dialog_root).insert(ForcePause);
+    }
 
     let mut entity_commands = commands.spawn((
         ChildOf(dialog_root),
@@ -348,10 +349,6 @@ fn on_dialog_add(
                         move |click: On<Pointer<Click>>, mut commands: Commands| {
                             if click.button == PointerButton::Primary {
                                 commands.entity(dialog_root).despawn();
-                                if dialog.pause {
-                                    commands
-                                        .trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
-                                }
                             }
                         },
                     );
@@ -379,9 +376,6 @@ fn on_dialog_add(
                         {
                             commands.entity(dialog_entity).insert(DialogConfirmed);
                             commands.entity(dialog_root).despawn();
-                            if dialog.pause {
-                                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
-                            }
                         }
                     },
                 );
@@ -419,7 +413,6 @@ fn listen_dialog_confirm(
     mut commands: Commands,
     keys: Res<ButtonInput<KeyCode>>,
     dialog_roots: Query<(Entity, &ZIndex, &DialogRoot, &ConfirmButton)>,
-    dialog: Query<&Dialog>,
     has_disableds: Query<Has<InteractionDisabled>>,
 ) {
     if keys.any_just_pressed([KeyCode::Enter, KeyCode::Escape]) && dialog_roots.count() > 0 {
@@ -440,9 +433,5 @@ fn listen_dialog_confirm(
         }
 
         commands.entity(dialog_root).despawn();
-        let dialog = dialog.get(dialog_entity).unwrap();
-        if dialog.pause {
-            commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
-        }
     }
 }

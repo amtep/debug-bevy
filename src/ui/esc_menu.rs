@@ -1,11 +1,7 @@
 use bevy::{prelude::*, ui::FocusPolicy};
 
 use crate::{
-    constants::ui::*,
-    save_load::SaveDirective,
-    state::GameState,
-    text::TextKey,
-    time::{GameSpeedAction, GameSpeedChangedEvent},
+    constants::ui::*, save_load::SaveDirective, state::GameState, text::TextKey, time::ForcePause,
     ui::FontHandle,
 };
 
@@ -24,10 +20,8 @@ fn listen_esc_key(
 ) {
     if keys.just_pressed(KeyCode::Escape) {
         if let Some(menu) = menu {
-            commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
             commands.entity(*menu).despawn();
         } else {
-            commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiOpen));
             open_esc_menu(commands.reborrow(), font_handle);
         }
     }
@@ -51,12 +45,13 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
             children![(
                 TextFont::from_font_size(40.0).with_font(font_handle.clone()),
                 TextKey::new(key),
-            ),],
+            )],
         )
     };
     let root = commands
         .spawn((
             EscMenuRoot,
+            ForcePause,
             GlobalZIndex(ZINDEX_ESC_MENU),
             Node {
                 width: percent(100),
@@ -90,7 +85,6 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
         .spawn((ChildOf(menu), button("esc-menu-button-resume")))
         .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
             if click.button == PointerButton::Primary {
-                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
                 commands.entity(root).despawn();
             }
         });
@@ -100,7 +94,6 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
         .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
             if click.button == PointerButton::Primary {
                 commands.trigger(SaveDirective);
-                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
                 commands.entity(root).despawn();
             }
         });
@@ -114,7 +107,6 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
                 if click.button == PointerButton::Primary {
                     commands.trigger(SaveDirective);
                     next_state.set(GameState::MainMenu);
-                    commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
                     commands.entity(root).despawn();
                 }
             },

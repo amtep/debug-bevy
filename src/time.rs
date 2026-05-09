@@ -13,7 +13,9 @@ pub fn plugin(app: &mut App) {
         FixedPreUpdate,
         fixed_pre_update.run_if(in_state(GameState::Main)),
     )
-    .add_systems(Update, listen_speed_keys.run_if(in_state(GameState::Main)));
+    .add_systems(Update, listen_speed_keys.run_if(in_state(GameState::Main)))
+    .add_observer(on_force_pause_insert)
+    .add_observer(on_force_pause_remove);
 }
 
 #[derive(Resource, Clone, Reflect, Serialize, Deserialize)]
@@ -22,6 +24,11 @@ pub fn plugin(app: &mut App) {
 #[reflect(Deserialize)]
 #[reflect(opaque)]
 pub struct GameDate(pub NaiveDate);
+
+/// A marker struct that makes the game pause when it's added and
+/// prevents unpausing until it's removed or despawned.
+#[derive(Component)]
+pub struct ForcePause;
 
 impl Default for GameDate {
     fn default() -> Self {
@@ -38,7 +45,6 @@ fn setup(mut commands: Commands) {
 
 #[derive(Resource, Default)]
 pub struct CurrentGameSpeed {
-    pub dialog_open: u32,
     pub paused: bool,
     pub speed: GameSpeed,
 }
@@ -70,8 +76,6 @@ impl GameSpeed {
 pub enum GameSpeedAction {
     SetSpeed(GameSpeed),
     TogglePause,
-    UiOpen,
-    UiClose,
 }
 
 #[derive(Event)]
@@ -81,20 +85,21 @@ fn on_game_speed_changed(
     event: On<GameSpeedChangedEvent>,
     mut time: ResMut<Time<Virtual>>,
     mut current_game_speed: ResMut<CurrentGameSpeed>,
+    forced_pause: Query<(), With<ForcePause>>,
 ) {
+    let can_unpause = forced_pause.is_empty();
     match event.0 {
-        GameSpeedAction::SetSpeed(speed) if current_game_speed.dialog_open == 0 => {
+        GameSpeedAction::SetSpeed(speed) if can_unpause => {
             let s = speed.get();
             info!("Game speed to {s}");
             time.set_relative_speed(s);
             time.unpause();
             *current_game_speed = CurrentGameSpeed {
-                dialog_open: 0,
                 paused: false,
                 speed,
             };
         }
-        GameSpeedAction::TogglePause if current_game_speed.dialog_open == 0 => {
+        GameSpeedAction::TogglePause if can_unpause => {
             if current_game_speed.paused {
                 info!("Unpausing");
                 time.unpause();
@@ -104,20 +109,32 @@ fn on_game_speed_changed(
             }
             current_game_speed.paused = !current_game_speed.paused;
         }
-        GameSpeedAction::UiOpen => {
-            current_game_speed.dialog_open += 1;
-            if !time.is_paused() {
-                time.pause();
-            }
-        }
-        GameSpeedAction::UiClose => {
-            current_game_speed.dialog_open -= 1;
-            if current_game_speed.dialog_open == 0 && !current_game_speed.paused {
-                time.set_relative_speed(current_game_speed.speed.get());
-                time.unpause();
-            }
-        }
         _ => (),
+    }
+}
+
+/// Pause the game if someone inserts a [`ForcePause`] component.
+fn on_force_pause_insert(_: On<Insert, ForcePause>, mut time: ResMut<Time<Virtual>>) {
+    if !time.is_paused() {
+        info!("ForcePause");
+        time.pause();
+    }
+}
+
+/// Unpause the game if the last [`ForcePause`] component is removed.
+fn on_force_pause_remove(
+    _: On<Remove, ForcePause>,
+    mut time: ResMut<Time<Virtual>>,
+    q: Query<(), With<ForcePause>>,
+    current_game_speed: ResMut<CurrentGameSpeed>,
+) {
+    // Check for count 1, because we're called just before the component is removed.
+    if q.count() == 1 {
+        info!("Un-ForcePause");
+        if !current_game_speed.paused {
+            time.set_relative_speed(current_game_speed.speed.get());
+            time.unpause();
+        }
     }
 }
 
