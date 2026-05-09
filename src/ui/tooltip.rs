@@ -1,21 +1,36 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
+use bevy::ui::UiSystems;
 use bevy::window::PrimaryWindow;
 
-use crate::constants::ui::*;
-use crate::text::TextKey;
-use crate::ui::FontHandle;
+use crate::{constants::ui::*, state::GameState, text::TextKey, ui::FontHandle};
+
+pub fn plugin(app: &mut App) {
+    app.add_systems(OnExit(GameState::Load), setup)
+        .add_systems(
+            Update,
+            listen_tooltip_timers.run_if(not(in_state(GameState::Load))),
+        )
+        .add_systems(
+            PostUpdate,
+            override_tooltip_position
+                .run_if(not(in_state(GameState::Load)))
+                .after(UiSystems::Layout),
+        );
+}
 
 #[derive(Resource, Clone)]
 pub struct TooltipSetting {
     delay: Duration,
+    font_size: f32,
 }
 
 impl Default for TooltipSetting {
     fn default() -> Self {
         Self {
             delay: Duration::from_millis(200),
+            font_size: SMALL,
         }
     }
 }
@@ -36,18 +51,21 @@ impl Default for TooltipInner {
 #[derive(Component, Default, Clone)]
 pub struct Tooltip {
     content: TooltipInner,
+    font_size: Option<f32>,
 }
 
 impl Tooltip {
     pub fn new_text(text: impl Into<TextKey>) -> Self {
         Self {
             content: TooltipInner::TextKeys(vec![(text.into(), TEXT.into())]),
+            ..Default::default()
         }
     }
 
     pub fn new_text_color(text: impl Into<TextKey>, color: impl Into<Color>) -> Self {
         Self {
             content: TooltipInner::TextKeys(vec![(text.into(), TextColor::from(color.into()))]),
+            ..Default::default()
         }
     }
 
@@ -59,6 +77,7 @@ impl Tooltip {
                     .map(|text| (text.into(), TEXT.into()))
                     .collect(),
             ),
+            ..Default::default()
         }
     }
 
@@ -73,18 +92,21 @@ impl Tooltip {
                     .map(|(text, color)| (text.into(), TextColor::from(color.into())))
                     .collect(),
             ),
+            ..Default::default()
         }
     }
 
     pub fn new_static_text(text: impl Into<Text>) -> Self {
         Self {
             content: TooltipInner::StaticTexts(vec![(text.into(), TEXT.into())]),
+            ..Default::default()
         }
     }
 
     pub fn new_static_text_color(text: impl Into<Text>, color: impl Into<Color>) -> Self {
         Self {
             content: TooltipInner::StaticTexts(vec![(text.into(), TextColor::from(color.into()))]),
+            ..Default::default()
         }
     }
 
@@ -96,6 +118,7 @@ impl Tooltip {
                     .map(|text| (text.into(), TEXT.into()))
                     .collect(),
             ),
+            ..Default::default()
         }
     }
 
@@ -110,12 +133,21 @@ impl Tooltip {
                     .map(|(text, color)| (text.into(), TextColor::from(color.into())))
                     .collect(),
             ),
+            ..Default::default()
         }
     }
 
     pub fn new_custom(entity: Entity) -> Self {
         Self {
             content: TooltipInner::Custom(entity),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_font_size(self, font_size: f32) -> Self {
+        Self {
+            font_size: Some(font_size),
+            ..self
         }
     }
 }
@@ -134,7 +166,7 @@ pub struct TooltipTimer(Timer);
 #[derive(Resource)]
 struct TooltipPlaceholder(Entity);
 
-pub fn setup_observe_tooltips(mut commands: Commands) {
+fn setup(mut commands: Commands) {
     // hide the tooltip custom entity when it is not open.
     let placeholder = commands.spawn(Visibility::Hidden).id();
     commands.insert_resource(TooltipPlaceholder(placeholder));
@@ -147,11 +179,12 @@ pub fn setup_observe_tooltips(mut commands: Commands) {
 
 const TOOLTIP_Y: f32 = 5.0;
 
-pub fn listen_tooltip_timers(
+fn listen_tooltip_timers(
     mut commands: Commands,
     mut tooltip_timers: Query<(Entity, &mut TooltipTimer)>,
     time: Res<Time<Real>>,
     tooltips: Query<&Tooltip>,
+    tooltip_setting: Res<TooltipSetting>,
     font_handle: Res<FontHandle>,
 ) {
     for (tooltip_entity, mut timer) in &mut tooltip_timers {
@@ -180,6 +213,7 @@ pub fn listen_tooltip_timers(
                 BorderColor::all(BORDER),
             ));
             let box_entity = entity_commands.id();
+            let font_size = tooltip.font_size.unwrap_or(tooltip_setting.font_size);
 
             let inner_entity = match &tooltip.content {
                 TooltipInner::TextKeys(text_colors) => entity_commands
@@ -196,7 +230,7 @@ pub fn listen_tooltip_timers(
                             parent.spawn((
                                 text.clone(),
                                 *color,
-                                TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
+                                TextFont::from_font_size(font_size).with_font(font_handle.clone()),
                             ));
                         }
                     })
@@ -215,7 +249,7 @@ pub fn listen_tooltip_timers(
                             parent.spawn((
                                 text.clone(),
                                 *color,
-                                TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
+                                TextFont::from_font_size(font_size).with_font(font_handle.clone()),
                             ));
                         }
                     })

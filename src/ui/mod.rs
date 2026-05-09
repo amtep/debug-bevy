@@ -23,10 +23,7 @@ use crate::{
         dialog::Dialog,
         main_menu::setup_main_menu,
         menu::{override_menu_position, setup_observe_menus},
-        tooltip::{
-            Tooltip, TooltipOpen, listen_tooltip_timers, override_tooltip_position,
-            setup_observe_tooltips,
-        },
+        tooltip::{Tooltip, TooltipOpen},
     },
 };
 
@@ -42,67 +39,65 @@ mod scroll;
 mod tooltip;
 
 pub fn plugin(app: &mut App) {
-    app.add_plugins((regions::plugin, dialog::plugin, esc_menu::plugin))
-        .add_systems(OnEnter(GameState::Load), setup_fonts)
-        .init_resource::<UiScale>()
-        .init_resource::<InputFocus>()
-        .add_systems(
-            OnExit(GameState::Load),
-            (
-                setup_observe_buttons,
-                setup_observe_menus,
-                setup_observe_tooltips,
-            ),
-        )
-        .add_systems(Update, listen_tooltip_timers)
-        .add_systems(Update, read_window_resized_messages)
-        .add_systems(OnEnter(GameState::MainMenu), setup_main_menu)
-        .add_systems(
-            OnEnter(GameState::Main),
-            (setup_map, regions::setup, setup_intro)
-                .chain()
-                .in_set(MainSetupSet::Ui),
-        )
-        .add_systems(
-            Update,
-            regions::update_regional_suspicion.run_if(in_state(GameState::Main)),
-        )
-        .add_systems(
-            Update,
-            update_game_date
-                .run_if(resource_exists_and_changed::<GameDate>.and(in_state(GameState::Main))),
-        )
-        .add_systems(
-            Update,
-            update_funds
-                .run_if(resource_exists_and_changed::<Funds>.and(in_state(GameState::Main))),
-        )
-        .add_systems(
-            Update,
-            update_suspicion.run_if(
-                (resource_exists_and_changed::<IntelligenceSuspicion>
-                    .or(resource_exists_and_changed::<ScientificSuspicion>))
-                .and(in_state(GameState::Main)),
-            ),
-        )
-        .add_systems(
-            Update,
-            update_game_speed_state.run_if(
-                resource_exists_and_changed::<CurrentGameSpeed>.and(in_state(GameState::Main)),
-            ),
-        )
-        .add_systems(
-            PostUpdate,
-            update_meter_display::<u32>
-                .run_if(in_state(GameState::Main))
-                .before(UiSystems::Prepare),
-        )
-        .add_systems(
-            PostUpdate,
-            (override_tooltip_position, override_menu_position)
-                .run_if(not(in_state(GameState::Load)))
-                .after(UiSystems::Layout),
-        );
+    app.add_plugins((
+        regions::plugin,
+        dialog::plugin,
+        esc_menu::plugin,
+        tooltip::plugin,
+    ))
+    .add_systems(OnEnter(GameState::Load), setup_fonts)
+    .init_resource::<UiScale>()
+    .init_resource::<InputFocus>()
+    .add_systems(
+        OnExit(GameState::Load),
+        (setup_observe_buttons, setup_observe_menus),
+    )
+    .add_systems(Update, read_window_resized_messages)
+    .add_systems(OnEnter(GameState::MainMenu), setup_main_menu)
+    .add_systems(
+        OnEnter(GameState::Main),
+        (setup_map, regions::setup, setup_intro)
+            .chain()
+            .in_set(MainSetupSet::Ui),
+    )
+    .add_systems(
+        Update,
+        regions::update_regional_suspicion.run_if(in_state(GameState::Main)),
+    )
+    .add_systems(
+        Update,
+        update_game_date
+            .run_if(resource_exists_and_changed::<GameDate>.and(in_state(GameState::Main))),
+    )
+    .add_systems(
+        Update,
+        update_funds.run_if(resource_exists_and_changed::<Funds>.and(in_state(GameState::Main))),
+    )
+    .add_systems(
+        Update,
+        update_suspicion.run_if(
+            (resource_exists_and_changed::<IntelligenceSuspicion>
+                .or(resource_exists_and_changed::<ScientificSuspicion>))
+            .and(in_state(GameState::Main)),
+        ),
+    )
+    .add_systems(
+        Update,
+        update_game_speed_state
+            .run_if(resource_exists_and_changed::<CurrentGameSpeed>.and(in_state(GameState::Main))),
+    )
+    .add_systems(
+        PostUpdate,
+        update_meter_display::<u32>
+            .run_if(in_state(GameState::Main))
+            .before(UiSystems::Prepare),
+    )
+    .add_systems(
+        PostUpdate,
+        override_menu_position
+            .run_if(not(in_state(GameState::Load)))
+            .after(UiSystems::Layout),
+    );
 }
 
 #[derive(Component)]
@@ -403,7 +398,7 @@ fn setup_map(
                     },
                     BackgroundColor::from(MENU_BACKGROUND),
                     BorderColor::all(BORDER),
-                    Tooltip::new_static_text(cult_name.0.clone()),
+                    Tooltip::new_static_text(cult_name.0.clone()).with_font_size(LARGE),
                 ))
                 .with_child(ImageNode {
                     image: asset_server.load(format!(
