@@ -236,7 +236,6 @@ fn recruitment(
                     progress.0 = 0;
                 }
             }
-            debug!("Making {new_minions} new minions");
 
             for e in children {
                 if let Ok((_, Follower::Minion, count)) = followers.get(*e) {
