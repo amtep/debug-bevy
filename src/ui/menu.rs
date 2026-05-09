@@ -258,7 +258,7 @@ fn on_menu_add(
                                 TextLayout::new_with_no_wrap(),
                                 )).observe(move |click: On<Pointer<Click>>,
                                                      mut commands: Commands,
-                                                     has_disableds: Query<Has<InteractionDisabled>>| {
+                                                     has_disableds: Query<Has<InteractionDisabled>, With<Button>>| {
                                             if click.button == PointerButton::Primary && !has_disableds.get(click.entity).unwrap() {
                                                 commands.entity(menu_entity).insert(MenuClicked(text.clone()));
                                                 commands.entity(menu_entity).despawn();

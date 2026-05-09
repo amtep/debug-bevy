@@ -371,7 +371,7 @@ fn on_dialog_add(
                 confirm_button.observe(
                     move |click: On<Pointer<Click>>,
                           mut commands: Commands,
-                          has_disableds: Query<Has<InteractionDisabled>>| {
+                          has_disableds: Query<Has<InteractionDisabled>, With<Button>>| {
                         if click.button == PointerButton::Primary
                             && !has_disableds.get(click.entity).unwrap()
                         {
@@ -414,7 +414,7 @@ fn listen_dialog_confirm(
     mut commands: Commands,
     keys: Res<ButtonInput<KeyCode>>,
     dialog_roots: Query<(Entity, &ZIndex, &DialogRoot, &ConfirmButton)>,
-    has_disableds: Query<Has<InteractionDisabled>>,
+    has_disableds: Query<Has<InteractionDisabled>, With<Button>>,
 ) {
     if keys.any_just_pressed([KeyCode::Enter, KeyCode::Backspace]) && dialog_roots.count() > 0 {
         #[allow(clippy::cast_possible_truncation)]
