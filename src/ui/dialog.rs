@@ -66,7 +66,6 @@ fn setup_observe_dialogs(mut commands: Commands) {
         GlobalZIndex(ZINDEX_DIALOG),
         FocusPolicy::Block,
         DialogBackground(0),
-        DespawnOnExit(GameState::Main),
     ));
     commands.add_observer(on_dialog_root_add);
     commands.add_observer(on_dialog_root_remove);
@@ -178,6 +177,7 @@ fn on_dialog_add(
             },
             ZIndex(index),
             Pickable::IGNORE,
+            DespawnOnExit(GameState::Main),
         ))
         .observe(
             |press: On<Pointer<Press>>, mut dialog_roots: Query<&mut ZIndex, With<DialogRoot>>| {
