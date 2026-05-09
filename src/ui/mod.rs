@@ -45,11 +45,10 @@ pub fn plugin(app: &mut App) {
         tooltip::plugin,
         menu::plugin,
     ))
-    .add_systems(OnEnter(GameState::Load), setup_fonts)
     .init_resource::<UiScale>()
     .init_resource::<InputFocus>()
+    .add_systems(OnEnter(GameState::Load), setup_fonts)
     .add_systems(OnExit(GameState::Load), setup_observe_buttons)
-    .add_systems(Update, read_window_resized_messages)
     .add_systems(OnEnter(GameState::MainMenu), setup_main_menu)
     .add_systems(
         OnEnter(GameState::Main),
@@ -57,6 +56,7 @@ pub fn plugin(app: &mut App) {
             .chain()
             .in_set(MainSetupSet::Ui),
     )
+    .add_systems(Update, read_window_resized_messages)
     .add_systems(
         Update,
         regions::update_regional_suspicion.run_if(in_state(GameState::Main)),

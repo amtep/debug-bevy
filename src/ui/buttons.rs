@@ -27,8 +27,8 @@ pub fn setup_observe_buttons(mut commands: Commands) {
                 if let Some(mut border) = border {
                     border.set_all(BORDER_HIGHLIGHT);
                 }
+                input_focus.set(over.entity);
             }
-            input_focus.set(over.entity);
         },
     );
     commands.add_observer(
@@ -50,8 +50,8 @@ pub fn setup_observe_buttons(mut commands: Commands) {
                 if let Some(mut border) = border {
                     border.set_all(BORDER);
                 }
+                input_focus.clear();
             }
-            input_focus.clear();
         },
     );
     commands.add_observer(

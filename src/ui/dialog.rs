@@ -1,7 +1,9 @@
 use bevy::{
+    input_focus::InputFocus,
     prelude::*,
     ui::{FocusPolicy, InteractionDisabled},
 };
+use bevy_ui_text_input::TextInputNode;
 
 use crate::{
     constants::ui::*,
@@ -415,8 +417,16 @@ fn listen_dialog_confirm(
     keys: Res<ButtonInput<KeyCode>>,
     dialog_roots: Query<(Entity, &ZIndex, &DialogRoot, &ConfirmButton)>,
     has_disableds: Query<Has<InteractionDisabled>, With<Button>>,
+    input_focus: Res<InputFocus>,
+    text_inputs: Query<(), With<TextInputNode>>,
 ) {
-    if keys.any_just_pressed([KeyCode::Enter, KeyCode::Backspace]) && dialog_roots.count() > 0 {
+    if keys.any_just_pressed([KeyCode::Enter, KeyCode::Backspace]) && !dialog_roots.is_empty() {
+        if let Some(focus) = &input_focus.0
+            && text_inputs.contains(*focus)
+        {
+            return;
+        }
+
         #[allow(clippy::cast_possible_truncation)]
         let top = (dialog_roots.count() - 1) as i32;
         let (dialog_root, dialog_entity, confirm_button) = dialog_roots
