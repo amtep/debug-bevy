@@ -88,6 +88,25 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
         .id();
 
     commands
+        .spawn((ChildOf(menu), button("esc-menu-button-resume")))
+        .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
+            if click.button == PointerButton::Primary {
+                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
+                commands.entity(root).despawn();
+            }
+        });
+
+    commands
+        .spawn((ChildOf(menu), button("esc-menu-button-save-game")))
+        .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
+            if click.button == PointerButton::Primary {
+                commands.trigger(SaveDirective);
+                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
+                commands.entity(root).despawn();
+            }
+        });
+
+    commands
         .spawn((ChildOf(menu), button("esc-menu-button-to-main-menu")))
         .observe(
             move |click: On<Pointer<Click>>,
@@ -103,17 +122,7 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
         );
 
     commands
-        .spawn((ChildOf(menu), button("esc-menu-button-save-game")))
-        .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
-            if click.button == PointerButton::Primary {
-                commands.trigger(SaveDirective);
-                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
-                commands.entity(root).despawn();
-            }
-        });
-
-    commands
-        .spawn((ChildOf(menu), button("esc-menu-button-save-and-exit")))
+        .spawn((ChildOf(menu), button("esc-menu-button-quit")))
         .observe(
             move |click: On<Pointer<Click>>,
                   mut commands: Commands,
@@ -124,13 +133,4 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
                 }
             },
         );
-
-    commands
-        .spawn((ChildOf(menu), button("esc-menu-button-resume")))
-        .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
-            if click.button == PointerButton::Primary {
-                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
-                commands.entity(root).despawn();
-            }
-        });
 }
