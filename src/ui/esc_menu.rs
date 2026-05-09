@@ -87,20 +87,6 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
         ))
         .id();
 
-    commands.spawn((
-        ChildOf(menu),
-        Node {
-            width: percent(100),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            ..default()
-        },
-        children![(
-            TextKey::new("esc-menu-title"),
-            TextFont::from_font_size(40.0).with_font(font_handle.clone()),
-        )],
-    ));
-
     commands
         .spawn((ChildOf(menu), button("esc-menu-button-to-main-menu")))
         .observe(
