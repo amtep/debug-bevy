@@ -21,38 +21,39 @@ impl Default for TooltipSetting {
 }
 
 #[derive(Clone)]
-pub enum TooltipContent {
-    Texts(Vec<(TextKey, TextColor)>),
+enum TooltipInner {
+    StaticTexts(Vec<(Text, TextColor)>),
+    TextKeys(Vec<(TextKey, TextColor)>),
     Custom(Entity),
 }
 
-impl Default for TooltipContent {
+impl Default for TooltipInner {
     fn default() -> Self {
-        Self::Texts(vec![(TextKey::new("debug-tooltip"), TEXT.into())])
+        Self::TextKeys(vec![(TextKey::new("debug-tooltip"), TEXT.into())])
     }
 }
 
 #[derive(Component, Default, Clone)]
 pub struct Tooltip {
-    content: TooltipContent,
+    content: TooltipInner,
 }
 
 impl Tooltip {
     pub fn new_text(text: impl Into<TextKey>) -> Self {
         Self {
-            content: TooltipContent::Texts(vec![(text.into(), TEXT.into())]),
+            content: TooltipInner::TextKeys(vec![(text.into(), TEXT.into())]),
         }
     }
 
     pub fn new_text_color(text: impl Into<TextKey>, color: impl Into<Color>) -> Self {
         Self {
-            content: TooltipContent::Texts(vec![(text.into(), TextColor::from(color.into()))]),
+            content: TooltipInner::TextKeys(vec![(text.into(), TextColor::from(color.into()))]),
         }
     }
 
     pub fn new_texts(texts: impl IntoIterator<Item = impl Into<TextKey>>) -> Self {
         Self {
-            content: TooltipContent::Texts(
+            content: TooltipInner::TextKeys(
                 texts
                     .into_iter()
                     .map(|text| (text.into(), TEXT.into()))
@@ -66,7 +67,44 @@ impl Tooltip {
         text_colors: impl IntoIterator<Item = (impl Into<TextKey>, impl Into<Color>)>,
     ) -> Self {
         Self {
-            content: TooltipContent::Texts(
+            content: TooltipInner::TextKeys(
+                text_colors
+                    .into_iter()
+                    .map(|(text, color)| (text.into(), TextColor::from(color.into())))
+                    .collect(),
+            ),
+        }
+    }
+
+    pub fn new_static_text(text: impl Into<Text>) -> Self {
+        Self {
+            content: TooltipInner::StaticTexts(vec![(text.into(), TEXT.into())]),
+        }
+    }
+
+    pub fn new_static_text_color(text: impl Into<Text>, color: impl Into<Color>) -> Self {
+        Self {
+            content: TooltipInner::StaticTexts(vec![(text.into(), TextColor::from(color.into()))]),
+        }
+    }
+
+    pub fn new_static_texts(texts: impl IntoIterator<Item = impl Into<Text>>) -> Self {
+        Self {
+            content: TooltipInner::StaticTexts(
+                texts
+                    .into_iter()
+                    .map(|text| (text.into(), TEXT.into()))
+                    .collect(),
+            ),
+        }
+    }
+
+    #[expect(dead_code)]
+    pub fn new_static_text_colors(
+        text_colors: impl IntoIterator<Item = (impl Into<Text>, impl Into<Color>)>,
+    ) -> Self {
+        Self {
+            content: TooltipInner::StaticTexts(
                 text_colors
                     .into_iter()
                     .map(|(text, color)| (text.into(), TextColor::from(color.into())))
@@ -77,17 +115,16 @@ impl Tooltip {
 
     pub fn new_custom(entity: Entity) -> Self {
         Self {
-            content: TooltipContent::Custom(entity),
+            content: TooltipInner::Custom(entity),
         }
     }
 }
 
+/// Tooltip box and inner content entities.
 #[derive(Component, Clone, Copy)]
-pub struct TooltipOpen(pub Entity);
+pub struct TooltipOpen(pub Entity, pub Entity);
 
-#[derive(Component, Clone, Copy)]
-pub struct TooltipInner(pub Entity);
-
+/// Tooltip box that is opened upon activation.
 #[derive(Component, Clone, Copy)]
 pub struct TooltipBox;
 
@@ -144,41 +181,54 @@ pub fn listen_tooltip_timers(
             ));
             let box_entity = entity_commands.id();
 
-            match &tooltip.content {
-                TooltipContent::Texts(text_colors) => {
-                    let texts = entity_commands
-                        .commands()
-                        .spawn((
-                            ChildOf(box_entity),
-                            Node {
-                                flex_direction: FlexDirection::Column,
-                                ..default()
-                            },
-                        ))
-                        .with_children(|parent| {
-                            for (text, color) in text_colors {
-                                parent.spawn((
-                                    text.clone(),
-                                    *color,
-                                    TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
-                                ));
-                            }
-                        })
-                        .id();
-
-                    commands.entity(tooltip_entity).insert(TooltipInner(texts));
-                }
-                TooltipContent::Custom(entity) => {
+            let inner_entity = match &tooltip.content {
+                TooltipInner::TextKeys(text_colors) => entity_commands
+                    .commands()
+                    .spawn((
+                        ChildOf(box_entity),
+                        Node {
+                            flex_direction: FlexDirection::Column,
+                            ..default()
+                        },
+                    ))
+                    .with_children(|parent| {
+                        for (text, color) in text_colors {
+                            parent.spawn((
+                                text.clone(),
+                                *color,
+                                TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
+                            ));
+                        }
+                    })
+                    .id(),
+                TooltipInner::StaticTexts(text_colors) => entity_commands
+                    .commands()
+                    .spawn((
+                        ChildOf(box_entity),
+                        Node {
+                            flex_direction: FlexDirection::Column,
+                            ..default()
+                        },
+                    ))
+                    .with_children(|parent| {
+                        for (text, color) in text_colors {
+                            parent.spawn((
+                                text.clone(),
+                                *color,
+                                TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
+                            ));
+                        }
+                    })
+                    .id(),
+                TooltipInner::Custom(entity) => {
                     entity_commands.add_child(*entity);
-                    commands
-                        .entity(tooltip_entity)
-                        .insert(TooltipInner(*entity));
+                    *entity
                 }
-            }
+            };
 
             commands
                 .entity(tooltip_entity)
-                .insert(TooltipOpen(box_entity));
+                .insert(TooltipOpen(box_entity, inner_entity));
         }
     }
 }
@@ -189,7 +239,7 @@ fn on_tooltip_add(
     tooltips: Query<&Tooltip>,
     placeholder: Res<TooltipPlaceholder>,
 ) {
-    if let TooltipContent::Custom(entity) = tooltips.get(add.entity).unwrap().content {
+    if let TooltipInner::Custom(entity) = tooltips.get(add.entity).unwrap().content {
         commands.entity(placeholder.0).add_child(entity);
     }
 }
@@ -219,7 +269,7 @@ fn on_tooltip_out(
     if let Ok(tooltip) = tooltips.get(out.entity)
         && let Ok(tooltip_box) = tooltip_opens.get(out.entity).map(|open| open.0)
     {
-        if let TooltipContent::Custom(entity) = tooltip.content {
+        if let TooltipInner::Custom(entity) = tooltip.content {
             commands.entity(placeholder.0).add_child(entity);
         }
         commands.entity(tooltip_box).try_despawn();
@@ -227,13 +277,13 @@ fn on_tooltip_out(
 
     commands
         .entity(out.entity)
-        .try_remove::<(TooltipTimer, TooltipOpen, TooltipInner)>();
+        .try_remove::<(TooltipTimer, TooltipOpen)>();
 }
 
 fn on_tooltip_remove(remove: On<Remove, Tooltip>, mut commands: Commands) {
     commands
         .entity(remove.entity)
-        .try_remove::<(TooltipTimer, TooltipOpen, TooltipInner)>();
+        .try_remove::<(TooltipTimer, TooltipOpen)>();
 }
 
 pub fn override_tooltip_position(

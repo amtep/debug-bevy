@@ -24,7 +24,7 @@ use crate::{
         main_menu::setup_main_menu,
         menu::{override_menu_position, setup_observe_menus},
         tooltip::{
-            Tooltip, TooltipInner, listen_tooltip_timers, override_tooltip_position,
+            Tooltip, TooltipOpen, listen_tooltip_timers, override_tooltip_position,
             setup_observe_tooltips,
         },
     },
@@ -182,7 +182,6 @@ fn read_window_resized_messages(
 
 fn setup_map(
     mut commands: Commands,
-    font_handle: Res<FontHandle>,
     mono_font_handle: Res<MonoFontHandle>,
     asset_server: Res<AssetServer>,
     game_date: Res<GameDate>,
@@ -326,17 +325,6 @@ fn setup_map(
                         ..default()
                     });
                     parent
-                        .spawn(Node {
-                            align_self: AlignSelf::Center,
-                            margin: UiRect::right(px(10)),
-                            ..default()
-                        })
-                        .with_child((
-                            Text::new(&cult_name.0),
-                            TextColor::from(TEXT),
-                            TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
-                        ));
-                    parent
                         .spawn((
                             Button,
                             GameSpeedAction::TogglePause,
@@ -415,6 +403,7 @@ fn setup_map(
                     },
                     BackgroundColor::from(MENU_BACKGROUND),
                     BorderColor::all(BORDER),
+                    Tooltip::new_static_text(cult_name.0.clone()),
                 ))
                 .with_child(ImageNode {
                     image: asset_server.load(format!(
@@ -428,15 +417,14 @@ fn setup_map(
 }
 
 fn on_funds_tooltip_inner_add(
-    inner: On<Add, TooltipInner>,
+    open: On<Add, TooltipOpen>,
     mut commands: Commands,
-    tooltip_inners: Query<(&ChildOf, &TooltipInner)>,
+    tooltip_opens: Query<&TooltipOpen>,
     incomes: Query<&Income>,
     expenses: Query<&Expense>,
     font_handle: Res<FontHandle>,
 ) {
-    let (tooltip_box, tooltip_inner) = tooltip_inners.get(inner.entity).unwrap();
-    let tooltip_inner = tooltip_inner.0;
+    let TooltipOpen(tooltip_box, tooltip_inner) = *tooltip_opens.get(open.entity).unwrap();
     update_funds_tooltip(
         tooltip_inner,
         commands.reborrow(),
@@ -457,7 +445,7 @@ fn on_funds_tooltip_inner_add(
         .id();
 
     // observer despawn with the tooltip box upon tooltip close.
-    commands.entity(tooltip_box.0).add_child(observer);
+    commands.entity(tooltip_box).add_child(observer);
 }
 
 fn update_game_date(
