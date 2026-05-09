@@ -1,10 +1,24 @@
-use bevy::{prelude::*, ui::InteractionDisabled, window::PrimaryWindow};
+use bevy::{
+    prelude::*,
+    ui::{InteractionDisabled, UiSystems},
+    window::PrimaryWindow,
+};
 
 use crate::{
     constants::ui::*,
+    state::GameState,
     text::TextKey,
     ui::{FontHandle, tooltip::Tooltip},
 };
+
+pub fn plugin(app: &mut App) {
+    app.add_systems(OnExit(GameState::Load), setup).add_systems(
+        PostUpdate,
+        override_menu_position
+            .run_if(not(in_state(GameState::Load)))
+            .after(UiSystems::Layout),
+    );
+}
 
 const MENU_Y: f32 = 5.0;
 
@@ -96,7 +110,7 @@ struct MenuItemUi;
 #[derive(Component)]
 pub struct MenuClicked(pub String);
 
-pub fn setup_observe_menus(mut commands: Commands) {
+pub fn setup(mut commands: Commands) {
     commands.add_observer(on_menu_add);
 }
 

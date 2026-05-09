@@ -6,6 +6,8 @@ use bevy::window::PrimaryWindow;
 
 use crate::{constants::ui::*, state::GameState, text::TextKey, ui::FontHandle};
 
+const TOOLTIP_Y: f32 = 5.0;
+
 pub fn plugin(app: &mut App) {
     app.add_systems(OnExit(GameState::Load), setup)
         .add_systems(
@@ -103,6 +105,7 @@ impl Tooltip {
         }
     }
 
+    #[expect(dead_code)]
     pub fn new_static_text_color(text: impl Into<Text>, color: impl Into<Color>) -> Self {
         Self {
             content: TooltipInner::StaticTexts(vec![(text.into(), TextColor::from(color.into()))]),
@@ -110,6 +113,7 @@ impl Tooltip {
         }
     }
 
+    #[expect(dead_code)]
     pub fn new_static_texts(texts: impl IntoIterator<Item = impl Into<Text>>) -> Self {
         Self {
             content: TooltipInner::StaticTexts(
@@ -176,8 +180,6 @@ fn setup(mut commands: Commands) {
     commands.add_observer(on_tooltip_over);
     commands.add_observer(on_tooltip_out);
 }
-
-const TOOLTIP_Y: f32 = 5.0;
 
 fn listen_tooltip_timers(
     mut commands: Commands,

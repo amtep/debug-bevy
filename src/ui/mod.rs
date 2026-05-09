@@ -22,7 +22,6 @@ use crate::{
         buttons::setup_observe_buttons,
         dialog::Dialog,
         main_menu::setup_main_menu,
-        menu::{override_menu_position, setup_observe_menus},
         tooltip::{Tooltip, TooltipOpen},
     },
 };
@@ -44,14 +43,12 @@ pub fn plugin(app: &mut App) {
         dialog::plugin,
         esc_menu::plugin,
         tooltip::plugin,
+        menu::plugin,
     ))
     .add_systems(OnEnter(GameState::Load), setup_fonts)
     .init_resource::<UiScale>()
     .init_resource::<InputFocus>()
-    .add_systems(
-        OnExit(GameState::Load),
-        (setup_observe_buttons, setup_observe_menus),
-    )
+    .add_systems(OnExit(GameState::Load), setup_observe_buttons)
     .add_systems(Update, read_window_resized_messages)
     .add_systems(OnEnter(GameState::MainMenu), setup_main_menu)
     .add_systems(
@@ -91,12 +88,6 @@ pub fn plugin(app: &mut App) {
         update_meter_display::<u32>
             .run_if(in_state(GameState::Main))
             .before(UiSystems::Prepare),
-    )
-    .add_systems(
-        PostUpdate,
-        override_menu_position
-            .run_if(not(in_state(GameState::Load)))
-            .after(UiSystems::Layout),
     );
 }
 
