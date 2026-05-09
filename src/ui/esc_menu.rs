@@ -54,7 +54,7 @@ fn open_esc_menu(
             BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(OVERLAY_ALPHA)),
             children![
                 (
-                    TextFont::from_font_size(40.0).with_font(font_handle.clone()),
+                    TextFont::from_font_size(32.0).with_font(font_handle.clone()),
                     TextKey::new(key),
                 ),
                 (
@@ -85,7 +85,7 @@ fn open_esc_menu(
         .spawn((
             ChildOf(root),
             Node {
-                width: percent(35),
+                width: percent(30),
                 flex_direction: FlexDirection::Column,
                 row_gap: px(20),
                 border: px(6).all(),

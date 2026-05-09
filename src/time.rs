@@ -2,12 +2,21 @@ use bevy::prelude::*;
 use chrono::{Days, NaiveDate};
 use serde::{Deserialize, Serialize};
 
-use crate::state::{GameState, MainSetupSet};
+use crate::{
+    main_menu::NewGame,
+    state::{GameState, MainSetupSet},
+};
 
 pub fn plugin(app: &mut App) {
     app.add_systems(
         OnEnter(GameState::Main),
         setup.in_set(MainSetupSet::Default),
+    )
+    .add_systems(
+        OnEnter(GameState::Main),
+        new_game
+            .run_if(resource_exists::<NewGame>)
+            .in_set(MainSetupSet::Default),
     )
     .add_systems(
         FixedPreUpdate,
@@ -36,11 +45,16 @@ impl Default for GameDate {
     }
 }
 
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, mut time: ResMut<Time<Virtual>>) {
+    time.set_relative_speed(1.0);
+    time.unpause();
     commands.insert_resource(Time::<Fixed>::from_seconds(1.0));
-    commands.insert_resource(GameDate::default());
     commands.insert_resource(CurrentGameSpeed::default());
     commands.add_observer(on_game_speed_changed);
+}
+
+fn new_game(mut commands: Commands) {
+    commands.init_resource::<GameDate>();
 }
 
 #[derive(Resource, Default)]
