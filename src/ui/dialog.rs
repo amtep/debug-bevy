@@ -415,7 +415,7 @@ fn listen_dialog_confirm(
     dialog_roots: Query<(Entity, &ZIndex, &DialogRoot, &ConfirmButton)>,
     has_disableds: Query<Has<InteractionDisabled>>,
 ) {
-    if keys.any_just_pressed([KeyCode::Enter, KeyCode::Escape]) && dialog_roots.count() > 0 {
+    if keys.any_just_pressed([KeyCode::Enter, KeyCode::Backspace]) && dialog_roots.count() > 0 {
         #[allow(clippy::cast_possible_truncation)]
         let top = (dialog_roots.count() - 1) as i32;
         let (dialog_root, dialog_entity, confirm_button) = dialog_roots

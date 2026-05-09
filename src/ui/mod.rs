@@ -128,6 +128,9 @@ struct UnicodeFontHandle(pub Handle<Font>);
 #[derive(Resource, Deref)]
 struct MonoFontHandle(pub Handle<Font>);
 
+#[derive(Resource, Deref)]
+struct EmojiFontHandle(pub Handle<Font>);
+
 #[derive(Component)]
 struct MapUi;
 
@@ -164,6 +167,7 @@ fn setup_fonts(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(DisplayFontHandle(asset_server.load(FONT_DISPLAY_PATH)));
     commands.insert_resource(UnicodeFontHandle(asset_server.load(UNICODE_FONT_PATH)));
     commands.insert_resource(MonoFontHandle(asset_server.load(MONO_FONT_PATH)));
+    commands.insert_resource(EmojiFontHandle(asset_server.load(EMOJI_FONT_PATH)));
 }
 
 fn read_window_resized_messages(

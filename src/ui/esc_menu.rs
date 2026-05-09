@@ -1,8 +1,12 @@
 use bevy::{prelude::*, ui::FocusPolicy};
 
 use crate::{
-    constants::ui::*, save_load::SaveDirective, state::GameState, text::TextKey, time::ForcePause,
-    ui::FontHandle,
+    constants::ui::*,
+    save_load::SaveDirective,
+    state::GameState,
+    text::TextKey,
+    time::ForcePause,
+    ui::{EmojiFontHandle, FontHandle},
 };
 
 pub fn plugin(app: &mut App) {
@@ -16,19 +20,24 @@ fn listen_esc_key(
     mut commands: Commands,
     keys: Res<ButtonInput<KeyCode>>,
     font_handle: Res<FontHandle>,
+    emoji_font_handle: Res<EmojiFontHandle>,
     menu: Option<Single<Entity, With<EscMenuRoot>>>,
 ) {
     if keys.just_pressed(KeyCode::Escape) {
         if let Some(menu) = menu {
             commands.entity(*menu).despawn();
         } else {
-            open_esc_menu(commands.reborrow(), font_handle);
+            open_esc_menu(commands.reborrow(), font_handle, emoji_font_handle);
         }
     }
 }
 
-fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
-    let button = |key| {
+fn open_esc_menu(
+    mut commands: Commands,
+    font_handle: Res<FontHandle>,
+    emoji_font_handle: Res<EmojiFontHandle>,
+) {
+    let button = |key, is_save| {
         (
             Button,
             Node {
@@ -38,14 +47,21 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
                 border_radius: BorderRadius::all(px(20)),
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
+                column_gap: px(10),
                 ..default()
             },
             BorderColor::all(BORDER),
             BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(OVERLAY_ALPHA)),
-            children![(
-                TextFont::from_font_size(40.0).with_font(font_handle.clone()),
-                TextKey::new(key),
-            )],
+            children![
+                (
+                    TextFont::from_font_size(40.0).with_font(font_handle.clone()),
+                    TextKey::new(key),
+                ),
+                (
+                    TextFont::from_font_size(32.0).with_font(emoji_font_handle.clone()),
+                    Text::new(if is_save { "💾" } else { "" })
+                )
+            ],
         )
     };
     let root = commands
@@ -69,7 +85,7 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
         .spawn((
             ChildOf(root),
             Node {
-                width: percent(30),
+                width: percent(35),
                 flex_direction: FlexDirection::Column,
                 row_gap: px(20),
                 border: px(6).all(),
@@ -82,7 +98,7 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
         .id();
 
     commands
-        .spawn((ChildOf(menu), button("esc-menu-button-resume")))
+        .spawn((ChildOf(menu), button("esc-menu-button-resume", false)))
         .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
             if click.button == PointerButton::Primary {
                 commands.entity(root).despawn();
@@ -90,7 +106,7 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
         });
 
     commands
-        .spawn((ChildOf(menu), button("esc-menu-button-save-game")))
+        .spawn((ChildOf(menu), button("esc-menu-button-save-game", true)))
         .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
             if click.button == PointerButton::Primary {
                 commands.trigger(SaveDirective);
@@ -99,7 +115,7 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
         });
 
     commands
-        .spawn((ChildOf(menu), button("esc-menu-button-to-main-menu")))
+        .spawn((ChildOf(menu), button("esc-menu-button-to-main-menu", true)))
         .observe(
             move |click: On<Pointer<Click>>,
                   mut commands: Commands,
@@ -113,7 +129,7 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
         );
 
     commands
-        .spawn((ChildOf(menu), button("esc-menu-button-quit")))
+        .spawn((ChildOf(menu), button("esc-menu-button-quit", true)))
         .observe(
             move |click: On<Pointer<Click>>,
                   mut commands: Commands,

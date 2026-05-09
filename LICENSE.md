@@ -75,3 +75,13 @@ Copyright 2015 The Courier Prime Project Authors (https://github.com/quoteunquot
 This Font Software is licensed under the SIL Open Font License, Version 1.1 . This license is copied below, and is also available with a FAQ at: https://openfontlicense.org
 
 A copy of the license is provided under [LICENSE.OFL1.1](LICENSE.OFL1.1).
+
+## Noto Emoji font license
+
+Files: `assets/fonts/NotoEmoji-VariableFont_wght.ttf`
+
+Copyright 2013 Google LLC
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1 . This license is copied below, and is also available with a FAQ at: https://openfontlicense.org
+
+A copy of the license is provided under [LICENSE.OFL1.1](LICENSE.OFL1.1).
