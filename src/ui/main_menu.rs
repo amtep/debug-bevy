@@ -38,8 +38,6 @@ pub fn setup_main_menu(
                 padding: UiRect::axes(px(30), px(15)),
                 border: UiRect::all(px(4)),
                 border_radius: BorderRadius::all(px(20)),
-                align_self: AlignSelf::Center,
-                justify_self: JustifySelf::Center,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 ..default()

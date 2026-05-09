@@ -157,7 +157,7 @@ fn on_dialog_add(
     let index = dialog_roots.count() as i32;
     let font = font_handle.clone();
     if dialog.pause {
-        commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogOpen));
+        commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiOpen));
     }
 
     let dialog_root = commands
@@ -349,9 +349,8 @@ fn on_dialog_add(
                             if click.button == PointerButton::Primary {
                                 commands.entity(dialog_root).despawn();
                                 if dialog.pause {
-                                    commands.trigger(GameSpeedChangedEvent(
-                                        GameSpeedAction::DialogClose,
-                                    ));
+                                    commands
+                                        .trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
                                 }
                             }
                         },
@@ -381,8 +380,7 @@ fn on_dialog_add(
                             commands.entity(dialog_entity).insert(DialogConfirmed);
                             commands.entity(dialog_root).despawn();
                             if dialog.pause {
-                                commands
-                                    .trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
+                                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
                             }
                         }
                     },
@@ -444,7 +442,7 @@ fn listen_dialog_confirm(
         commands.entity(dialog_root).despawn();
         let dialog = dialog.get(dialog_entity).unwrap();
         if dialog.pause {
-            commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
+            commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
         }
     }
 }

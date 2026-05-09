@@ -70,8 +70,8 @@ impl GameSpeed {
 pub enum GameSpeedAction {
     SetSpeed(GameSpeed),
     TogglePause,
-    DialogOpen,
-    DialogClose,
+    UiOpen,
+    UiClose,
 }
 
 #[derive(Event)]
@@ -104,13 +104,13 @@ fn on_game_speed_changed(
             }
             current_game_speed.paused = !current_game_speed.paused;
         }
-        GameSpeedAction::DialogOpen => {
+        GameSpeedAction::UiOpen => {
             current_game_speed.dialog_open += 1;
             if !time.is_paused() {
                 time.pause();
             }
         }
-        GameSpeedAction::DialogClose => {
+        GameSpeedAction::UiClose => {
             current_game_speed.dialog_open -= 1;
             if current_game_speed.dialog_open == 0 && !current_game_speed.paused {
                 time.set_relative_speed(current_game_speed.speed.get());

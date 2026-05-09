@@ -60,7 +60,7 @@ pub mod ui {
 
     pub const TOOLTIP_BACKGROUND: Srgba = DARK_GREY;
 
-    pub const OVERLAY_ALPHA: f32 = 0.75;
+    pub const OVERLAY_ALPHA: f32 = 0.8;
 
     pub const DARK_OVERLAY: Srgba = Srgba {
         alpha: OVERLAY_ALPHA,

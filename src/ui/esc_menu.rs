@@ -1,7 +1,7 @@
 use bevy::{prelude::*, ui::FocusPolicy};
 
 use crate::{
-    constants::ui::{BLACK, BORDER, BUTTON_BACKGROUND, ZINDEX_ESC_MENU},
+    constants::ui::*,
     save_load::SaveDirective,
     state::GameState,
     text::TextKey,
@@ -20,14 +20,14 @@ fn listen_esc_key(
     mut commands: Commands,
     keys: Res<ButtonInput<KeyCode>>,
     font_handle: Res<FontHandle>,
-    menu: Query<Entity, With<EscMenuRoot>>,
+    menu: Option<Single<Entity, With<EscMenuRoot>>>,
 ) {
     if keys.just_pressed(KeyCode::Escape) {
-        if let Some(menu) = menu.iter().next() {
-            commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
-            commands.entity(menu).despawn();
+        if let Some(menu) = menu {
+            commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
+            commands.entity(*menu).despawn();
         } else {
-            commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogOpen));
+            commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiOpen));
             open_esc_menu(commands.reborrow(), font_handle);
         }
     }
@@ -39,20 +39,19 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
             Button,
             Node {
                 width: percent(100),
-                padding: px(15).all(),
+                padding: UiRect::axes(px(30), px(15)),
                 border: px(4).all(),
-                border_radius: BorderRadius::all(px(10)),
-                flex_direction: FlexDirection::Column,
+                border_radius: BorderRadius::all(px(20)),
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 ..default()
             },
             BorderColor::all(BORDER),
-            BackgroundColor::from(BUTTON_BACKGROUND),
+            BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(OVERLAY_ALPHA)),
             children![(
                 TextFont::from_font_size(40.0).with_font(font_handle.clone()),
                 TextKey::new(key),
-            )],
+            ),],
         )
     };
     let root = commands
@@ -66,7 +65,7 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
                 justify_content: JustifyContent::Center,
                 ..default()
             },
-            BackgroundColor(BLACK.into()),
+            BackgroundColor(DARK_OVERLAY.into()),
             FocusPolicy::Block,
         ))
         .id();
@@ -91,7 +90,7 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
         .spawn((ChildOf(menu), button("esc-menu-button-resume")))
         .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
             if click.button == PointerButton::Primary {
-                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
+                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
                 commands.entity(root).despawn();
             }
         });
@@ -101,7 +100,7 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
         .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
             if click.button == PointerButton::Primary {
                 commands.trigger(SaveDirective);
-                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
+                commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
                 commands.entity(root).despawn();
             }
         });
@@ -115,7 +114,7 @@ fn open_esc_menu(mut commands: Commands, font_handle: Res<FontHandle>) {
                 if click.button == PointerButton::Primary {
                     commands.trigger(SaveDirective);
                     next_state.set(GameState::MainMenu);
-                    commands.trigger(GameSpeedChangedEvent(GameSpeedAction::DialogClose));
+                    commands.trigger(GameSpeedChangedEvent(GameSpeedAction::UiClose));
                     commands.entity(root).despawn();
                 }
             },
