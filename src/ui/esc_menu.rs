@@ -2,7 +2,7 @@ use bevy::{prelude::*, ui::FocusPolicy};
 
 use crate::{
     constants::ui::*,
-    save_load::SaveDirective,
+    save_load::save,
     state::GameState,
     text::TextKey,
     time::ForcePause,
@@ -109,7 +109,7 @@ fn open_esc_menu(
         .spawn((ChildOf(menu), button("esc-menu-button-save-game", true)))
         .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
             if click.button == PointerButton::Primary {
-                commands.trigger(SaveDirective);
+                commands.run_system_cached(save);
                 commands.entity(root).despawn();
             }
         });
@@ -121,7 +121,7 @@ fn open_esc_menu(
                   mut commands: Commands,
                   mut next_state: ResMut<NextState<GameState>>| {
                 if click.button == PointerButton::Primary {
-                    commands.trigger(SaveDirective);
+                    commands.run_system_cached(save);
                     next_state.set(GameState::MainMenu);
                     commands.entity(root).despawn();
                 }
@@ -135,7 +135,7 @@ fn open_esc_menu(
                   mut commands: Commands,
                   mut exit: MessageWriter<AppExit>| {
                 if click.button == PointerButton::Primary {
-                    commands.trigger(SaveDirective);
+                    commands.run_system_cached(save);
                     exit.write(AppExit::Success);
                 }
             },

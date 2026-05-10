@@ -49,21 +49,16 @@ pub fn plugin(app: &mut App) {
         )
         .add_systems(
             OnEnter(GameState::Main),
-            first_save
-                .run_if(resource_exists::<NewGame>)
+            save.run_if(resource_exists::<NewGame>)
                 .in_set(MainSetupSet::Save),
         )
         .insert_resource(AutosaveTimer(Timer::new(
             AUTOSAVE_INTERVAL,
             TimerMode::Repeating,
         )))
-        .add_observer(on_save_directive)
         .add_observer(save_on_default_event)
         .add_observer(load_on_default_event);
 }
-
-#[derive(Event)]
-pub struct SaveDirective;
 
 #[derive(Serialize, Deserialize)]
 pub struct SaveMetadata {
@@ -143,8 +138,7 @@ fn save_inner(
     }
 }
 
-fn on_save_directive(
-    _: On<SaveDirective>,
+pub fn save(
     mut commands: Commands,
     campaign: Option<Res<Campaign>>,
     cult_name: Res<CultName>,
@@ -182,12 +176,8 @@ fn on_save_directive(
 
 fn autosave(mut commands: Commands, time: Res<Time<Real>>, mut timer: ResMut<AutosaveTimer>) {
     if timer.tick(time.delta()).just_finished() {
-        commands.trigger(SaveDirective);
+        commands.run_system_cached(save);
     }
-}
-
-fn first_save(mut commands: Commands) {
-    commands.trigger(SaveDirective);
 }
 
 pub fn load(
