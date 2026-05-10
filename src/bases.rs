@@ -69,51 +69,39 @@ pub struct Base(pub String);
 pub struct RecruitMinionProgress(usize);
 
 fn new_game(
-    commands: Commands,
+    mut commands: Commands,
     base_types_handle: Res<BasetypesHandle>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
     mut random_source: ResMut<RandomSource>,
     base_plots: Query<Entity, With<BasePlot>>,
-    followers_handle: Res<FollowersHandle>,
-    followers_assets: Res<Assets<FollowersAsset>>,
-    task_handle: Res<TasksHandle>,
-    task_assets: Res<Assets<TasksAsset>>,
 ) {
     info!("Creating starting base");
     let i = random_source.0.random_range(0..base_plots.count());
     let base_plot = base_plots.iter().nth(i).unwrap();
 
-    let (base_type, base_type_settings) = base_types_asset
+    let (base_type, _) = base_types_asset
         .get(base_types_handle.0.id())
         .unwrap()
         .0
         .first()
         .unwrap();
 
-    spawn_base_inner(
-        commands,
-        base_plot,
-        base_type.clone(),
-        base_type_settings,
-        followers_handle,
-        followers_assets,
-        task_handle,
-        task_assets,
-        None,
-    );
+    commands.run_system_cached_with(spawn_base_inner, (base_plot, base_type.clone(), true));
 }
 
 fn spawn_base_inner(
+    In((base_plot, base_type, free)): In<(Entity, String, bool)>,
     mut commands: Commands,
-    base_plot: Entity,
-    base_type: String,
-    base_type_settings: &BasetypeSettings,
+    base_types_handle: Res<BasetypesHandle>,
+    base_types_asset: Res<Assets<BasetypesAsset>>,
     followers_handle: Res<FollowersHandle>,
     followers_asset: Res<Assets<FollowersAsset>>,
     task_handle: Res<TasksHandle>,
     task_assets: Res<Assets<TasksAsset>>,
-    funds: Option<ResMut<Funds>>,
+    mut funds: ResMut<Funds>,
 ) {
+    let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
+    let base_type_settings = base_types.get(&base_type).unwrap();
     let base = commands
         .spawn((
             Base(base_type),
@@ -121,7 +109,7 @@ fn spawn_base_inner(
             ChildOf(base_plot),
         ))
         .id();
-    if let Some(mut funds) = funds {
+    if !free {
         funds.0 -= base_type_settings.initial_cost;
     }
 
@@ -147,18 +135,13 @@ fn spawn_base_inner(
 }
 
 pub fn spawn_base(
-    commands: Commands,
+    In((region, base_type)): In<(Entity, String)>,
+    mut commands: Commands,
     funds: ResMut<Funds>,
-    region: Entity,
     regions: Query<&Children, With<Region>>,
-    base_type: String,
     base_plots: Query<Has<Children>, With<BasePlot>>,
     base_types_handle: Res<BasetypesHandle>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
-    followers_handle: Res<FollowersHandle>,
-    followers_assets: Res<Assets<FollowersAsset>>,
-    task_handle: Res<TasksHandle>,
-    task_assets: Res<Assets<TasksAsset>>,
     mut random_source: ResMut<RandomSource>,
 ) {
     let vacant_base_plots: Vec<Entity> = regions
@@ -183,17 +166,7 @@ pub fn spawn_base(
         return;
     }
 
-    spawn_base_inner(
-        commands,
-        *base_plot,
-        base_type,
-        base_type_settings,
-        followers_handle,
-        followers_assets,
-        task_handle,
-        task_assets,
-        Some(funds),
-    );
+    commands.run_system_cached_with(spawn_base_inner, (*base_plot, base_type, false));
 }
 
 fn recruitment(

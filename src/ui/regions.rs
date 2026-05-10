@@ -3,12 +3,9 @@ use bevy::prelude::*;
 use crate::{
     bases::{BasetypesAsset, BasetypesHandle, spawn_base},
     constants::ui::*,
-    followers::{FollowersAsset, FollowersHandle},
     funds::Funds,
     regions::{BasePlot, Location, Region},
-    rng::RandomSource,
     suspicion::{MediaSuspicion, PoliceSuspicion},
-    tasks::{TasksAsset, TasksHandle},
     text::TextKey,
     ui::{
         BasePlotUi, MonoFontHandle, RegionSuspicionUi,
@@ -300,35 +297,14 @@ fn on_region_click(
                                 );
                             }
 
-                            commands
-                                .spawn(dialog)
-                                .observe(move |_: On<Add, DialogConfirmed>,
-                                               commands: Commands,
-                                               funds: ResMut<Funds>,
-                                               regions: Query<&Children, With<Region>>,
-                                               base_plots: Query<Has<Children>, With<BasePlot>>,
-                                               base_types_handle: Res<BasetypesHandle>,
-                                               base_types_asset: Res<Assets<BasetypesAsset>>,
-                                               followers_handle: Res<FollowersHandle>,
-                                               followers_assets: Res<Assets<FollowersAsset>>,
-                                               task_handle: Res<TasksHandle>,
-                                               task_assets: Res<Assets<TasksAsset>>,
-                                               random_source: ResMut<RandomSource>| {
-                                            spawn_base(
-                                                commands,
-                                                funds,
-                                                region_entity,
-                                                regions,
-                                                base_type.clone(),
-                                                base_plots,
-                                                base_types_handle,
-                                                base_types_asset,
-                                                followers_handle,
-                                                followers_assets,
-                                                task_handle,
-                                                task_assets,
-                                                random_source);
-                                });
+                            commands.spawn(dialog).observe(
+                                move |_: On<Add, DialogConfirmed>, mut commands: Commands| {
+                                    commands.run_system_cached_with(
+                                        spawn_base,
+                                        (region_entity, base_type.clone()),
+                                    );
+                                },
+                            );
                         }
                     }
                 }
