@@ -3,7 +3,6 @@ use bevy_common_assets::toml::TomlAssetPlugin;
 use indexmap::IndexMap;
 use moonshine_save::save::Save;
 use serde::Deserialize;
-use strum::{Display, EnumIter};
 
 use crate::{
     bases::Base,
@@ -26,7 +25,7 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Deserialize, Asset, TypePath)]
-pub struct FollowersAsset(pub IndexMap<String, GeneralFollowerSettings>);
+pub struct FollowersAsset(pub IndexMap<String, FollowerSettings>);
 
 #[derive(Resource)]
 pub struct FollowersHandle(pub Handle<FollowersAsset>);
@@ -36,46 +35,15 @@ pub struct FollowersHandle(pub Handle<FollowersAsset>);
 /// will need to be an enum to distinguish them.
 #[derive(Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "kebab-case")]
-pub struct GeneralFollowerSettings {
+pub struct FollowerSettings {
     pub cost_per_day: FundsAmount,
+    pub symbol: char,
 }
 
-#[derive(
-    Component,
-    Deserialize,
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    EnumIter,
-    Display,
-    Reflect,
-)]
+#[derive(Component, Reflect, Clone, Deserialize, Debug, Deref, PartialEq, Eq)]
 #[reflect(Component)]
 #[require(Save)]
-#[strum(serialize_all = "kebab-case")]
-#[serde(rename_all = "kebab-case")]
-pub enum Follower {
-    Priest,
-    Goon,
-    Minion,
-}
-
-impl Follower {
-    pub fn to_symbol(self) -> char {
-        match self {
-            // 2600 BLACK SUN WITH RAYS
-            Follower::Priest => '\u{2600}',
-            // 2608 THUNDERSTORM
-            Follower::Goon => '\u{2608}',
-            // 2644 SATURN
-            Follower::Minion => '\u{2644}',
-        }
-    }
-}
+pub struct Follower(pub String);
 
 #[derive(
     Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Reflect,
@@ -93,8 +61,18 @@ fn new_game(
     mut commands: Commands,
     base: Single<&Children, With<Base>>,
     mut followers: Query<(&Follower, &FollowerCount, &Expense)>,
+    followers_handle: Res<FollowersHandle>,
+    followers_asset: Res<Assets<FollowersAsset>>,
 ) {
-    info!("Creating starting priest");
+    info!("Creating starting follower");
+
+    let first_follower = followers_asset
+        .get(followers_handle.0.id())
+        .unwrap()
+        .0
+        .first()
+        .unwrap()
+        .0;
 
     // Generally we should check whether the base has room
     // for another follower, but this is a new game and it
@@ -102,7 +80,7 @@ fn new_game(
 
     for child in base.iter() {
         if let Ok((follower, follower_count, expense)) = followers.get_mut(child)
-            && *follower == Follower::Priest
+            && *first_follower == follower.0
         {
             let mut follower_count = *follower_count;
             *follower_count += 1;

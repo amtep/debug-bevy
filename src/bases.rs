@@ -4,24 +4,19 @@ use indexmap::IndexMap;
 use moonshine_save::save::Save;
 use rand::{RngExt, seq::IndexedRandom};
 use serde_derive::Deserialize;
-use strum::IntoEnumIterator;
 
 use crate::{
     constants::NEW_MINION_PROGRESS,
-    followers::{
-        Follower, FollowerCount, FollowersAsset, FollowersHandle, GeneralFollowerSettings,
-    },
+    followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
     funds::{Expense, ExpenseCategory, Funds, FundsAmount},
     main_menu::NewGame,
     regions::{BasePlot, Region},
     rng::RandomSource,
     state::{GameState, MainSetupSet},
-    tasks::{DEFAULT_TASK, Task, TasksAsset, TasksHandle},
+    tasks::{Task, TasksAsset, TasksHandle},
 };
 
 const BASETYPES_ASSET_PATH: &str = "data/define.basetypes.toml";
-
-const DEFAULT_BASETYPE: &str = "apartment";
 
 pub fn plugin(app: &mut App) {
     app.add_plugins(TomlAssetPlugin::<BasetypesAsset>::new(&["basetypes.toml"]))
@@ -80,32 +75,43 @@ fn new_game(
     mut random_source: ResMut<RandomSource>,
     base_plots: Query<Entity, With<BasePlot>>,
     followers_handle: Res<FollowersHandle>,
-    followers_asset: Res<Assets<FollowersAsset>>,
+    followers_assets: Res<Assets<FollowersAsset>>,
+    task_handle: Res<TasksHandle>,
+    task_assets: Res<Assets<TasksAsset>>,
 ) {
     info!("Creating starting base");
     let i = random_source.0.random_range(0..base_plots.count());
     let base_plot = base_plots.iter().nth(i).unwrap();
 
-    // TODO: don't hardcode this string
-    let apartment = &base_types_asset.get(base_types_handle.0.id()).unwrap().0[DEFAULT_BASETYPE];
-    let general = &followers_asset.get(followers_handle.0.id()).unwrap().0["general"];
+    let (base_type, base_type_settings) = base_types_asset
+        .get(base_types_handle.0.id())
+        .unwrap()
+        .0
+        .first()
+        .unwrap();
+
     spawn_base_inner(
         commands,
         base_plot,
-        DEFAULT_BASETYPE.into(),
-        apartment,
-        general,
+        base_type.clone(),
+        base_type_settings,
+        followers_handle,
+        followers_assets,
+        task_handle,
+        task_assets,
         None,
     );
 }
 
-#[expect(clippy::trivially_copy_pass_by_ref)]
 fn spawn_base_inner(
     mut commands: Commands,
     base_plot: Entity,
     base_type: String,
     base_type_settings: &BasetypeSettings,
-    follower_settings: &GeneralFollowerSettings,
+    followers_handle: Res<FollowersHandle>,
+    followers_asset: Res<Assets<FollowersAsset>>,
+    task_handle: Res<TasksHandle>,
+    task_assets: Res<Assets<TasksAsset>>,
     funds: Option<ResMut<Funds>>,
 ) {
     let base = commands
@@ -118,19 +124,25 @@ fn spawn_base_inner(
     if let Some(mut funds) = funds {
         funds.0 -= base_type_settings.initial_cost;
     }
-    let cost = follower_settings.cost_per_day;
-    for follower in Follower::iter() {
-        let follower_e = commands
+
+    for (follower, settings) in &followers_asset.get(followers_handle.0.id()).unwrap().0 {
+        let follower_entity = commands
             .spawn((
                 ChildOf(base),
-                follower,
-                Expense(cost, ExpenseCategory::Followers, 0),
+                Follower(follower.clone()),
+                Expense(settings.cost_per_day, ExpenseCategory::Followers, 0),
             ))
             .insert(FollowerCount(0))
             .id();
-        if follower != Follower::Goon {
-            commands.spawn((Task(String::from(DEFAULT_TASK)), ChildOf(follower_e)));
-        }
+        let task = task_assets
+            .get(task_handle.0.id())
+            .unwrap()
+            .0
+            .iter()
+            .find(|(_, settings)| settings.follower_types.contains(follower))
+            .unwrap()
+            .0;
+        commands.spawn((Task(task.clone()), ChildOf(follower_entity)));
     }
 }
 
@@ -144,7 +156,9 @@ pub fn spawn_base(
     base_types_handle: Res<BasetypesHandle>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
     followers_handle: Res<FollowersHandle>,
-    followers_asset: Res<Assets<FollowersAsset>>,
+    followers_assets: Res<Assets<FollowersAsset>>,
+    task_handle: Res<TasksHandle>,
+    task_assets: Res<Assets<TasksAsset>>,
     mut random_source: ResMut<RandomSource>,
 ) {
     let vacant_base_plots: Vec<Entity> = regions
@@ -169,14 +183,15 @@ pub fn spawn_base(
         return;
     }
 
-    let general = &followers_asset.get(followers_handle.0.id()).unwrap().0["general"];
-
     spawn_base_inner(
         commands,
         *base_plot,
         base_type,
         base_type_settings,
-        general,
+        followers_handle,
+        followers_assets,
+        task_handle,
+        task_assets,
         Some(funds),
     );
 }
@@ -236,8 +251,11 @@ fn recruitment(
                 }
             }
 
+            // FIXME: remove hardcode
             for e in children {
-                if let Ok((_, Follower::Minion, count)) = followers.get(*e) {
+                if let Ok((_, Follower(f), count)) = followers.get(*e)
+                    && f == "minion"
+                {
                     let new_count = FollowerCount(**count + new_minions);
                     commands.entity(*e).insert(new_count);
                 }

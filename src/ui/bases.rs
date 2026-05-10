@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     bases::{Base, BasetypesAsset, BasetypesHandle},
     constants::ui::*,
-    followers::{Follower, FollowerCount},
+    followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
     regions::{BasePlot, Region},
     state::GameState,
     tasks::{TasksAsset, TasksHandle},
@@ -168,8 +168,10 @@ fn on_base_click(
                 });
 
             #[allow(clippy::cast_precision_loss)]
-            MenuEntry::new(TextKey::new(format!("follower-type-{f}")).add_arg("count", c.0 as f64))
-                .with_items_iter(task_iter)
+            MenuEntry::new(
+                TextKey::new(format!("follower-type-{}", f.0)).add_arg("count", c.0 as f64),
+            )
+            .with_items_iter(task_iter)
         });
 
     commands
@@ -195,6 +197,8 @@ pub fn on_follower_count_insert(
     base_uis: Query<&BaseUi>,
     mut follower_list_uis: Query<(&mut Text, &ChildOf), With<FollowerListUi>>,
     mut follower_list_box_uis: Query<&mut Visibility, With<FollowerListBoxUi>>,
+    followers_handle: Res<FollowersHandle>,
+    followers_assets: Res<Assets<FollowersAsset>>,
 ) {
     if *state != GameState::Main {
         return;
@@ -210,18 +214,17 @@ pub fn on_follower_count_insert(
     let (mut follower_list_text, follower_list_box) =
         follower_list_uis.get_mut(follower_list).unwrap();
 
-    let mut followers: Vec<(Follower, FollowerCount)> = bases
+    let followers: Vec<(&Follower, FollowerCount)> = bases
         .get(base.0)
         .unwrap()
         .iter()
-        .filter_map(|f| followers.get(f).ok().map(|(f, c)| (*f, *c)))
+        .filter_map(|f| followers.get(f).ok().map(|(f, c)| (f, *c)))
         .collect();
 
-    followers.sort_unstable_by_key(|(f, _)| *f);
+    let followers_settings = &followers_assets.get(followers_handle.0.id()).unwrap().0;
 
     let new_text = followers.iter().fold(String::new(), |mut text, (f, c)| {
-        let iter = std::iter::repeat_n(f.to_symbol(), **c);
-
+        let iter = std::iter::repeat_n(followers_settings.get(&f.0).unwrap().symbol, **c);
         text.extend(iter);
         text
     });

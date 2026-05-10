@@ -4,7 +4,7 @@ profit-per-day = 50
 profit-category = "jobs"
 
 [petty-crime]
-follower-types = ["minion"]
+follower-types = ["minion", "goon"]
 profit-per-day = 75
 profit-category = "crime"
 suspicion = { police = 1 }

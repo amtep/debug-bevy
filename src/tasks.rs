@@ -6,15 +6,13 @@ use moonshine_save::save::Save;
 use serde_derive::Deserialize;
 
 use crate::{
-    followers::{Follower, FollowerCount},
+    followers::FollowerCount,
     funds::{FundsAmount, Income, IncomeCategory},
     state::GameState,
     suspicion::SuspicionType,
 };
 
 const TASKS_ASSET_PATH: &str = "data/define.tasks.toml";
-
-pub const DEFAULT_TASK: &str = "gig-work";
 
 pub fn plugin(app: &mut App) {
     app.add_plugins(TomlAssetPlugin::<TasksAsset>::new(&["tasks.toml"]))
@@ -32,7 +30,7 @@ pub struct TasksHandle(pub Handle<TasksAsset>);
 #[derive(Deserialize, Debug, Clone, Reflect)]
 #[serde(rename_all = "kebab-case")]
 pub struct TaskSettings {
-    pub follower_types: Vec<Follower>,
+    pub follower_types: Vec<String>,
     #[serde(default)]
     pub profit_per_day: FundsAmount,
     #[serde(default)]

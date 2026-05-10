@@ -1,2 +1,11 @@
-[general]
+[priest]
+cost-per-day = 50
+symbol = "\u2600"
+
+[minion]
 cost-per-day = 20
+symbol = "\u2608"
+
+[goon]
+cost-per-day = 20
+symbol = "\u2644"
