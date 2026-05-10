@@ -1,8 +1,8 @@
 use std::time::Duration;
 
-use bevy::prelude::*;
 use bevy::ui::UiSystems;
 use bevy::window::PrimaryWindow;
+use bevy::{picking::hover::Hovered, prelude::*};
 
 use crate::{constants::ui::*, state::GameState, text::TextKey, ui::FontHandle};
 
@@ -53,6 +53,7 @@ impl Default for TooltipInner {
 }
 
 #[derive(Component, Default, Clone)]
+#[require(Hovered)]
 pub struct Tooltip {
     content: TooltipInner,
     font_size: Option<f32>,
@@ -301,21 +302,21 @@ fn on_tooltip_out(
     out: On<Pointer<Out>>,
     mut commands: Commands,
     placeholder: Res<TooltipPlaceholder>,
-    tooltips: Query<&Tooltip>,
-    tooltip_opens: Query<&TooltipOpen>,
+    tooltips: Query<(&Tooltip, &TooltipOpen, &Hovered)>,
 ) {
-    if let Ok(tooltip) = tooltips.get(out.entity)
-        && let Ok(tooltip_box) = tooltip_opens.get(out.entity).map(|open| open.0)
+    // require hovered check since moving from one part of the entity to another will also trigger
+    // out, hence need to confirm whether its intra or inter-node movement.
+    if let Ok((tooltip, tooltip_open, hovered)) = tooltips.get(out.entity)
+        && !hovered.0
     {
+        // attach custom entity back to the hidden placeholder.
         if let TooltipInner::Custom(entity) = tooltip.content {
             commands.entity(placeholder.0).add_child(entity);
         }
-        commands.entity(tooltip_box).try_despawn();
+        commands.entity(tooltip_open.0).despawn();
+        commands.entity(out.entity).remove::<TooltipOpen>();
     }
-
-    commands
-        .entity(out.entity)
-        .try_remove::<(TooltipTimer, TooltipOpen)>();
+    commands.entity(out.entity).try_remove::<TooltipTimer>();
 }
 
 fn on_tooltip_remove(remove: On<Remove, Tooltip>, mut commands: Commands) {
