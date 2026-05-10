@@ -26,6 +26,7 @@ pub fn plugin(app: &mut App) {
 pub struct TooltipSetting {
     delay: Duration,
     font_size: f32,
+    max_width: f32,
 }
 
 impl Default for TooltipSetting {
@@ -33,6 +34,7 @@ impl Default for TooltipSetting {
         Self {
             delay: Duration::from_millis(200),
             font_size: SMALL,
+            max_width: 256.0,
         }
     }
 }
@@ -202,7 +204,7 @@ fn listen_tooltip_timers(
                 Node {
                     left: px(10),
                     top: percent(100),
-                    max_width: px(200),
+                    max_width: px(tooltip_setting.max_width),
                     margin: UiRect::top(px(TOOLTIP_Y)),
                     position_type: PositionType::Absolute,
                     border: UiRect::all(px(1)),
