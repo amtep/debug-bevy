@@ -82,7 +82,6 @@ impl Menu {
         self
     }
 
-    #[expect(dead_code)]
     pub fn with_entries_iter<I: IntoIterator<Item = MenuEntry>>(mut self, entries: I) -> Self {
         self.entries.extend(entries);
         self

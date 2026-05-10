@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_common_assets::toml::TomlAssetPlugin;
 use moonshine_save::save::Save;
 use serde::Deserialize;
-use strum::{EnumIter, IntoStaticStr};
+use strum::{Display, EnumIter};
 
 use crate::{
     bases::Base,
@@ -42,11 +42,23 @@ pub struct GeneralFollowerSettings {
 }
 
 #[derive(
-    Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, EnumIter, IntoStaticStr, Reflect,
+    Component,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    EnumIter,
+    Display,
+    Reflect,
 )]
 #[reflect(Component)]
 #[require(Save)]
 #[strum(serialize_all = "kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum Follower {
     Priest,
     Goon,

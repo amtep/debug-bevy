@@ -6,8 +6,13 @@ use crate::{
     followers::{Follower, FollowerCount},
     regions::{BasePlot, Region},
     state::GameState,
+    tasks::{TasksAsset, TasksHandle},
     text::TextKey,
-    ui::{BasePlotUi, RegionSuspicionUi, UnicodeFontHandle, menu::Menu, tooltip::Tooltip},
+    ui::{
+        BasePlotUi, RegionSuspicionUi, UnicodeFontHandle,
+        menu::{Menu, MenuClicked, MenuEntry, MenuItem},
+        tooltip::Tooltip,
+    },
 };
 
 use super::{ViewOf, Views};
@@ -135,18 +140,48 @@ fn on_base_click(
     click: On<Pointer<Click>>,
     mut commands: Commands,
     base_uis: Query<&ViewOf, With<BaseUi>>,
-    bases: Query<&Base>,
+    bases: Query<(&Children, &Base)>,
+    followers: Query<(&Follower, &FollowerCount)>,
+    task_handle: Res<TasksHandle>,
+    task_assets: Res<Assets<TasksAsset>>,
 ) {
     if click.button != PointerButton::Primary {
         return;
     }
 
     let base = base_uis.get(click.entity).unwrap().0;
-    let base = &bases.get(base).unwrap().0;
+    let (children, base) = bases.get(base).unwrap();
+    let task_settings = &task_assets.get(task_handle.0.id()).unwrap().0;
+
+    let follower_iter = children
+        .iter()
+        .filter_map(|child| followers.get(child).ok())
+        .filter(|(_, c)| c.0 != 0)
+        .map(|(f, c)| {
+            let task_iter = task_settings
+                .iter()
+                .filter(|(_, v)| v.follower_types.contains(f))
+                .map(|(k, _)| MenuItem {
+                    enabled: true,
+                    text: TextKey::new(format!("task-{k}")),
+                    tooltip: TextKey::new(format!("switch-task-{k}-tooltip")),
+                });
+
+            #[allow(clippy::cast_precision_loss)]
+            MenuEntry::new(TextKey::new(format!("follower-type-{f}")).add_arg("count", c.0 as f64))
+                .with_items_iter(task_iter)
+        });
 
     commands
         .entity(click.entity)
-        .with_child(Menu::new().with_title(format!("basetype-{base}")));
+        .with_child(
+            Menu::new()
+                .with_title(format!("basetype-{}", base.0))
+                .with_entries_iter(follower_iter),
+        )
+        .observe(|menu_clicked: On<Add, MenuClicked>| {
+            // TODO: switch task
+        });
 }
 
 pub fn on_follower_count_insert(
@@ -205,11 +240,10 @@ pub fn on_follower_count_insert(
         .entity(follower_list_box.0)
         .insert(Tooltip::new_texts(
             followers.iter().filter(|(_, c)| **c != 0).map(|(f, c)| {
-                let f: &str = f.into();
                 #[allow(clippy::cast_precision_loss)]
                 TextKey::new("follower-list-tooltip")
                     .add_arg("count", **c as f64)
-                    .add_arg("follower-type", f)
+                    .add_arg("follower-type", f.to_string())
             }),
         ));
 }

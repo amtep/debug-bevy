@@ -7,7 +7,7 @@ use moonshine_save::save::Save;
 use serde_derive::Deserialize;
 
 use crate::{
-    followers::FollowerCount,
+    followers::{Follower, FollowerCount},
     funds::{FundsAmount, Income, IncomeCategory},
     state::GameState,
     suspicion::SuspicionType,
@@ -33,10 +33,7 @@ pub struct TasksHandle(pub Handle<TasksAsset>);
 #[derive(Deserialize, Debug, Clone, Reflect)]
 #[serde(rename_all = "kebab-case")]
 pub struct TaskSettings {
-    #[serde(default)]
-    pub priests_allowed: bool,
-    #[serde(default)]
-    pub minions_allowed: bool,
+    pub follower_types: Vec<Follower>,
     #[serde(default)]
     pub profit_per_day: FundsAmount,
     #[serde(default)]

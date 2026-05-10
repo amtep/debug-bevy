@@ -216,7 +216,7 @@ fn on_region_click(
             tooltip: if is_any_base_plot_vacant {
                 format!("acquire-{name}-tooltip").into()
             } else {
-                "acquire-tooltip-no-vacant-base-plot".into()
+                "acquire-no-vacant-base-plot-tooltip".into()
             },
         });
     let entry = MenuEntry::new("menu-region-bases").with_items_iter(iter);

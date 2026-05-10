@@ -1,20 +1,18 @@
 [gig-work]
-priests-allowed = true
-minions-allowed = true
+follower-types = ["priest", "minion"]
 profit-per-day = 50
 profit-category = "jobs"
 
 [petty-crime]
-minions-allowed = true
+follower-types = ["minion"]
 profit-per-day = 75
 profit-category = "crime"
 suspicion = { police = 1 }
 
 [recruitment]
-priests-allowed = true
-minions-allowed = true
+follower-types = ["priest", "minion"]
 recruit-progress = 1
 
 [research]
-priests-allowed = true
+follower-types = ["priest"]
 research = 1
