@@ -41,6 +41,8 @@ pub struct TaskSettings {
     pub recruit_progress: usize,
     #[serde(default)]
     pub research: usize,
+    #[serde(default)]
+    pub security: usize,
 }
 
 fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {

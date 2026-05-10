@@ -3,6 +3,10 @@ follower-types = ["priest", "minion"]
 profit-per-day = 50
 profit-category = "jobs"
 
+[security]
+follower-types = ["goon"]
+security = 1
+
 [petty-crime]
 follower-types = ["minion", "goon"]
 profit-per-day = 75
