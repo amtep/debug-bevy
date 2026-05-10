@@ -35,6 +35,7 @@ base-plots = {
 [africa]
 x = 56
 y = 48
+requires-discovery = "unlock-africa"
 base-plots = {
     north-africa = { x = 52.5, y = 32 },
     south-africa = { x = 57, y = 64 },

@@ -13,9 +13,14 @@ follower-types = ["minion"]
 income-per-day = [100, "crime"]
 suspicion = { police = 1 }
 
-[recruitment]
-follower-types = ["priest", "minion"]
-recruit-progress = 1
+[priest-recruit-minions]
+follower-types = ["priest"]
+recruit-progress = 1.0
+
+[minions-recruit-minions]
+follower-types = ["minion"]
+requires-discovery = "minions-can-recruit"
+recruit-progress = 0.5
 
 [research]
 follower-types = ["priest"]

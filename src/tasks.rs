@@ -31,12 +31,14 @@ pub struct TasksHandle(pub Handle<TasksAsset>);
 #[serde(rename_all = "kebab-case")]
 pub struct TaskSettings {
     pub follower_types: Vec<String>,
+    #[serde(default)]
+    pub requires_discovery: Option<String>,
     pub income_per_day: Option<(FundsAmount, String)>,
     pub expense_per_day: Option<(FundsAmount, String)>,
     #[serde(default)]
     pub suspicion: IndexMap<SuspicionType, u32>,
     #[serde(default)]
-    pub recruit_progress: usize,
+    pub recruit_progress: f64,
     #[serde(default)]
     pub research: usize,
     #[serde(default)]

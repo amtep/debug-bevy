@@ -66,7 +66,7 @@ pub struct Base(pub String);
 /// It's locked to 0 if the base is full.
 #[derive(Component, Default, Reflect)]
 #[reflect(Component)]
-pub struct RecruitMinionProgress(usize);
+pub struct RecruitMinionProgress(f64);
 
 fn new_game(
     mut commands: Commands,
@@ -169,6 +169,7 @@ pub fn spawn_base(
     commands.run_system_cached_with(spawn_base_inner, (*base_plot, base_type, false));
 }
 
+#[expect(clippy::cast_precision_loss)]
 fn recruitment(
     mut commands: Commands,
     tasks: Query<(&ChildOf, &Task)>,
@@ -187,7 +188,7 @@ fn recruitment(
             error!("Unknown task '{task}'");
             continue;
         };
-        if task_settings.recruit_progress > 0 {
+        if task_settings.recruit_progress > 0.0 {
             let Ok((ChildOf(base_e), _, count)) = followers.get(*follower_e) else {
                 error!("Task without followers");
                 continue;
@@ -211,16 +212,17 @@ fn recruitment(
                 })
                 .sum();
             if total_followers >= base_type_settings.max_pop {
-                progress.0 = 0;
+                progress.0 = 0.0;
                 continue;
             }
-            progress.0 += task_settings.recruit_progress * **count;
+            progress.0 += task_settings.recruit_progress * **count as f64;
             let mut new_minions = 0;
+            #[expect(clippy::while_float)]
             while progress.0 >= NEW_MINION_PROGRESS {
                 progress.0 -= NEW_MINION_PROGRESS;
                 new_minions += 1;
                 if total_followers + new_minions >= base_type_settings.max_pop {
-                    progress.0 = 0;
+                    progress.0 = 0.0;
                 }
             }
 

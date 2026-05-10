@@ -5,6 +5,7 @@ mod common;
 mod constants;
 #[cfg(feature = "dev")]
 mod dev;
+mod discoveries;
 mod followers;
 mod funds;
 mod main_menu;
