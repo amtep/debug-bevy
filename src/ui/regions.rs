@@ -8,7 +8,7 @@ use crate::{
     suspicion::{MediaSuspicion, PoliceSuspicion},
     text::TextKey,
     ui::{
-        BasePlotUi, MonoFontHandle, RegionSuspicionUi,
+        BasePlotUi, EmojiFontHandle, MonoFontHandle, RegionSuspicionUi,
         bases::{on_follower_count_insert, on_spawn_base},
         dialog::{Dialog, DialogConfirmed},
         menu::{Menu, MenuClicked, MenuEntry, MenuItem},
@@ -40,6 +40,7 @@ pub fn setup(
     base_plots: Query<&Location, With<BasePlot>>,
     display_font_handle: Res<DisplayFontHandle>,
     mono_font_handle: Res<MonoFontHandle>,
+    emoji_font_handle: Res<EmojiFontHandle>,
 ) {
     for (entity, region, location, children) in regions.iter() {
         commands
@@ -82,7 +83,7 @@ pub fn setup(
                             flex_direction: FlexDirection::Row,
                             justify_content: JustifyContent::Center,
                             display: Display::None,
-                            margin: UiRect::top(px(2)),
+                            margin: UiRect::top(px(4)),
                             column_gap: px(5),
                             border: UiRect::bottom(px(1)),
                             ..default()
@@ -92,41 +93,57 @@ pub fn setup(
                         children![
                             (
                                 Node {
-                                    min_width: px(25),
-                                    justify_content: JustifyContent::Center,
+                                    min_width: px(38),
+                                    justify_content: JustifyContent::SpaceBetween,
                                     ..default()
                                 },
                                 Tooltip::new_text("police-suspicion-tooltip"),
-                                children![(
-                                    TextFont::from_font_size(SMALL)
-                                        .with_font(mono_font_handle.clone()),
-                                    MeterDisplay::<u32> {
-                                        value: 0,
-                                        low_threshold: 334,
-                                        high_threshold: 667,
-                                    },
-                                    PoliceSuspicionUi,
-                                    ViewOf(entity),
-                                )]
+                                children![
+                                    (
+                                        Text::new('🚨'),
+                                        TextColor::from(TEXT),
+                                        TextFont::from_font_size(TINY)
+                                            .with_font(emoji_font_handle.clone()),
+                                    ),
+                                    (
+                                        TextFont::from_font_size(SMALL)
+                                            .with_font(mono_font_handle.clone()),
+                                        MeterDisplay::<u32> {
+                                            value: 0,
+                                            low_threshold: 334,
+                                            high_threshold: 667,
+                                        },
+                                        PoliceSuspicionUi,
+                                        ViewOf(entity),
+                                    )
+                                ]
                             ),
                             (
                                 Node {
-                                    min_width: px(25),
-                                    justify_content: JustifyContent::Center,
+                                    min_width: px(38),
+                                    justify_content: JustifyContent::SpaceBetween,
                                     ..default()
                                 },
                                 Tooltip::new_text("media-suspicion-tooltip"),
-                                children![(
-                                    TextFont::from_font_size(SMALL)
-                                        .with_font(mono_font_handle.clone()),
-                                    MeterDisplay::<u32> {
-                                        value: 0,
-                                        low_threshold: 334,
-                                        high_threshold: 667,
-                                    },
-                                    MediaSuspicionUi,
-                                    ViewOf(entity)
-                                ),]
+                                children![
+                                    (
+                                        Text::new('📺'),
+                                        TextColor::from(TEXT),
+                                        TextFont::from_font_size(TINY)
+                                            .with_font(emoji_font_handle.clone()),
+                                    ),
+                                    (
+                                        TextFont::from_font_size(SMALL)
+                                            .with_font(mono_font_handle.clone()),
+                                        MeterDisplay::<u32> {
+                                            value: 0,
+                                            low_threshold: 334,
+                                            high_threshold: 667,
+                                        },
+                                        MediaSuspicionUi,
+                                        ViewOf(entity)
+                                    ),
+                                ]
                             )
                         ],
                     ))

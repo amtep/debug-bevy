@@ -37,9 +37,7 @@ pub mod ui {
     pub const THEME_INDIGO: Srgba = Srgba::rgb(0.122, 0.102, 0.439); // #1F1A70
     #[expect(dead_code)]
     pub const THEME_MAGENTA: Srgba = Srgba::rgb(0.859, 0.282, 0.545); // #DB488B
-    #[expect(dead_code)]
     pub const THEME_LIGHT_PINK: Srgba = Srgba::rgb(1.000, 0.514, 0.965); // #FF83F6
-    #[expect(dead_code)]
     pub const THEME_CYAN: Srgba = Srgba::rgb(0.243, 0.816, 0.922); // #3ED0EB
 
     pub const WHITE: Srgba = Srgba::rgb(0.878, 0.878, 0.878);
@@ -51,6 +49,7 @@ pub mod ui {
     pub const ORANGE: Srgba = Srgba::rgb(1.00, 0.694, 0.384);
     pub const RED: Srgba = Srgba::rgb(1.00, 0.384, 0.384);
     pub const BLUE: Srgba = Srgba::rgb(0.384, 0.384, 1.00);
+    pub const GOLD: Srgba = Srgba::rgb(1.00, 0.894, 0.384);
 
     pub const BUTTON_BACKGROUND: Srgba = THEME_DARK_PURPLE;
     pub const BUTTON_HOVER_BACKGROUND: Srgba = THEME_INDIGO;
@@ -84,12 +83,15 @@ pub mod ui {
     pub const TEXT_NEGATIVE: Srgba = RED;
     pub const TEXT_NEUTRAL: Srgba = BLUE;
     pub const TEXT_DISABLED: Srgba = GREY;
+    pub const TEXT_FUNDS: Srgba = GOLD;
 
     pub const HEADING: f32 = 24.0;
     pub const SUB_HEADING: f32 = 20.0;
     pub const LARGE: f32 = 16.0;
     pub const NORMAL: f32 = 14.5;
     pub const SMALL: f32 = 13.0;
+    // EMOJI FONT ONLY
+    pub const TINY: f32 = 10.0;
 
     pub const ICON_PAUSE: &str = "textures/pause.png";
     pub const ICON_PLAY: &str = "textures/play.png";

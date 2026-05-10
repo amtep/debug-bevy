@@ -48,7 +48,7 @@ pub fn plugin(app: &mut App) {
     .add_systems(OnEnter(GameState::MainMenu), setup_main_menu)
     .add_systems(
         OnEnter(GameState::Main),
-        (setup_map, regions::setup, setup_intro)
+        (setup_ui, regions::setup, setup_intro)
             .chain()
             .in_set(MainSetupSet::Ui),
     )
@@ -162,14 +162,64 @@ fn read_window_resized_messages(
     }
 }
 
-fn setup_map(
+fn setup_ui(
     mut commands: Commands,
     mono_font_handle: Res<MonoFontHandle>,
+    emoji_font_handle: Res<EmojiFontHandle>,
     asset_server: Res<AssetServer>,
     game_date: Res<GameDate>,
     cult_name: Res<CultName>,
     cult_symbol: Res<CultSymbol>,
 ) {
+    fn suspicion_bundle<T: Component>(
+        key: &str,
+        icon: char,
+        color: Srgba,
+        ui: T,
+        emoji_font_handle: Handle<Font>,
+        mono_font_handle: Handle<Font>,
+    ) -> impl Bundle {
+        (
+            Node {
+                min_width: px(55),
+                padding: UiRect::horizontal(px(3)).with_top(px(3)),
+                margin: UiRect::vertical(px(2)).with_right(px(10)),
+                border: UiRect::all(px(1)),
+                border_radius: BorderRadius::all(px(10)),
+                justify_content: JustifyContent::SpaceBetween,
+                ..default()
+            },
+            BorderColor::all(color),
+            BackgroundColor::from(WHITE.with_alpha(0.01)),
+            Tooltip::new_text(key),
+            children![
+                (
+                    Text::new(icon),
+                    TextColor::from(color),
+                    TextFont {
+                        font: emoji_font_handle,
+                        font_size: SMALL,
+                        ..default()
+                    }
+                ),
+                (
+                    TextFont {
+                        font: mono_font_handle,
+                        font_size: LARGE,
+                        ..default()
+                    },
+                    TextColor::from(TEXT),
+                    MeterDisplay::<u32> {
+                        value: 0,
+                        low_threshold: 334,
+                        high_threshold: 667,
+                    },
+                    ui
+                )
+            ],
+        )
+    }
+
     let mono_text_font = TextFont {
         font: mono_font_handle.clone(),
         font_size: SUB_HEADING,
@@ -214,9 +264,9 @@ fn setup_map(
                     Node {
                         width: percent(100.0),
                         position_type: PositionType::Absolute,
-                        align_items: AlignItems::End,
+                        align_items: AlignItems::Center,
                         border: UiRect::vertical(px(2)),
-                        padding: UiRect::horizontal(px(2)),
+                        padding: UiRect::horizontal(px(5)),
                         ..default()
                     },
                     BorderColor::all(BORDER),
@@ -241,52 +291,27 @@ fn setup_map(
                             mono_text_font.clone(),
                             // will be updated by funds_changed
                             TextKey::new("funds-display").add_arg("funds", 0),
-                            TextColor::from(TEXT),
+                            TextColor::from(TEXT_FUNDS),
                             FundsUi,
                         ))
                         .observe(on_funds_tooltip_inner_add);
                     // Suspicion meters
-                    parent
-                        .spawn((
-                            Node {
-                                padding: UiRect::top(px(2)),
-                                min_width: px(50),
-                                justify_content: JustifyContent::Start,
-                                ..default()
-                            },
-                            Tooltip::new_text("intelligence-suspicion-tooltip"),
-                        ))
-                        .with_child((
-                            mono_text_font.clone(),
-                            TextColor::from(TEXT),
-                            MeterDisplay::<u32> {
-                                value: 0,
-                                low_threshold: 334,
-                                high_threshold: 667,
-                            },
-                            IntelligenceSuspicionUi,
-                        ));
-                    parent
-                        .spawn((
-                            Node {
-                                padding: UiRect::top(px(2)),
-                                min_width: px(50),
-                                justify_content: JustifyContent::Start,
-                                ..default()
-                            },
-                            Tooltip::new_text("scientific-suspicion-tooltip"),
-                        ))
-                        .with_child((
-                            mono_text_font.clone(),
-                            TextLayout::new_with_justify(Justify::Right),
-                            TextColor::from(TEXT),
-                            MeterDisplay::<u32> {
-                                value: 0,
-                                low_threshold: 334,
-                                high_threshold: 667,
-                            },
-                            ScientificSuspicionUi,
-                        ));
+                    parent.spawn(suspicion_bundle(
+                        "intelligence-suspicion-tooltip",
+                        '📡',
+                        THEME_LIGHT_PINK,
+                        IntelligenceSuspicionUi,
+                        emoji_font_handle.clone(),
+                        mono_font_handle.clone(),
+                    ));
+                    parent.spawn(suspicion_bundle(
+                        "scientific-suspicion-tooltip",
+                        '🔬',
+                        THEME_CYAN,
+                        ScientificSuspicionUi,
+                        emoji_font_handle.clone(),
+                        mono_font_handle.clone(),
+                    ));
                     // Game date display
                     parent
                         .spawn(Node {
