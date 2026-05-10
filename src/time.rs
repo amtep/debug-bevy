@@ -57,9 +57,19 @@ fn new_game(mut commands: Commands) {
     commands.init_resource::<GameDate>();
 }
 
+/// The "source of truth" for game speed state.
+/// The state of `Time<Virtual>` is derived from this resource.
 #[derive(Resource, Default)]
 pub struct CurrentGameSpeed {
+    /// Whether the clock is currently forced to pause.
+    /// This is distinct from `paused` because that is the user's desired setting.
+    /// When `forced_paused` is over, we should return to the state indicated by `paused` and `speed`.
+    pub forced_paused: bool,
+    /// Whether the user elected to pause the game.
     pub paused: bool,
+    /// Which speed the game should run at when not paused.
+    /// This remains valid even when `paused` or `forced_paused`, so that the game can return
+    /// to the user's desired speed setting when unpaused.
     pub speed: GameSpeed,
 }
 
@@ -95,42 +105,50 @@ pub enum GameSpeedAction {
 #[derive(Event)]
 pub struct GameSpeedChangedEvent(pub GameSpeedAction);
 
+/// Process a game speed event, either from user input or internal UI logic.
 fn on_game_speed_changed(
     event: On<GameSpeedChangedEvent>,
     mut time: ResMut<Time<Virtual>>,
     mut current_game_speed: ResMut<CurrentGameSpeed>,
-    forced_pause: Query<(), With<ForcePause>>,
 ) {
-    let can_unpause = forced_pause.is_empty();
     match event.0 {
-        GameSpeedAction::SetSpeed(speed) if can_unpause => {
+        GameSpeedAction::SetSpeed(speed) => {
             let s = speed.get();
             info!("Game speed to {s}");
             time.set_relative_speed(s);
-            time.unpause();
+            if !current_game_speed.forced_paused {
+                time.unpause();
+            }
             *current_game_speed = CurrentGameSpeed {
+                forced_paused: current_game_speed.forced_paused,
                 paused: false,
                 speed,
             };
         }
-        GameSpeedAction::TogglePause if can_unpause => {
+        GameSpeedAction::TogglePause => {
             if current_game_speed.paused {
                 info!("Unpausing");
-                time.unpause();
+                if !current_game_speed.forced_paused {
+                    time.unpause();
+                }
             } else {
                 info!("Pausing");
                 time.pause();
             }
             current_game_speed.paused = !current_game_speed.paused;
         }
-        _ => (),
     }
 }
 
 /// Pause the game if someone inserts a [`ForcePause`] component.
-fn on_force_pause_insert(_: On<Insert, ForcePause>, mut time: ResMut<Time<Virtual>>) {
+fn on_force_pause_insert(
+    _: On<Insert, ForcePause>,
+    mut current_game_speed: ResMut<CurrentGameSpeed>,
+    mut time: ResMut<Time<Virtual>>,
+) {
+    current_game_speed.forced_paused = true;
     if !time.is_paused() {
-        info!("ForcePause");
+        info!("Forced pausing");
         time.pause();
     }
 }
@@ -138,15 +156,15 @@ fn on_force_pause_insert(_: On<Insert, ForcePause>, mut time: ResMut<Time<Virtua
 /// Unpause the game if the last [`ForcePause`] component is removed.
 fn on_force_pause_remove(
     _: On<Remove, ForcePause>,
-    mut time: ResMut<Time<Virtual>>,
     q: Query<(), With<ForcePause>>,
-    current_game_speed: ResMut<CurrentGameSpeed>,
+    mut current_game_speed: ResMut<CurrentGameSpeed>,
+    mut time: ResMut<Time<Virtual>>,
 ) {
     // Check for count 1, because we're called just before the component is removed.
     if q.count() == 1 {
-        info!("Un-ForcePause");
+        current_game_speed.forced_paused = false;
         if !current_game_speed.paused {
-            time.set_relative_speed(current_game_speed.speed.get());
+            info!("Unpausing");
             time.unpause();
         }
     }
