@@ -1,16 +1,16 @@
+# Default task for a follower type is the first in order that accepts that type.
+
 [gig-work]
 follower-types = ["priest", "minion"]
-profit-per-day = 50
-profit-category = "jobs"
+income-per-day = [50, "job"]
 
 [security]
 follower-types = ["goon"]
 security = 1
 
 [petty-crime]
-follower-types = ["minion", "goon"]
-profit-per-day = 75
-profit-category = "crime"
+follower-types = ["minion"]
+income-per-day = [100, "crime"]
 suspicion = { police = 1 }
 
 [recruitment]
@@ -19,4 +19,5 @@ recruit-progress = 1
 
 [research]
 follower-types = ["priest"]
+expense-per-day = [50, "research"]
 research = 1

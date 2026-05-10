@@ -8,7 +8,7 @@ use serde_derive::Deserialize;
 use crate::{
     constants::NEW_MINION_PROGRESS,
     followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
-    funds::{Expense, ExpenseCategory, Funds, FundsAmount},
+    funds::{Expense, Funds, FundsAmount},
     main_menu::NewGame,
     regions::{BasePlot, Region},
     rng::RandomSource,
@@ -27,7 +27,7 @@ pub fn plugin(app: &mut App) {
                 .run_if(resource_exists::<NewGame>)
                 .in_set(MainSetupSet::Bases),
         )
-        .add_systems(FixedUpdate, recruitment);
+        .add_systems(FixedUpdate, recruitment.run_if(in_state(GameState::Main)));
 }
 
 #[derive(Deserialize, Asset, TypePath)]
@@ -117,7 +117,7 @@ fn spawn_base_inner(
     let base = commands
         .spawn((
             Base(base_type),
-            Expense(base_type_settings.cost_per_day, ExpenseCategory::Bases, 1),
+            Expense(base_type_settings.cost_per_day, "base".into(), 1),
             ChildOf(base_plot),
         ))
         .id();
@@ -130,7 +130,7 @@ fn spawn_base_inner(
             .spawn((
                 ChildOf(base),
                 Follower(follower.clone()),
-                Expense(settings.cost_per_day, ExpenseCategory::Followers, 0),
+                Expense(settings.cost_per_day, follower.clone(), 0),
             ))
             .insert(FollowerCount(0))
             .id();

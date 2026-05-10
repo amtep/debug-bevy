@@ -1,7 +1,6 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use bevy::{input_focus::InputFocus, prelude::*, ui::UiSystems, window::WindowResized};
-use strum::IntoEnumIterator;
 
 use crate::{
     common::{CultName, CultSymbol, Dev},
@@ -9,10 +8,7 @@ use crate::{
         files::{CULT_SYMBOL_PATH, CULT_SYMBOLS},
         ui::*,
     },
-    funds::{
-        Expense, ExpenseCategory, Funds, FundsAmount, Income, IncomeCategory,
-        IncomeExpenseUpdatedEvent,
-    },
+    funds::{Expense, Funds, FundsAmount, Income, IncomeExpenseUpdatedEvent},
     main_menu::NewGame,
     state::{GameState, MainSetupSet},
     suspicion::{IntelligenceSuspicion, ScientificSuspicion},
@@ -561,7 +557,11 @@ fn update_funds_tooltip(
             ))
             .with_children(|parent| {
                 parent.spawn((Text::new(format!("{count}x ")), text_font.clone()));
-                parent.spawn((TextKey::new(category), text_font.clone()));
+                #[allow(clippy::cast_precision_loss)]
+                parent.spawn((
+                    TextKey::new(category).add_arg("count", count as f64),
+                    text_font.clone(),
+                ));
                 parent.spawn(Node {
                     flex_grow: 1.0,
                     padding: UiRect::left(px(5)),
@@ -595,15 +595,15 @@ fn update_funds_tooltip(
     ));
     commands.spawn(hrule.clone());
 
-    let mut income_ledger: HashMap<IncomeCategory, (FundsAmount, usize)> = HashMap::default();
+    let mut income_ledger: BTreeMap<String, (FundsAmount, usize)> = BTreeMap::default();
     for Income(amount, category, icount) in incomes {
-        let (funds, count) = income_ledger.entry(*category).or_default();
+        let (funds, count) = income_ledger.entry(category.clone()).or_default();
         *funds += amount * (*icount as FundsAmount);
         *count += icount;
     }
-    for category in IncomeCategory::iter() {
-        if let Some((funds, count)) = income_ledger.get(&category) {
-            let category: &str = category.into();
+
+    for (category, (funds, count)) in &income_ledger {
+        if *count != 0 {
             let category = format!("income-category-{category}");
             income_expense_row(
                 commands.reborrow(),
@@ -615,6 +615,7 @@ fn update_funds_tooltip(
             );
         }
     }
+
     commands.spawn(hrule.clone());
     commands.spawn((
         TextKey::new("expense-tooltip-header"),
@@ -622,15 +623,17 @@ fn update_funds_tooltip(
         ChildOf(tooltip_inner),
     ));
     commands.spawn(hrule);
-    let mut expense_ledger: HashMap<ExpenseCategory, (FundsAmount, usize)> = HashMap::default();
+
+    let mut expense_ledger: BTreeMap<String, (FundsAmount, usize)> = BTreeMap::default();
+
     for Expense(amount, category, ecount) in expenses {
-        let (funds, count) = expense_ledger.entry(*category).or_default();
+        let (funds, count) = expense_ledger.entry(category.clone()).or_default();
         *funds += amount * (*ecount as FundsAmount);
         *count += ecount;
     }
-    for category in ExpenseCategory::iter() {
-        if let Some((funds, count)) = expense_ledger.get(&category) {
-            let category: &str = category.into();
+
+    for (category, (funds, count)) in &expense_ledger {
+        if *count != 0 {
             let category = format!("expense-category-{category}");
             income_expense_row(
                 commands.reborrow(),

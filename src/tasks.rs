@@ -7,7 +7,7 @@ use serde_derive::Deserialize;
 
 use crate::{
     followers::FollowerCount,
-    funds::{FundsAmount, Income, IncomeCategory},
+    funds::{Expense, FundsAmount, Income},
     state::GameState,
     suspicion::SuspicionType,
 };
@@ -31,10 +31,8 @@ pub struct TasksHandle(pub Handle<TasksAsset>);
 #[serde(rename_all = "kebab-case")]
 pub struct TaskSettings {
     pub follower_types: Vec<String>,
-    #[serde(default)]
-    pub profit_per_day: FundsAmount,
-    #[serde(default)]
-    pub profit_category: Option<IncomeCategory>,
+    pub income_per_day: Option<(FundsAmount, String)>,
+    pub expense_per_day: Option<(FundsAmount, String)>,
     #[serde(default)]
     pub suspicion: IndexMap<SuspicionType, u32>,
     #[serde(default)]
@@ -95,16 +93,24 @@ fn on_task_changed<C: Component>(
         return;
     };
 
-    // Handle task income
-    if let Some(cat) = settings.profit_category
-        && settings.profit_per_day > 0
-    {
+    // Handle task income/expense
+    if let Some((income, category)) = &settings.income_per_day {
         commands
             .entity(entity)
-            .insert(Income(settings.profit_per_day, cat, count.0));
+            .insert(Income(*income, category.clone(), count.0));
     } else {
-        commands.entity(entity).remove::<Income>();
+        commands.entity(entity).try_remove::<Income>();
     }
+
+    if let Some((expense, category)) = &settings.expense_per_day {
+        commands
+            .entity(entity)
+            .insert(Expense(*expense, category.clone(), count.0));
+    } else {
+        commands.entity(entity).try_remove::<Expense>();
+    }
+
+    // TODO: handle suspicions
     // TODO: handle recruitment
     // TODO: handle research
 }

@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 use moonshine_save::save::Save;
-use serde::Deserialize;
-use strum::{EnumIter, IntoStaticStr};
 
 use crate::{
     constants::STARTING_FUNDS,
@@ -47,14 +45,7 @@ pub struct Funds(pub FundsAmount);
 #[reflect(Component)]
 #[require(Save)]
 #[component(immutable)]
-pub struct Expense(pub FundsAmount, pub ExpenseCategory, pub usize);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter, IntoStaticStr, Reflect)]
-#[strum(serialize_all = "lowercase")]
-pub enum ExpenseCategory {
-    Followers,
-    Bases,
-}
+pub struct Expense(pub FundsAmount, pub String, pub usize);
 
 /// The third field is the number of budget entries represented by this component,
 /// to be shown in the funds tooltip.
@@ -62,17 +53,7 @@ pub enum ExpenseCategory {
 #[reflect(Component)]
 #[require(Save)]
 #[component(immutable)]
-pub struct Income(pub FundsAmount, pub IncomeCategory, pub usize);
-
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter, IntoStaticStr, Reflect, Deserialize,
-)]
-#[strum(serialize_all = "kebab-case")]
-#[serde(rename_all = "kebab-case")]
-pub enum IncomeCategory {
-    Jobs,
-    Crime,
-}
+pub struct Income(pub FundsAmount, pub String, pub usize);
 
 #[derive(Debug, Event, Clone, Copy)]
 pub struct IncomeExpenseUpdatedEvent;
