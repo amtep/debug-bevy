@@ -23,7 +23,7 @@ use crate::{
         AUTOSAVE_INTERVAL,
         files::{PROJECT_DIR_APPLICATION, PROJECT_DIR_ORGANIZATION, PROJECT_DIR_QUALIFIER},
     },
-    discoveries::DiscoveriesLearned,
+    discoveries::{DiscoveriesLearned, ResearchPoints},
     followers::FollowerCount,
     funds::{Funds, FundsAmount},
     main_menu::NewGame,
@@ -130,7 +130,8 @@ fn save_inner(
             .include_resource::<IntelligenceSuspicion>()
             .include_resource::<ScientificSuspicion>()
             .include_resource::<GameDate>()
-            .include_resource::<DiscoveriesLearned>();
+            .include_resource::<DiscoveriesLearned>()
+            .include_resource::<ResearchPoints>();
         commands.trigger_save(event);
         // TODO: only do this if the save succeeded
         rename(temp_path, &path).map_err(|e| SaveLoadError::RenameError(path.clone(), e))?;

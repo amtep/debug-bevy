@@ -6,6 +6,7 @@ use moonshine_save::save::Save;
 use serde_derive::Deserialize;
 
 use crate::{
+    discoveries::ResearchPoints,
     followers::FollowerCount,
     funds::{Expense, FundsAmount, Income},
     state::GameState,
@@ -17,6 +18,7 @@ const TASKS_ASSET_PATH: &str = "data/define.tasks.toml";
 pub fn plugin(app: &mut App) {
     app.add_plugins(TomlAssetPlugin::<TasksAsset>::new(&["tasks.toml"]))
         .add_systems(OnEnter(GameState::Load), setup_load)
+        .add_systems(FixedUpdate, research.run_if(in_state(GameState::Main)))
         .add_observer(on_task_changed::<Task>)
         .add_observer(on_task_changed::<FollowerCount>);
 }
@@ -113,6 +115,28 @@ fn on_task_changed<C: Component>(
     }
 
     // TODO: handle suspicions
-    // TODO: handle recruitment
     // TODO: handle research
+}
+
+fn research(
+    tasks: Query<(&ChildOf, &Task)>,
+    followers: Query<&FollowerCount>,
+    task_handle: Res<TasksHandle>,
+    task_assets: Res<Assets<TasksAsset>>,
+    mut points: ResMut<ResearchPoints>,
+) {
+    let task_types = &task_assets.get(task_handle.0.id()).unwrap().0;
+    for (ChildOf(follower_e), Task(task)) in tasks {
+        let Some(task_settings) = task_types.get(task) else {
+            error!("Unknown task '{task}'");
+            continue;
+        };
+        if task_settings.research > 0 {
+            let Ok(count) = followers.get(*follower_e) else {
+                error!("Task without followers");
+                continue;
+            };
+            points.0 += task_settings.research * **count;
+        }
+    }
 }
