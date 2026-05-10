@@ -1,7 +1,6 @@
-use std::collections::HashMap;
-
 use bevy::prelude::*;
 use bevy_common_assets::toml::TomlAssetPlugin;
+use indexmap::IndexMap;
 use moonshine_save::save::Save;
 use serde::Deserialize;
 use strum::{Display, EnumIter};
@@ -27,7 +26,7 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Deserialize, Asset, TypePath)]
-pub struct FollowersAsset(pub HashMap<String, GeneralFollowerSettings>);
+pub struct FollowersAsset(pub IndexMap<String, GeneralFollowerSettings>);
 
 #[derive(Resource)]
 pub struct FollowersHandle(pub Handle<FollowersAsset>);

@@ -184,6 +184,7 @@ dependencies = [
  "fluent",
  "fluent-datetime",
  "icu",
+ "indexmap",
  "line-numbers",
  "moonshine-save",
  "rand 0.10.1",
@@ -193,6 +194,7 @@ dependencies = [
  "serde_derive",
  "strum",
  "thiserror 2.0.18",
+ "toml",
  "unic-langid",
 ]
 
@@ -5644,6 +5646,7 @@ version = "0.9.12+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf92845e79fc2e2def6a5d828f0801e29a2f8acc037becc5ab08595c7d5e9863"
 dependencies = [
+ "foldhash 0.2.0",
  "indexmap",
  "serde_core",
  "serde_spanned",

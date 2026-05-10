@@ -1,8 +1,7 @@
-use std::collections::HashMap;
-
 use bevy::prelude::*;
 use bevy::reflect::Is;
 use bevy_common_assets::toml::TomlAssetPlugin;
+use indexmap::IndexMap;
 use moonshine_save::save::Save;
 use serde_derive::Deserialize;
 
@@ -25,7 +24,7 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Deserialize, Asset, TypePath)]
-pub struct TasksAsset(pub HashMap<String, TaskSettings>);
+pub struct TasksAsset(pub IndexMap<String, TaskSettings>);
 
 #[derive(Resource)]
 pub struct TasksHandle(pub Handle<TasksAsset>);
@@ -39,7 +38,7 @@ pub struct TaskSettings {
     #[serde(default)]
     pub profit_category: Option<IncomeCategory>,
     #[serde(default)]
-    pub suspicion: HashMap<SuspicionType, u32>,
+    pub suspicion: IndexMap<SuspicionType, u32>,
     #[serde(default)]
     pub recruit_progress: usize,
     #[serde(default)]

@@ -1,7 +1,6 @@
-use std::collections::HashMap;
-
 use bevy::prelude::*;
 use bevy_common_assets::toml::TomlAssetPlugin;
+use indexmap::IndexMap;
 use moonshine_save::save::Save;
 use rand::{RngExt, seq::IndexedRandom};
 use serde_derive::Deserialize;
@@ -37,7 +36,7 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Deserialize, Asset, TypePath)]
-pub struct BasetypesAsset(pub HashMap<String, BasetypeSettings>);
+pub struct BasetypesAsset(pub IndexMap<String, BasetypeSettings>);
 
 #[derive(Resource)]
 pub struct BasetypesHandle(pub Handle<BasetypesAsset>);
