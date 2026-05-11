@@ -10,5 +10,23 @@ discovery-minions-can-recruit = Pamphlets
 discovery-shadowy-contacts = Shadowy Contacts
   .desc = Get in touch with operatives who can provide illegal services.
 
+discovery-unlock-africa = Unlock North America
+  .desc = Forged papers and bribes to enable a foothold in North America.
+
+discovery-unlock-africa = Unlock South America
+  .desc = Forged papers and bribes to enable a foothold in South America.
+
+discovery-unlock-africa = Unlock Europe
+  .desc = Forged papers and bribes to enable a foothold in Europe.
+
 discovery-unlock-africa = Unlock Africa
-  .desc = Forged papers and bribes to enable a presence in Africa.
+  .desc = Forged papers and bribes to enable a foothold in Africa.
+
+discovery-unlock-africa = Unlock Western Asia
+  .desc = Forged papers and bribes to enable a foothold in Western Asia.
+
+discovery-unlock-africa = Unlock Eastern Asia
+  .desc = Forged papers and bribes to enable a foothold in Eastern Asia.
+
+discovery-unlock-africa = Unlock Oceania
+  .desc = Forged papers and bribes to enable a foothold in Oceania.
