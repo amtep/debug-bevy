@@ -2,7 +2,7 @@ use bevy::{prelude::*, ui::FocusPolicy};
 
 use crate::{
     constants::ui::*,
-    save_load::save,
+    save_load::{Campaign, save},
     state::GameState,
     text::TextKey,
     time::ForcePause,
@@ -122,6 +122,7 @@ fn open_esc_menu(
                   mut next_state: ResMut<NextState<GameState>>| {
                 if click.button == PointerButton::Primary {
                     commands.run_system_cached(save);
+                    commands.remove_resource::<Campaign>();
                     next_state.set(GameState::MainMenu);
                     commands.entity(root).despawn();
                 }
