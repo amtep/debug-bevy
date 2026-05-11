@@ -3,7 +3,11 @@ use bevy_common_assets::toml::TomlAssetPlugin;
 use indexmap::IndexMap;
 use serde_derive::Deserialize;
 
-use crate::{funds::FundsAmount, main_menu::NewGame, state::GameState};
+use crate::{
+    funds::FundsAmount,
+    main_menu::NewGame,
+    state::{GameState, MainSetupSet},
+};
 
 const DISCOVERIES_ASSET_PATH: &str = "data/define.discoveries.toml";
 
@@ -12,7 +16,10 @@ pub fn plugin(app: &mut App) {
         "discoveries.toml",
     ]))
     .add_systems(OnEnter(GameState::Load), setup_load)
-    .add_systems(OnEnter(GameState::Main), new_game);
+    .add_systems(
+        OnEnter(GameState::Main),
+        new_game.in_set(MainSetupSet::Default),
+    );
 }
 
 #[derive(Deserialize, Asset, TypePath)]
