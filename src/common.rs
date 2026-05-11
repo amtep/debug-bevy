@@ -8,5 +8,9 @@ pub struct CultName(pub String);
 #[reflect(Resource)]
 pub struct CultSymbol(pub usize);
 
+#[derive(Resource, Reflect)]
+#[reflect(Resource)]
+pub struct Difficulty(pub String);
+
 #[derive(Resource, Default)]
 pub struct Dev;

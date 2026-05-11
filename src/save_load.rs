@@ -18,7 +18,7 @@ use thiserror::Error;
 
 use crate::{
     bases::Base,
-    common::{CultName, CultSymbol},
+    common::{CultName, CultSymbol, Difficulty},
     config::Config,
     constants::files::{PROJECT_DIR_APPLICATION, PROJECT_DIR_ORGANIZATION, PROJECT_DIR_QUALIFIER},
     discoveries::{DiscoveriesResearched, ResearchPoints},
@@ -122,6 +122,7 @@ fn save_inner(
             .include_resource::<Funds>()
             .include_resource::<CultName>()
             .include_resource::<CultSymbol>()
+            .include_resource::<Difficulty>()
             .include_resource::<IntelligenceSuspicion>()
             .include_resource::<ScientificSuspicion>()
             .include_resource::<GameDate>()

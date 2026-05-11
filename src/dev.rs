@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    common::{CultName, CultSymbol, Dev},
+    common::{CultName, CultSymbol, Dev, Difficulty},
     funds::Funds,
     new_game::{DifficultiesAsset, DifficultiesHandle, NewGame},
     state::GameState,
@@ -45,15 +45,15 @@ fn listen_dev_keys_main_menu(
         commands.insert_resource(CultSymbol(0));
         commands.init_resource::<Dev>();
 
-        let difficulty = difficulties_assets
+        let (name, difficulty) = difficulties_assets
             .get(difficulties_handle.0.id())
             .unwrap()
             .0
             .iter()
             .find(|(_, settings)| settings.default)
-            .unwrap()
-            .1;
+            .unwrap();
 
+        commands.insert_resource(Difficulty(name.clone()));
         commands.insert_resource(NewGame {
             difficulty: difficulty.clone(),
         });

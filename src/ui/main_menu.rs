@@ -426,6 +426,7 @@ fn setup_difficulties_dialog(
                     .get(&difficulty_name.0)
                     .unwrap()
                     .clone();
+                commands.insert_resource(crate::common::Difficulty(difficulty_name.0.clone()));
                 commands.insert_resource(NewGame { difficulty });
                 commands.remove_resource::<DifficultyName>();
                 game_state.set(GameState::Main);
