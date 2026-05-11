@@ -1,7 +1,7 @@
 use bevy::{prelude::*, ui::FocusPolicy};
 
 use crate::{
-    constants::ui::*,
+    constants::ui::{ZINDEX_ESC_MENU, colors::*},
     save_load::{Campaign, save},
     state::GameState,
     text::TextKey,

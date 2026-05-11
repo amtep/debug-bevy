@@ -6,7 +6,7 @@ use bevy::{
 use bevy_ui_text_input::TextInputNode;
 
 use crate::{
-    constants::ui::*,
+    constants::ui::{ZINDEX_DIALOG, colors::*, fonts::*},
     state::GameState,
     text::TextKey,
     time::ForcePause,

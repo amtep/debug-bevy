@@ -10,106 +10,110 @@ pub mod files {
         "kii1.png", "kii2.png", "kii3.png", "kii4.png", "kii5.png", "kii6.png", "kii7.png",
         "kii8.png",
     ];
-}
-
-pub mod ui {
-    use bevy::{color::Srgba, log::warn};
 
     pub const TEXTURE_EARTH_BACKGROUND: &str = "textures/earth_night.jpg";
 
     pub const FONT_DISPLAY_PATH: &str = "fonts/DancingScript-Variable.ttf";
     pub const FONT_PATH: &str = "fonts/Lora-Variable.ttf";
-    // A font spanning more unicode code points than usual
+    /// A font spanning more unicode code points than usual
     pub const UNICODE_FONT_PATH: &str = "fonts/DejaVuSans.ttf";
     pub const MONO_FONT_PATH: &str = "fonts/CourierPrime-Regular.ttf";
     pub const EMOJI_FONT_PATH: &str = "fonts/NotoEmoji-VariableFont_wght.ttf";
-
-    pub const THEME_DARK_PURPLE: Srgba = Srgba::rgb(0.102, 0.055, 0.243); // #1A0E3E
-    pub const THEME_INDIGO: Srgba = Srgba::rgb(0.122, 0.102, 0.439); // #1F1A70
-    #[expect(dead_code)]
-    pub const THEME_MAGENTA: Srgba = Srgba::rgb(0.859, 0.282, 0.545); // #DB488B
-    pub const THEME_LIGHT_PINK: Srgba = Srgba::rgb(1.000, 0.514, 0.965); // #FF83F6
-    pub const THEME_CYAN: Srgba = Srgba::rgb(0.243, 0.816, 0.922); // #3ED0EB
-
-    pub const WHITE: Srgba = Srgba::rgb(0.878, 0.878, 0.878);
-    pub const DARK_GREY: Srgba = Srgba::rgb(0.149, 0.145, 0.153);
-    pub const GREY: Srgba = Srgba::rgb(0.5, 0.5, 0.5);
-    pub const BLACK: Srgba = Srgba::rgb(0.071, 0.071, 0.071);
-    pub const YELLOW: Srgba = Srgba::rgb(1.00, 1.00, 0.384);
-    pub const GREEN: Srgba = Srgba::rgb(0.694, 1.00, 0.384);
-    pub const ORANGE: Srgba = Srgba::rgb(1.00, 0.694, 0.384);
-    pub const RED: Srgba = Srgba::rgb(1.00, 0.384, 0.384);
-    pub const BLUE: Srgba = Srgba::rgb(0.384, 0.384, 1.00);
-    pub const GOLD: Srgba = Srgba::rgb(1.00, 0.894, 0.384);
-
-    pub const BUTTON_BACKGROUND: Srgba = THEME_DARK_PURPLE;
-    pub const BUTTON_HOVER_BACKGROUND: Srgba = THEME_INDIGO;
-    pub const BUTTON_PRESSED_BACKGROUND: Srgba = BLACK;
-
-    pub const DIALOG_BACKGROUND: Srgba = THEME_DARK_PURPLE;
-
-    pub const MENU_BACKGROUND: Srgba = THEME_DARK_PURPLE;
-
-    pub const TOOLTIP_BACKGROUND: Srgba = DARK_GREY;
-
-    pub const OVERLAY_ALPHA: f32 = 0.8;
-
-    pub const DARK_OVERLAY: Srgba = Srgba {
-        alpha: OVERLAY_ALPHA,
-        ..BLACK
-    };
-
-    #[expect(dead_code)]
-    pub const LIGHT_OVERLAY: Srgba = Srgba {
-        alpha: OVERLAY_ALPHA,
-        ..WHITE
-    };
-
-    pub const TEXT: Srgba = WHITE;
-    pub const BORDER: Srgba = WHITE;
-    pub const TEXT_HIGHLIGHT: Srgba = YELLOW;
-    pub const BORDER_HIGHLIGHT: Srgba = YELLOW;
-    pub const TEXT_POSITIVE: Srgba = GREEN;
-    pub const TEXT_MIXED: Srgba = ORANGE;
-    pub const TEXT_NEGATIVE: Srgba = RED;
-    pub const TEXT_NEUTRAL: Srgba = BLUE;
-    pub const TEXT_DISABLED: Srgba = GREY;
-    pub const TEXT_FUNDS: Srgba = GOLD;
-
-    pub const HEADING: f32 = 24.0;
-    pub const SUB_HEADING: f32 = 20.0;
-    pub const LARGE: f32 = 16.0;
-    pub const NORMAL: f32 = 14.5;
-    pub const SMALL: f32 = 13.0;
-    // EMOJI FONT ONLY
-    pub const TINY: f32 = 10.0;
 
     pub const ICON_PAUSE: &str = "textures/pause.png";
     pub const ICON_PLAY: &str = "textures/play.png";
     pub const ICON_FAST: &str = "textures/fast.png";
     pub const ICON_FASTEST: &str = "textures/fastest.png";
+}
+
+pub mod ui {
+    pub mod fonts {
+        pub const HEADING: f32 = 24.0;
+        pub const SUB_HEADING: f32 = 20.0;
+        pub const LARGE: f32 = 16.0;
+        pub const NORMAL: f32 = 14.5;
+        pub const SMALL: f32 = 13.0;
+        // EMOJI FONT ONLY
+        pub const TINY: f32 = 10.0;
+    }
+
+    pub mod colors {
+        use bevy::{color::Srgba, log::warn};
+
+        pub const THEME_DARK_PURPLE: Srgba = Srgba::rgb(0.102, 0.055, 0.243); // #1A0E3E
+        pub const THEME_INDIGO: Srgba = Srgba::rgb(0.122, 0.102, 0.439); // #1F1A70
+        #[expect(dead_code)]
+        pub const THEME_MAGENTA: Srgba = Srgba::rgb(0.859, 0.282, 0.545); // #DB488B
+        pub const THEME_LIGHT_PINK: Srgba = Srgba::rgb(1.000, 0.514, 0.965); // #FF83F6
+        pub const THEME_CYAN: Srgba = Srgba::rgb(0.243, 0.816, 0.922); // #3ED0EB
+
+        pub const WHITE: Srgba = Srgba::rgb(0.878, 0.878, 0.878);
+        pub const DARK_GREY: Srgba = Srgba::rgb(0.149, 0.145, 0.153);
+        pub const GREY: Srgba = Srgba::rgb(0.5, 0.5, 0.5);
+        pub const BLACK: Srgba = Srgba::rgb(0.071, 0.071, 0.071);
+        pub const YELLOW: Srgba = Srgba::rgb(1.00, 1.00, 0.384);
+        pub const GREEN: Srgba = Srgba::rgb(0.694, 1.00, 0.384);
+        pub const ORANGE: Srgba = Srgba::rgb(1.00, 0.694, 0.384);
+        pub const RED: Srgba = Srgba::rgb(1.00, 0.384, 0.384);
+        pub const BLUE: Srgba = Srgba::rgb(0.384, 0.384, 1.00);
+        pub const GOLD: Srgba = Srgba::rgb(1.00, 0.894, 0.384);
+
+        pub const BUTTON_BACKGROUND: Srgba = THEME_DARK_PURPLE;
+        pub const BUTTON_HOVER_BACKGROUND: Srgba = THEME_INDIGO;
+        pub const BUTTON_PRESSED_BACKGROUND: Srgba = BLACK;
+
+        pub const DIALOG_BACKGROUND: Srgba = THEME_DARK_PURPLE;
+
+        pub const MENU_BACKGROUND: Srgba = THEME_DARK_PURPLE;
+
+        pub const TOOLTIP_BACKGROUND: Srgba = DARK_GREY;
+
+        pub const OVERLAY_ALPHA: f32 = 0.8;
+
+        pub const DARK_OVERLAY: Srgba = Srgba {
+            alpha: OVERLAY_ALPHA,
+            ..BLACK
+        };
+
+        #[expect(dead_code)]
+        pub const LIGHT_OVERLAY: Srgba = Srgba {
+            alpha: OVERLAY_ALPHA,
+            ..WHITE
+        };
+
+        pub const TEXT: Srgba = WHITE;
+        pub const BORDER: Srgba = WHITE;
+        pub const TEXT_HIGHLIGHT: Srgba = YELLOW;
+        pub const BORDER_HIGHLIGHT: Srgba = YELLOW;
+        pub const TEXT_POSITIVE: Srgba = GREEN;
+        pub const TEXT_MIXED: Srgba = ORANGE;
+        pub const TEXT_NEGATIVE: Srgba = RED;
+        pub const TEXT_NEUTRAL: Srgba = BLUE;
+        pub const TEXT_DISABLED: Srgba = GREY;
+        pub const TEXT_FUNDS: Srgba = GOLD;
+
+        pub fn color(color: &str) -> Srgba {
+            match color {
+                "white" => WHITE,
+                "dark grey" => DARK_GREY,
+                "grey" => GREY,
+                "black" => BLACK,
+                "yellow" => YELLOW,
+                "green" => GREEN,
+                "orange" => ORANGE,
+                "red" => RED,
+                "blue" => BLUE,
+                "gold" => GOLD,
+                _ => {
+                    warn!("unknown color '{color}'");
+                    WHITE
+                }
+            }
+        }
+    }
 
     pub const ZINDEX_MENU: i32 = 50;
     pub const ZINDEX_DIALOG: i32 = 100;
     pub const ZINDEX_TOOLTIP: i32 = 200;
     pub const ZINDEX_ESC_MENU: i32 = 1000;
-
-    pub fn color(color: &str) -> Srgba {
-        match color {
-            "white" => WHITE,
-            "dark grey" => DARK_GREY,
-            "grey" => GREY,
-            "black" => BLACK,
-            "yellow" => YELLOW,
-            "green" => GREEN,
-            "orange" => ORANGE,
-            "red" => RED,
-            "blue" => BLUE,
-            "gold" => GOLD,
-            _ => {
-                warn!("unknown color '{color}'");
-                WHITE
-            }
-        }
-    }
 }

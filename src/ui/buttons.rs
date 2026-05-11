@@ -1,7 +1,7 @@
 use bevy::{input_focus::InputFocus, prelude::*, ui::InteractionDisabled};
 
 use crate::{
-    constants::ui::*,
+    constants::ui::colors::*,
     ui::{MapUi, menu::Menu},
 };
 

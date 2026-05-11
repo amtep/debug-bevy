@@ -4,7 +4,10 @@ use bevy::{
 };
 
 use crate::{
-    constants::ui::{BORDER, HEADING, NORMAL, SUB_HEADING, TEXT},
+    constants::ui::{
+        colors::{BORDER, TEXT},
+        fonts::{HEADING, NORMAL, SUB_HEADING},
+    },
     discoveries::{DiscoveriesAsset, DiscoveriesHandle, DiscoveriesResearched},
     text::TextKey,
     ui::{FontHandle, dialog::Dialog, scroll::on_scroll},

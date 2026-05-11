@@ -5,7 +5,7 @@ use bevy::{
 };
 
 use crate::{
-    constants::ui::*,
+    constants::ui::{ZINDEX_MENU, colors::*, fonts::*},
     state::GameState,
     text::TextKey,
     ui::{FontHandle, tooltip::Tooltip},

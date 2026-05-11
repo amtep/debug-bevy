@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     bases::{BasetypesAsset, BasetypesHandle, spawn_base},
-    constants::ui::*,
+    constants::ui::{colors::*, fonts::*},
     discoveries::DiscoveriesResearched,
     funds::Funds,
     regions::{BasePlot, Location, Region},

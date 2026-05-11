@@ -6,7 +6,10 @@ use bevy::{
 use crate::{
     constants::{
         files::{CULT_SYMBOL_PATH, CULT_SYMBOLS},
-        ui::{BORDER, NORMAL, TEXT},
+        ui::{
+            colors::{BORDER, TEXT},
+            fonts::NORMAL,
+        },
     },
     save_load::{Campaign, load, scan_saved_games},
     state::GameState,

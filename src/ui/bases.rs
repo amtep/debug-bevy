@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     bases::{Base, BasetypesAsset, BasetypesHandle},
-    constants::ui::*,
+    constants::ui::{colors::*, fonts::SMALL},
     followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
     regions::{BasePlot, Region},
     state::GameState,

@@ -1,6 +1,6 @@
 use bevy::{asset::LoadedFolder, prelude::*};
 
-use crate::{config::Config, constants::ui::BLACK};
+use crate::{config::Config, constants::ui::colors::BLACK};
 
 pub fn plugin(app: &mut App) {
     app.init_state::<GameState>()

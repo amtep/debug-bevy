@@ -4,7 +4,12 @@ use bevy::ui::UiSystems;
 use bevy::window::PrimaryWindow;
 use bevy::{picking::hover::Hovered, prelude::*};
 
-use crate::{constants::ui::*, state::GameState, text::TextKey, ui::FontHandle};
+use crate::{
+    constants::ui::{ZINDEX_TOOLTIP, colors::*, fonts::*},
+    state::GameState,
+    text::TextKey,
+    ui::FontHandle,
+};
 
 const TOOLTIP_Y: f32 = 5.0;
 

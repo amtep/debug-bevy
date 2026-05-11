@@ -5,8 +5,8 @@ use bevy::{input_focus::InputFocus, prelude::*, ui::UiSystems, window::WindowRes
 use crate::{
     common::{CultName, CultSymbol, Dev},
     constants::{
-        files::{CULT_SYMBOL_PATH, CULT_SYMBOLS},
-        ui::*,
+        files::*,
+        ui::{colors::*, fonts::*},
     },
     discoveries::ResearchPoints,
     funds::{Expense, Funds, FundsAmount, Income, IncomeExpenseUpdatedEvent},

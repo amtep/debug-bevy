@@ -4,8 +4,8 @@ use bevy_ui_text_input::{TextInputBuffer, TextInputMode, TextInputNode, TextInpu
 use crate::{
     common::{CultName, CultSymbol},
     constants::{
-        files::{CULT_SYMBOL_PATH, CULT_SYMBOLS},
-        ui::*,
+        files::{CULT_SYMBOL_PATH, CULT_SYMBOLS, TEXTURE_EARTH_BACKGROUND},
+        ui::{colors::*, fonts::*},
     },
     new_game::{DifficultiesAsset, DifficultiesHandle, NewGame},
     save_load::any_save_file_exists,
