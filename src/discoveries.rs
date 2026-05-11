@@ -3,7 +3,7 @@ use bevy_common_assets::toml::TomlAssetPlugin;
 use indexmap::IndexMap;
 use serde_derive::Deserialize;
 
-use crate::{funds::FundsAmount, state::GameState};
+use crate::{funds::FundsAmount, main_menu::NewGame, state::GameState};
 
 const DISCOVERIES_ASSET_PATH: &str = "data/define.discoveries.toml";
 
@@ -11,9 +11,8 @@ pub fn plugin(app: &mut App) {
     app.add_plugins(TomlAssetPlugin::<DiscoveriesAsset>::new(&[
         "discoveries.toml",
     ]))
-    .init_resource::<DiscoveriesResearched>()
-    .init_resource::<ResearchPoints>()
-    .add_systems(OnEnter(GameState::Load), setup_load);
+    .add_systems(OnEnter(GameState::Load), setup_load)
+    .add_systems(OnEnter(GameState::Main), new_game);
 }
 
 #[derive(Deserialize, Asset, TypePath)]
@@ -42,4 +41,9 @@ pub struct DiscoverySettings {
 
 fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(DiscoveriesHandle(asset_server.load(DISCOVERIES_ASSET_PATH)));
+}
+
+fn new_game(mut commands: Commands, _: If<Res<NewGame>>) {
+    commands.init_resource::<DiscoveriesResearched>();
+    commands.init_resource::<ResearchPoints>();
 }
