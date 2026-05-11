@@ -1,4 +1,5 @@
 game-date-display = { DATETIME($date, dateStyle: "medium") }
+research-display = Knowledge: { $points }
 
 dialog-confirm = Confirm
 dialog-cancel = Cancel

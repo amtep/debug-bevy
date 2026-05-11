@@ -8,6 +8,7 @@ use crate::{
         files::{CULT_SYMBOL_PATH, CULT_SYMBOLS},
         ui::*,
     },
+    discoveries::ResearchPoints,
     funds::{Expense, Funds, FundsAmount, Income, IncomeExpenseUpdatedEvent},
     new_game::NewGame,
     state::{GameState, MainSetupSet},
@@ -64,7 +65,13 @@ pub fn plugin(app: &mut App) {
     )
     .add_systems(
         Update,
-        update_funds.run_if(resource_exists_and_changed::<Funds>.and(in_state(GameState::Main))),
+        (
+            update_funds
+                .run_if(resource_exists_and_changed::<Funds>.and(in_state(GameState::Main))),
+            update_research.run_if(
+                resource_exists_and_changed::<ResearchPoints>.and(in_state(GameState::Main)),
+            ),
+        ),
     )
     .add_systems(
         Update,
@@ -121,6 +128,9 @@ struct GameDateUi;
 
 #[derive(Component)]
 struct FundsUi;
+
+#[derive(Component)]
+struct ResearchPointsUi;
 
 #[derive(Component)]
 struct BasePlotUi;
@@ -331,6 +341,28 @@ fn setup_ui(
                         flex_grow: 1.0,
                         ..default()
                     });
+                    // Research points counter
+                    parent
+                        .spawn((
+                            Node {
+                                padding: UiRect {
+                                    top: px(2),
+                                    right: px(5),
+                                    ..default()
+                                },
+                                min_width: px(80),
+                                border: px(1).right(),
+                                ..default()
+                            },
+                            BorderColor::all(BORDER),
+                        ))
+                        .with_child((
+                            mono_text_font.clone(),
+                            // will be updated by update_research
+                            TextKey::new("research-display").add_arg("points", 0),
+                            TextColor::from(TEXT),
+                            ResearchPointsUi,
+                        ));
                     parent
                         .spawn((
                             Button,
@@ -464,6 +496,13 @@ fn update_game_date(
 
 fn update_funds(funds: Res<Funds>, mut text_key: Single<&mut TextKey, With<FundsUi>>) {
     text_key.replace_arg("funds", funds.0);
+}
+
+fn update_research(
+    points: Res<ResearchPoints>,
+    mut text_key: Single<&mut TextKey, With<ResearchPointsUi>>,
+) {
+    text_key.replace_arg("points", points.0 as f64);
 }
 
 fn update_suspicion(
