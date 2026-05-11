@@ -19,10 +19,8 @@ use thiserror::Error;
 use crate::{
     bases::Base,
     common::{CultName, CultSymbol},
-    constants::{
-        AUTOSAVE_INTERVAL,
-        files::{PROJECT_DIR_APPLICATION, PROJECT_DIR_ORGANIZATION, PROJECT_DIR_QUALIFIER},
-    },
+    config::Config,
+    constants::files::{PROJECT_DIR_APPLICATION, PROJECT_DIR_ORGANIZATION, PROJECT_DIR_QUALIFIER},
     discoveries::{DiscoveriesLearned, ResearchPoints},
     followers::FollowerCount,
     funds::{Funds, FundsAmount},
@@ -53,10 +51,7 @@ pub fn plugin(app: &mut App) {
             save.run_if(resource_exists::<NewGame>)
                 .in_set(MainSetupSet::Save),
         )
-        .insert_resource(AutosaveTimer(Timer::new(
-            AUTOSAVE_INTERVAL,
-            TimerMode::Repeating,
-        )))
+        .add_systems(OnEnter(GameState::Main), setup_autosave_timer)
         .add_observer(save_on_default_event)
         .add_observer(load_on_default_event);
 }
@@ -278,6 +273,13 @@ pub fn scan_saved_games() -> Result<Vec<(Campaign, SaveMetadata, Vec<u8>)>, Save
         }
     }
     Ok(v)
+}
+
+fn setup_autosave_timer(mut commands: Commands, config: Res<Config>) {
+    commands.insert_resource(AutosaveTimer(Timer::new(
+        config.auto_save_interval,
+        TimerMode::Repeating,
+    )));
 }
 
 fn reinsert_component<C: Component + Clone>(

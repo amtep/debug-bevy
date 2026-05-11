@@ -2,6 +2,7 @@ pub mod main_loop;
 
 mod bases;
 mod common;
+mod config;
 mod constants;
 #[cfg(feature = "dev")]
 mod dev;

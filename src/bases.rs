@@ -6,14 +6,13 @@ use rand::{RngExt, seq::IndexedRandom};
 use serde_derive::Deserialize;
 
 use crate::{
-    constants::NEW_MINION_PROGRESS,
     followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
     funds::{Expense, Funds, FundsAmount},
     main_menu::NewGame,
     regions::{BasePlot, Region},
     rng::RandomSource,
     state::{GameState, MainSetupSet},
-    tasks::{Task, TasksAsset, TasksHandle},
+    tasks::{RecruitMinionProgress, Task, TasksAsset, TasksHandle},
 };
 
 const BASETYPES_ASSET_PATH: &str = "data/define.basetypes.toml";
@@ -26,8 +25,7 @@ pub fn plugin(app: &mut App) {
             new_game
                 .run_if(resource_exists::<NewGame>)
                 .in_set(MainSetupSet::Bases),
-        )
-        .add_systems(FixedUpdate, recruitment.run_if(in_state(GameState::Main)));
+        );
 }
 
 #[derive(Deserialize, Asset, TypePath)]
@@ -46,8 +44,7 @@ pub struct BasetypeSettings {
     pub media_suspicion: u32,
     #[serde(default)]
     pub regions: Vec<String>,
-    #[serde(default)]
-    pub hidden: bool,
+    pub requires_discovery: Option<String>,
     pub color: String,
 }
 
@@ -60,13 +57,6 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
 #[reflect(Component)]
 #[require(Save, RecruitMinionProgress)]
 pub struct Base(pub String);
-
-/// A component to track recruitment of new minions.
-/// A new minion is spawned if this rolls over the [`NEW_MINION_PROGRESS`] constant.
-/// It's locked to 0 if the base is full.
-#[derive(Component, Default, Reflect)]
-#[reflect(Component)]
-pub struct RecruitMinionProgress(f64);
 
 fn new_game(
     mut commands: Commands,
@@ -167,74 +157,4 @@ pub fn spawn_base(
     }
 
     commands.run_system_cached_with(spawn_base_inner, (*base_plot, base_type, false));
-}
-
-#[expect(clippy::cast_precision_loss)]
-fn recruitment(
-    mut commands: Commands,
-    tasks: Query<(&ChildOf, &Task)>,
-    followers: Query<(&ChildOf, &Follower, &FollowerCount)>,
-    mut bases: Query<(&Base, &mut RecruitMinionProgress, &Children)>,
-    base_types_handle: Res<BasetypesHandle>,
-    base_types_asset: Res<Assets<BasetypesAsset>>,
-    task_handle: Res<TasksHandle>,
-    task_assets: Res<Assets<TasksAsset>>,
-) {
-    let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
-    let task_types = &task_assets.get(task_handle.0.id()).unwrap().0;
-
-    for (ChildOf(follower_e), Task(task)) in tasks {
-        let Some(task_settings) = task_types.get(task) else {
-            error!("Unknown task '{task}'");
-            continue;
-        };
-        if task_settings.recruit_progress > 0.0 {
-            let Ok((ChildOf(base_e), _, count)) = followers.get(*follower_e) else {
-                error!("Task without followers");
-                continue;
-            };
-            let Ok((Base(basetype), mut progress, children)) = bases.get_mut(*base_e) else {
-                error!("Followers without base");
-                continue;
-            };
-            let Some(base_type_settings) = base_types.get(basetype) else {
-                error!("Unknown basetype '{basetype}'");
-                continue;
-            };
-            let total_followers: usize = children
-                .iter()
-                .map(|e| {
-                    if let Ok((_, _, count)) = followers.get(e) {
-                        **count
-                    } else {
-                        0
-                    }
-                })
-                .sum();
-            if total_followers >= base_type_settings.max_pop {
-                progress.0 = 0.0;
-                continue;
-            }
-            progress.0 += task_settings.recruit_progress * **count as f64;
-            let mut new_minions = 0;
-            #[expect(clippy::while_float)]
-            while progress.0 >= NEW_MINION_PROGRESS {
-                progress.0 -= NEW_MINION_PROGRESS;
-                new_minions += 1;
-                if total_followers + new_minions >= base_type_settings.max_pop {
-                    progress.0 = 0.0;
-                }
-            }
-
-            // FIXME: remove hardcode
-            for e in children {
-                if let Ok((_, Follower(f), count)) = followers.get(*e)
-                    && f == "minion"
-                {
-                    let new_count = FollowerCount(**count + new_minions);
-                    commands.entity(*e).insert(new_count);
-                }
-            }
-        }
-    }
 }

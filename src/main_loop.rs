@@ -39,6 +39,7 @@ pub fn main_loop() {
                 crate::main_menu::plugin,
                 crate::save_load::plugin,
             ),
+            (crate::config::plugin),
         ))
         .run();
 }

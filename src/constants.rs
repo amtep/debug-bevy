@@ -1,11 +1,6 @@
-use std::time::Duration;
-
 use crate::funds::FundsAmount;
 
 pub const STARTING_FUNDS: FundsAmount = 5000;
-pub const NEW_MINION_PROGRESS: f64 = 100.0;
-
-pub const AUTOSAVE_INTERVAL: Duration = Duration::from_mins(5);
 
 pub mod files {
     pub const PROJECT_DIR_QUALIFIER: &str = "";
@@ -114,6 +109,7 @@ pub mod ui {
             "orange" => ORANGE,
             "red" => RED,
             "blue" => BLUE,
+            "gold" => GOLD,
             _ => {
                 warn!("unknown color '{color}'");
                 WHITE

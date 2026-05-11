@@ -1,6 +1,6 @@
 use bevy::{asset::LoadedFolder, prelude::*};
 
-use crate::constants::ui::BLACK;
+use crate::{config::Config, constants::ui::BLACK};
 
 pub fn plugin(app: &mut App) {
     app.init_state::<GameState>()
@@ -62,6 +62,7 @@ fn load_update(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     load_handle: Res<LoadHandle>,
+    _: If<Res<Config>>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     if asset_server.is_loaded_with_dependencies(load_handle.0.id()) {
