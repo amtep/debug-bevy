@@ -36,7 +36,7 @@ pub fn main_loop() {
                 crate::followers::plugin,
                 crate::discoveries::plugin,
                 crate::suspicion::plugin,
-                crate::main_menu::plugin,
+                crate::new_game::plugin,
                 crate::save_load::plugin,
             ),
             (crate::config::plugin),

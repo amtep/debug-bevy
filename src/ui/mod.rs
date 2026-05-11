@@ -9,7 +9,7 @@ use crate::{
         ui::*,
     },
     funds::{Expense, Funds, FundsAmount, Income, IncomeExpenseUpdatedEvent},
-    main_menu::NewGame,
+    new_game::NewGame,
     state::{GameState, MainSetupSet},
     suspicion::{IntelligenceSuspicion, ScientificSuspicion},
     text::TextKey,

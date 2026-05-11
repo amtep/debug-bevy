@@ -9,7 +9,7 @@ mod dev;
 mod discoveries;
 mod followers;
 mod funds;
-mod main_menu;
+mod new_game;
 mod regions;
 mod rng;
 mod save_load;

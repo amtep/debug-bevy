@@ -8,7 +8,7 @@ use serde_derive::Deserialize;
 use crate::{
     followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
     funds::{Expense, Funds, FundsAmount},
-    main_menu::NewGame,
+    new_game::NewGame,
     regions::{BasePlot, Region},
     rng::RandomSource,
     state::{GameState, MainSetupSet},

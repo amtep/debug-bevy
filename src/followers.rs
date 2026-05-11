@@ -7,7 +7,7 @@ use serde::Deserialize;
 use crate::{
     bases::Base,
     funds::{Expense, FundsAmount},
-    main_menu::NewGame,
+    new_game::NewGame,
     state::{GameState, MainSetupSet},
 };
 
@@ -61,31 +61,20 @@ fn new_game(
     mut commands: Commands,
     base: Single<&Children, With<Base>>,
     mut followers: Query<(&Follower, &FollowerCount, &Expense)>,
-    followers_handle: Res<FollowersHandle>,
-    followers_asset: Res<Assets<FollowersAsset>>,
+    new_game: Res<NewGame>,
 ) {
     info!("Creating starting follower");
 
-    let first_follower = followers_asset
-        .get(followers_handle.0.id())
-        .unwrap()
-        .0
-        .first()
-        .unwrap()
-        .0;
-
-    // Generally we should check whether the base has room
-    // for another follower, but this is a new game and it
-    // will be empty.
+    let starting_followers = &new_game.difficulty.starting_followers;
 
     for child in base.iter() {
         if let Ok((follower, follower_count, expense)) = followers.get_mut(child)
-            && *first_follower == follower.0
+            && let Some(count) = starting_followers.get(&follower.0)
         {
             let mut follower_count = *follower_count;
-            *follower_count += 1;
+            follower_count.0 = *count;
             let mut expense = expense.clone();
-            expense.2 += 1;
+            expense.2 = *count;
             commands.entity(child).insert(follower_count);
             commands.entity(child).insert(expense);
         }

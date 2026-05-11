@@ -5,7 +5,7 @@ use serde_derive::Deserialize;
 
 use crate::{
     funds::FundsAmount,
-    main_menu::NewGame,
+    new_game::NewGame,
     state::{GameState, MainSetupSet},
 };
 

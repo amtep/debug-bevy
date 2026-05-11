@@ -17,7 +17,7 @@ suspicion = { police = 1 }
 follower-types = ["priest"]
 recruit-progress = 1.0
 
-[minions-recruit-minions]
+[minion-recruit-minions]
 follower-types = ["minion"]
 requires-discovery = "minions-can-recruit"
 recruit-progress = 0.5

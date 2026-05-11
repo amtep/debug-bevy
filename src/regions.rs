@@ -6,7 +6,7 @@ use moonshine_save::save::Save;
 use serde::Deserialize;
 
 use crate::{
-    main_menu::NewGame,
+    new_game::NewGame,
     state::{GameState, MainSetupSet},
     suspicion::{MediaSuspicion, PoliceSuspicion},
     text::TextKey,

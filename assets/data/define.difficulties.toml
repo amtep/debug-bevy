@@ -1,0 +1,19 @@
+[easy]
+starting-funds = 50000
+starting-followers = {
+    priest = 1,
+    minion = 1
+}
+
+[normal]
+default = true
+starting-funds = 20000
+starting-followers = {
+    priest = 1,
+}
+
+[hard]
+starting-funds = 10000
+starting-followers = {
+    priest = 1,
+}

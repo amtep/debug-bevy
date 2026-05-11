@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     common::{CultName, CultSymbol, Dev},
     funds::Funds,
-    main_menu::NewGame,
+    new_game::{DifficultiesAsset, DifficultiesHandle, NewGame},
     state::GameState,
 };
 
@@ -33,6 +33,8 @@ fn listen_dev_keys_main_menu(
     keys: Res<ButtonInput<KeyCode>>,
     game_state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
+    difficulties_handle: Res<DifficultiesHandle>,
+    difficulties_assets: Res<Assets<DifficultiesAsset>>,
 ) {
     if keys.just_pressed(KeyCode::KeyG)
         && keys.pressed(KeyCode::AltLeft)
@@ -42,7 +44,19 @@ fn listen_dev_keys_main_menu(
         commands.insert_resource(CultName("DEV".into()));
         commands.insert_resource(CultSymbol(0));
         commands.init_resource::<Dev>();
-        commands.insert_resource(NewGame::NORMAL);
+
+        let difficulty = difficulties_assets
+            .get(difficulties_handle.0.id())
+            .unwrap()
+            .0
+            .iter()
+            .find(|(_, settings)| settings.default)
+            .unwrap()
+            .1;
+
+        commands.insert_resource(NewGame {
+            difficulty: difficulty.clone(),
+        });
         next_state.set(GameState::Main);
     }
 }

@@ -27,6 +27,8 @@ enum DialogBody {
 
 #[derive(Component, Default, Clone)]
 pub struct Dialog {
+    max_width: Option<Val>,
+    max_height: Option<Val>,
     text_body_font: Option<Handle<Font>>,
     pause: bool,
     title: Option<TextKey>,
@@ -83,6 +85,21 @@ impl Dialog {
 }
 
 impl Dialog {
+    pub fn with_max_width(self, max_width: Val) -> Self {
+        Self {
+            max_width: Some(max_width),
+            ..self
+        }
+    }
+
+    #[expect(dead_code)]
+    pub fn with_max_height(self, max_height: Val) -> Self {
+        Self {
+            max_width: Some(max_height),
+            ..self
+        }
+    }
+
     pub fn with_pause(self) -> Self {
         Self {
             pause: true,
@@ -170,9 +187,9 @@ fn on_dialog_add(
                 left: percent(50 + index),
                 top: percent(50 + index),
                 min_width: percent(25),
-                max_width: percent(50),
+                max_width: dialog.max_width.unwrap_or_else(|| percent(50)),
                 min_height: percent(50),
-                max_height: percent(75),
+                max_height: dialog.max_height.unwrap_or_else(|| percent(75)),
                 position_type: PositionType::Absolute,
                 ..Default::default()
             },

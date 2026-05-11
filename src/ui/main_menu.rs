@@ -7,7 +7,7 @@ use crate::{
         files::{CULT_SYMBOL_PATH, CULT_SYMBOLS},
         ui::*,
     },
-    main_menu::NewGame,
+    new_game::{DifficultiesAsset, DifficultiesHandle, NewGame},
     save_load::any_save_file_exists,
     state::GameState,
     text::TextKey,
@@ -21,20 +21,17 @@ use crate::{
 #[derive(Component)]
 struct CultSym(usize);
 
-#[derive(Component)]
-struct NewGameUi;
-
 #[derive(Event)]
 struct CultSymbolChanged(usize);
 
+#[derive(Resource)]
+struct DifficultyName(String);
+
 #[derive(Component)]
-struct Difficulty(&'static str);
+struct Difficulty(String);
 
 #[derive(Event)]
-struct DifficultyChanged(&'static str);
-
-#[derive(Event)]
-struct ConfirmEnable;
+struct DifficultyChanged(String);
 
 pub fn setup_main_menu(
     mut commands: Commands,
@@ -62,47 +59,6 @@ pub fn setup_main_menu(
             )],
         )
     };
-
-    let cult_symbol_observer = commands
-        .add_observer(
-            |event: On<CultSymbolChanged>, mut cult_symbols: Query<(&mut ImageNode, &CultSym)>| {
-                for (mut image_node, sym) in &mut cult_symbols {
-                    if sym.0 == event.0 {
-                        image_node.color = BLUE.into();
-                    } else {
-                        image_node.color = WHITE.into();
-                    }
-                }
-            },
-        )
-        .id();
-
-    let difficulty_observer = commands
-        .add_observer(
-            |event: On<DifficultyChanged>,
-             mut difficulties: Query<(&mut TextColor, &Difficulty)>| {
-                for (mut text_color, diff) in &mut difficulties {
-                    if diff.0 == event.0 {
-                        text_color.0 = BLUE.into();
-                    } else {
-                        text_color.0 = WHITE.into();
-                    }
-                }
-            },
-        )
-        .id();
-
-    let confirm_enable_observer = commands
-        .add_observer(
-            |_: On<ConfirmEnable>,
-             mut commands: Commands,
-             entity: Single<Entity, With<NewGameUi>>,
-             _: If<Res<CultSymbol>>,
-             _: If<Res<NewGame>>| {
-                commands.entity(*entity).insert(DialogConfirm(true));
-            },
-        )
-        .id();
 
     commands
         .spawn((
@@ -157,20 +113,32 @@ pub fn setup_main_menu(
                         );
                     }
 
-                    let display_font_handle = display_font_handle.clone();
-
                     parent.spawn(button("main-menu-button-new-game")).observe(
                         move |click: On<Pointer<Click>>,
                          mut commands: Commands,
                          asset_server: Res<AssetServer>,
                          font_handle: Res<FontHandle>| {
                             if click.button == PointerButton::Primary {
-                                let mut entity_commands = commands.spawn((Node {
+                                let cult_symbol_observer = commands
+                                    .add_observer(
+                                        |event: On<CultSymbolChanged>, mut cult_symbols: Query<(&mut ImageNode, &CultSym)>| {
+                                            for (mut image_node, sym) in &mut cult_symbols {
+                                                if sym.0 == event.0 {
+                                                    image_node.color = BLUE.into();
+                                                } else {
+                                                    image_node.color = WHITE.into();
+                                                }
+                                            }
+                                        },
+                                    )
+                                    .id();
+
+                                let mut entity_commands = commands.spawn(Node {
                                     flex_direction: FlexDirection::Column,
                                     align_items: AlignItems::Center,
                                     width: percent(100),
                                     ..Default::default()
-                                }, NewGameUi));
+                                });
                                 let entity = entity_commands.id();
                                 entity_commands.with_child(
                                     (
@@ -201,17 +169,17 @@ pub fn setup_main_menu(
                                         display: Display::Grid,
                                         grid_template_columns: RepeatedGridTrack::flex(4, 1.0),
                                         grid_template_rows: RepeatedGridTrack::flex(2, 1.0),
-                                        row_gap: px(10),
-                                        column_gap: px(10),
-                                        margin: UiRect::vertical(px(10)),
+                                        row_gap: px(16),
+                                        column_gap: px(16),
+                                        margin: UiRect::vertical(px(20)),
                                         ..default()
                                     }).with_children(|parent| {
                                         for (symbol_nr, symbol) in CULT_SYMBOLS.iter().enumerate() {
                                             let handle = asset_server.load(format!("{CULT_SYMBOL_PATH}/{symbol}"));
                                             parent.spawn((
                                                 Node {
-                                                    width: px(64),
-                                                    height: px(64),
+                                                    width: px(96),
+                                                    height: px(96),
                                                     border: UiRect::all(px(4)),
                                                     border_radius: BorderRadius::all(px(4)),
                                                     align_items: AlignItems::Center,
@@ -240,49 +208,7 @@ pub fn setup_main_menu(
                                                 if click.button == PointerButton::Primary {
                                                     commands.insert_resource(CultSymbol(symbol_nr));
                                                     commands.trigger(CultSymbolChanged(symbol_nr));
-                                                    commands.trigger(ConfirmEnable);
-                                                }
-                                            });
-                                        }
-                                    });
-
-                                    parent.spawn(Node {
-                                        flex_direction: FlexDirection::Row,
-                                        margin: UiRect::vertical(px(10)),
-                                        column_gap: px(20),
-                                        ..default()
-                                    }).with_children(|parent| {
-                                        for (key, new_game) in [("easy", NewGame::EASY),
-                                            ("normal", NewGame::NORMAL),
-                                            ("hard", NewGame::HARD)] {
-                                            parent.spawn((
-                                                Node {
-                                                    flex_direction: FlexDirection::Column,
-                                                    align_items: AlignItems::Center,
-                                                    justify_content: JustifyContent::Center,
-                                                    height: px(150),
-                                                    width: px(100),
-                                                    padding: UiRect::all(px(4)),
-                                                    border: UiRect::all(px(4)),
-                                                    border_radius: BorderRadius::all(px(8)),
-                                                    row_gap: px(20),
-                                                    ..default()
-                                                },
-                                                Button,
-                                                BorderColor::all(BORDER),
-                                                BackgroundColor::from(BUTTON_BACKGROUND)
-                                            )).with_children(|parent| {
-                                                parent.spawn((
-                                                    TextKey::new(format!("main-menu-difficulty-{key}")),
-                                                    TextColor::from(TEXT),
-                                                    TextFont::from_font_size(SUB_HEADING).with_font(display_font_handle.clone()),
-                                                    Difficulty(key),
-                                                ));
-                                            }).observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
-                                                if click.button == PointerButton::Primary {
-                                                    commands.insert_resource(new_game.clone());
-                                                    commands.trigger(DifficultyChanged(key));
-                                                    commands.trigger(ConfirmEnable);
+                                                    commands.entity(entity).insert(DialogConfirm(true));
                                                 }
                                             });
                                         }
@@ -290,23 +216,21 @@ pub fn setup_main_menu(
                                 });
 
                                 commands.spawn(Dialog::new()
-                                    .with_title("main-menu-button-new-game")
+                                    .with_title("main-menu-new-game-cult-title")
                                     .with_entity_body(entity)
                                     .with_cancel()
-                                    .with_confirm_disabled("main-menu-new-game-confirm-tooltip"))
+                                    .with_confirm_label("main-menu-new-game-cult-confirm")
+                                    .with_confirm_disabled("main-menu-new-game-cult-confirm-tooltip"))
                                 .observe(
                                         move |_: On<Add, DialogConfirmed>,
                                          mut commands: Commands,
-                                         mut game_state: ResMut<NextState<GameState>>,
                                          text_input_buffer: Single<&TextInputBuffer>,
                                         | {
                                              let text = text_input_buffer.get_text();
                                              let text = if text.is_empty() { "Nameless".into() } else { text };
                                              commands.insert_resource(CultName(text));
                                              commands.entity(cult_symbol_observer).despawn();
-                                             commands.entity(difficulty_observer).despawn();
-                                             commands.entity(confirm_enable_observer).despawn();
-                                             game_state.set(GameState::Main);
+                                             commands.run_system_cached(setup_difficulties_dialog);
                                         }
                                     )
                                 .observe(
@@ -314,7 +238,6 @@ pub fn setup_main_menu(
                                               mut commands: Commands,
                                         | {
                                             commands.remove_resource::<CultSymbol>();
-                                            commands.remove_resource::<NewGame>();
                                         }
                                     );
                             }
@@ -340,5 +263,175 @@ pub fn setup_main_menu(
                         },
                     );
                 });
+        });
+}
+
+fn setup_difficulties_dialog(
+    mut commands: Commands,
+    display_font_handle: Res<DisplayFontHandle>,
+    font_handle: Res<FontHandle>,
+    difficulties_handle: Res<DifficultiesHandle>,
+    difficulties_assets: Res<Assets<DifficultiesAsset>>,
+) {
+    let difficulty_observer = commands
+        .add_observer(
+            |event: On<DifficultyChanged>,
+             mut commands: Commands,
+             mut difficulties: Query<(&mut TextColor, &Difficulty)>| {
+                for (mut text_color, diff) in &mut difficulties {
+                    if diff.0 == event.0 {
+                        text_color.0 = BLUE.into();
+                    } else {
+                        text_color.0 = WHITE.into();
+                    }
+                }
+                commands.insert_resource(DifficultyName(event.0.clone()));
+            },
+        )
+        .id();
+
+    let entity = commands
+        .spawn(Node {
+            flex_direction: FlexDirection::Row,
+            padding: UiRect::all(px(20)),
+            column_gap: px(20),
+            ..default()
+        })
+        .with_children(|parent| {
+            for (name, settings) in &difficulties_assets
+                .get(difficulties_handle.0.id())
+                .unwrap()
+                .0
+            {
+                let name = name.clone();
+                parent
+                    .spawn((
+                        Node {
+                            height: px(350),
+                            width: px(200),
+                            border: UiRect::all(px(4)),
+                            border_radius: BorderRadius::all(px(16)),
+                            padding: UiRect::all(px(5)),
+                            flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BorderColor::all(BORDER),
+                        Button,
+                    ))
+                    .with_children(|parent| {
+                        parent.spawn((
+                            TextKey::new(format!("main-menu-difficulty-{name}")),
+                            TextColor::from(TEXT),
+                            TextFont::from_font_size(HEADING)
+                                .with_font(display_font_handle.clone()),
+                            Difficulty(name.clone()),
+                        ));
+
+                        parent.spawn((
+                            Node {
+                                height: px(1),
+                                width: percent(100),
+                                margin: UiRect::top(px(5)).with_bottom(px(10)),
+                                ..default()
+                            },
+                            BackgroundColor::from(BORDER),
+                        ));
+
+                        let condition = |text_key, vert| {
+                            (
+                                Node {
+                                    margin: UiRect::vertical(px(vert)),
+                                    ..default()
+                                },
+                                text_key,
+                                TextColor::from(TEXT),
+                                TextLayout::new_with_no_wrap(),
+                                TextFont::from_font_size(NORMAL).with_font(font_handle.clone()),
+                            )
+                        };
+
+                        parent.spawn(condition(
+                            TextKey::new("main-menu-new-game-difficulty-starting-funds")
+                                .add_arg("funds", settings.starting_funds),
+                            10,
+                        ));
+                        parent
+                            .spawn(Node {
+                                height: px(75),
+                                flex_direction: FlexDirection::Column,
+                                align_items: AlignItems::Center,
+                                margin: UiRect::vertical(px(8)),
+                                ..default()
+                            })
+                            .with_children(|parent| {
+                                parent.spawn(condition(
+                                    TextKey::new(
+                                        "main-menu-new-game-difficulty-starting-followers",
+                                    ),
+                                    2,
+                                ));
+                                for (follower, count) in &settings.starting_followers {
+                                    parent.spawn(condition(
+                                        #[allow(clippy::cast_precision_loss)]
+                                        TextKey::new("follower-list-tooltip")
+                                            .add_arg("count", *count as f64)
+                                            .add_arg("follower-type", follower.as_str()),
+                                        2,
+                                    ));
+                                }
+                            });
+                    })
+                    .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
+                        if click.button == PointerButton::Primary {
+                            commands.trigger(DifficultyChanged(name.clone()));
+                        }
+                    });
+            }
+        })
+        .id();
+
+    let default_difficulty_name = difficulties_assets
+        .get(difficulties_handle.0.id())
+        .unwrap()
+        .0
+        .iter()
+        .find(|(_, settings)| settings.default)
+        .unwrap()
+        .0;
+
+    commands.trigger(DifficultyChanged(default_difficulty_name.clone()));
+
+    commands
+        .spawn(
+            Dialog::new()
+                .with_title("main-menu-new-game-difficulty-title")
+                .with_entity_body(entity)
+                .with_cancel()
+                .with_max_width(percent(75))
+                .with_confirm_label("main-menu-new-game-difficulty-confirm"),
+        )
+        .observe(
+            move |_: On<Add, DialogConfirmed>,
+                  mut commands: Commands,
+                  mut game_state: ResMut<NextState<GameState>>,
+                  difficulty_name: Res<DifficultyName>,
+                  difficulties_handle: Res<DifficultiesHandle>,
+                  difficulties_assets: Res<Assets<DifficultiesAsset>>| {
+                commands.entity(difficulty_observer).despawn();
+                let difficulty = difficulties_assets
+                    .get(difficulties_handle.0.id())
+                    .unwrap()
+                    .0
+                    .get(&difficulty_name.0)
+                    .unwrap()
+                    .clone();
+                commands.insert_resource(NewGame { difficulty });
+                commands.remove_resource::<DifficultyName>();
+                game_state.set(GameState::Main);
+            },
+        )
+        .observe(move |_: On<Add, DialogCancelled>, mut commands: Commands| {
+            commands.remove_resource::<DifficultyName>();
         });
 }

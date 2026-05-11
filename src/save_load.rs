@@ -24,7 +24,7 @@ use crate::{
     discoveries::{DiscoveriesResearched, ResearchPoints},
     followers::FollowerCount,
     funds::{Funds, FundsAmount},
-    main_menu::NewGame,
+    new_game::NewGame,
     state::{GameState, MainSetupSet},
     suspicion::{IntelligenceSuspicion, ScientificSuspicion},
     time::GameDate,

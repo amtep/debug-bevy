@@ -3,7 +3,7 @@ use chrono::{Days, NaiveDate};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    main_menu::NewGame,
+    new_game::NewGame,
     state::{GameState, MainSetupSet},
 };
 

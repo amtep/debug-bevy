@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use moonshine_save::save::Save;
 
 use crate::{
-    main_menu::NewGame,
+    new_game::NewGame,
     state::{GameState, MainSetupSet},
     time::GameDate,
 };
@@ -58,7 +58,7 @@ pub struct Income(pub FundsAmount, pub String, pub usize);
 pub struct IncomeExpenseUpdatedEvent;
 
 fn setup_funds(mut commands: Commands, new_game: Res<NewGame>) {
-    commands.insert_resource(Funds(new_game.starting_fund));
+    commands.insert_resource(Funds(new_game.difficulty.starting_funds));
 }
 
 fn update_funds(mut funds: ResMut<Funds>, incomes: Query<&Income>, expenses: Query<&Expense>) {
