@@ -582,7 +582,6 @@ fn update_funds_tooltip(
             ))
             .with_children(|parent| {
                 parent.spawn((Text::new(format!("{count}x ")), text_font.clone()));
-                #[allow(clippy::cast_precision_loss)]
                 parent.spawn((
                     TextKey::new(category).add_arg("count", count as f64),
                     text_font.clone(),

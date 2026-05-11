@@ -66,6 +66,8 @@ option_if_let_else = "allow"
 cast_lossless = "allow"
 # const is a contract we don't always want
 missing_const_for_fn = "allow"
+# not much we can do about that
+cast_precision_loss = "allow"
 
 # disagreement about this lint
 option_option = "allow"

@@ -167,7 +167,6 @@ fn on_base_click(
                     tooltip: TextKey::new(format!("switch-task-{k}-tooltip")),
                 });
 
-            #[allow(clippy::cast_precision_loss)]
             MenuEntry::new(
                 TextKey::new(format!("follower-type-{}", f.0)).add_arg("count", c.0 as f64),
             )
@@ -243,7 +242,6 @@ pub fn on_follower_count_insert(
         .entity(follower_list_box.0)
         .insert(Tooltip::new_texts(
             followers.iter().filter(|(_, c)| **c != 0).map(|(f, c)| {
-                #[allow(clippy::cast_precision_loss)]
                 TextKey::new("follower-list-tooltip")
                     .add_arg("count", **c as f64)
                     .add_arg("follower-type", f.to_string())

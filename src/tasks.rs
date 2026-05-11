@@ -153,7 +153,6 @@ const NEW_MINION_PROGRESS: f64 = 100.0;
 #[reflect(Component)]
 pub struct RecruitMinionProgress(f64);
 
-#[expect(clippy::cast_precision_loss)]
 fn recruit(
     mut commands: Commands,
     tasks: Query<(&ChildOf, &Task)>,

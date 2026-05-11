@@ -257,7 +257,6 @@ fn on_region_click(
                 if let Some(clicked) = menu_clicked.0.strip_prefix("acquire-") {
                     for (name, settings) in base_types {
                         if name == clicked {
-                            #[expect(clippy::cast_precision_loss, reason = "can't be helped")]
                             let entity = commands
                                 .spawn(Node {
                                     flex_direction: FlexDirection::Column,

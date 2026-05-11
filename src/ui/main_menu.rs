@@ -373,7 +373,6 @@ fn setup_difficulties_dialog(
                                 ));
                                 for (follower, count) in &settings.starting_followers {
                                     parent.spawn(condition(
-                                        #[allow(clippy::cast_precision_loss)]
                                         TextKey::new("follower-list-tooltip")
                                             .add_arg("count", *count as f64)
                                             .add_arg("follower-type", follower.as_str()),

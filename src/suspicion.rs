@@ -57,7 +57,6 @@ fn setup_main(mut commands: Commands) {
 
 #[expect(clippy::cast_possible_truncation, reason = "it's random values anyway")]
 #[expect(clippy::cast_sign_loss, reason = "it's random values anyway")]
-#[expect(clippy::cast_precision_loss, reason = "it's random values anyway")]
 fn update_suspicion(
     mut intel_suspicion: ResMut<IntelligenceSuspicion>,
     mut scien_suspicion: ResMut<ScientificSuspicion>,

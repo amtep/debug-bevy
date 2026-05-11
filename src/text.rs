@@ -88,7 +88,6 @@ impl From<f64> for TextArgValue {
     }
 }
 
-#[expect(clippy::cast_precision_loss, reason = "can't help it here")]
 impl From<FundsAmount> for TextArgValue {
     fn from(value: FundsAmount) -> Self {
         TextArgValue::Number(value as f64)
