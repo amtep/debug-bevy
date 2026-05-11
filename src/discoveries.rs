@@ -23,10 +23,10 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Deserialize, Asset, TypePath)]
-struct DiscoveriesAsset(IndexMap<String, DiscoverySettings>);
+pub struct DiscoveriesAsset(pub IndexMap<String, DiscoverySettings>);
 
 #[derive(Resource)]
-struct DiscoveriesHandle(Handle<DiscoveriesAsset>);
+pub struct DiscoveriesHandle(pub Handle<DiscoveriesAsset>);
 
 #[derive(Resource, Default, Reflect, Deref)]
 #[reflect(Resource)]

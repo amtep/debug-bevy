@@ -1,3 +1,11 @@
+discoveries-menu =
+  .title = Discoveries
+  .available = Available
+  .discovered = Learned
+  .cancel = Back
+  .confirm = Learn
+  .confirm-tooltip = Select an available discovery
+
 discovery-personal-magnetism = Personal Magnetism
   .desc = Priests recruit followers 20% faster.
 
@@ -30,3 +38,9 @@ discovery-unlock-eastern-asia = Unlock Eastern Asia
 
 discovery-unlock-oceania = Unlock Oceania
   .desc = Forged papers and bribes to enable a foothold in Oceania.
+
+discovery-esoteric-knowledge = Esoteric Knowledge
+  .desc = ~ < << WoOoooo >> > ~
+
+discovery-election-interference = Election Interference
+  .desc = Achieve supreme executive power

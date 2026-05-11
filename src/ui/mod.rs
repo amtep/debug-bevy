@@ -18,6 +18,7 @@ use crate::{
     ui::{
         buttons::setup_observe_buttons,
         dialog::Dialog,
+        discoveries::open_discoveries_menu,
         main_menu::setup_main_menu,
         tooltip::{Tooltip, TooltipOpen},
     },
@@ -26,6 +27,7 @@ use crate::{
 mod bases;
 mod buttons;
 mod dialog;
+mod discoveries;
 mod esc_menu;
 mod main_menu;
 mod menu;
@@ -176,6 +178,7 @@ fn setup_ui(
     mut commands: Commands,
     mono_font_handle: Res<MonoFontHandle>,
     emoji_font_handle: Res<EmojiFontHandle>,
+    font_handle: Res<FontHandle>,
     asset_server: Res<AssetServer>,
     game_date: Res<GameDate>,
     cult_name: Res<CultName>,
@@ -451,6 +454,39 @@ fn setup_ui(
                     )),
                     color: WHITE.into(),
                     ..default()
+                });
+            // Discoveries button
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        padding: px(4).all(),
+                        border: px(3).all(),
+                        border_radius: BorderRadius::all(px(2)),
+                        left: percent(50),
+                        bottom: px(10),
+                        ..default()
+                    },
+                    BackgroundColor::from(BUTTON_BACKGROUND),
+                    BorderColor::all(BORDER),
+                    UiTransform {
+                        translation: Val2::percent(-50.0, -50.0),
+                        ..Default::default()
+                    },
+                ))
+                .with_child((
+                    TextFont {
+                        font: font_handle.clone(),
+                        font_size: LARGE,
+                        ..default()
+                    },
+                    TextKey::new("button-discoveries"),
+                ))
+                .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
+                    if click.button == PointerButton::Primary {
+                        commands.run_system_cached(open_discoveries_menu);
+                    }
                 });
         });
 }
