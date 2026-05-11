@@ -50,7 +50,9 @@ fn setup(mut commands: Commands, mut time: ResMut<Time<Virtual>>) {
     time.unpause();
     commands.insert_resource(Time::<Fixed>::from_seconds(1.0));
     commands.insert_resource(CurrentGameSpeed::default());
-    commands.add_observer(on_game_speed_changed);
+    commands
+        .add_observer(on_game_speed_changed)
+        .insert(DespawnOnExit(GameState::Main));
 }
 
 fn new_game(mut commands: Commands) {
@@ -164,7 +166,7 @@ fn on_force_pause_remove(
     if q.count() == 1 {
         current_game_speed.forced_paused = false;
         if !current_game_speed.paused {
-            info!("Unpausing");
+            info!("Forced unpausing");
             time.unpause();
         }
     }
