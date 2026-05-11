@@ -18,3 +18,11 @@ research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 # not implemented yet
+
+[esoteric-knowledge]
+research-cost = 100
+# not implemented yet
+
+[election-interference]
+research-cost = 100
+# not implemented yet

@@ -29,7 +29,7 @@ initial-cost = 5_000_000
 police-suspicion = 2
 media-suspicion = 3
 regions = ["europe"]
-hidden = true
+requires-discovery = "esoteric-knowledge"
 color = "red"
 
 [ballroom]
@@ -39,5 +39,5 @@ initial-cost = 400_000_000
 police-suspicion = 0
 media-suspicion = 10
 regions = ["north-america"]
-hidden = true
+requires-discovery = "election-interference"
 color = "yellow"
