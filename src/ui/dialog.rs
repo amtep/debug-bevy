@@ -43,6 +43,9 @@ pub struct Dialog {
 pub struct DialogConfirmed;
 
 #[derive(Component)]
+pub struct DialogCancelled;
+
+#[derive(Component)]
 pub struct DialogConfirm(pub bool);
 
 #[derive(Component)]
@@ -351,6 +354,7 @@ fn on_dialog_add(
                     parent.spawn(button(cancel_label)).observe(
                         move |click: On<Pointer<Click>>, mut commands: Commands| {
                             if click.button == PointerButton::Primary {
+                                commands.entity(dialog_entity).insert(DialogCancelled);
                                 commands.entity(dialog_root).despawn();
                             }
                         },

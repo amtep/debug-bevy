@@ -1,7 +1,3 @@
-use crate::funds::FundsAmount;
-
-pub const STARTING_FUNDS: FundsAmount = 5000;
-
 pub mod files {
     pub const PROJECT_DIR_QUALIFIER: &str = "";
     pub const PROJECT_DIR_ORGANIZATION: &str = "amtep";
