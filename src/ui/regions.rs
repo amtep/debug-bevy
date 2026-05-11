@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::{
     bases::{BasetypesAsset, BasetypesHandle, spawn_base},
     constants::ui::*,
+    discoveries::DiscoveriesResearched,
     funds::Funds,
     regions::{BasePlot, Location, Region},
     suspicion::{MediaSuspicion, PoliceSuspicion},
@@ -208,6 +209,7 @@ fn on_region_click(
     base_plots: Query<Has<Children>, With<BasePlot>>,
     base_types_handle: Res<BasetypesHandle>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
+    discoveries_researched: Res<DiscoveriesResearched>,
 ) {
     if click.button != PointerButton::Primary {
         return;
@@ -222,8 +224,11 @@ fn on_region_click(
     let iter = base_types
         .iter()
         .filter(|(_, settings)| {
-            // TODO: use settings.hidden along with trigger to only show on certain conditions.
-            settings.regions.is_empty() || settings.regions.contains(&region.name)
+            (settings.regions.is_empty() || settings.regions.contains(&region.name))
+                && settings
+                    .requires_discovery
+                    .as_ref()
+                    .is_none_or(|discovery| discoveries_researched.contains(discovery))
         })
         .map(|(name, _)| MenuItem {
             enabled: is_any_base_plot_vacant,

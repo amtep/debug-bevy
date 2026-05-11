@@ -21,7 +21,7 @@ use crate::{
     common::{CultName, CultSymbol},
     config::Config,
     constants::files::{PROJECT_DIR_APPLICATION, PROJECT_DIR_ORGANIZATION, PROJECT_DIR_QUALIFIER},
-    discoveries::{DiscoveriesLearned, ResearchPoints},
+    discoveries::{DiscoveriesResearched, ResearchPoints},
     followers::FollowerCount,
     funds::{Funds, FundsAmount},
     main_menu::NewGame,
@@ -125,7 +125,7 @@ fn save_inner(
             .include_resource::<IntelligenceSuspicion>()
             .include_resource::<ScientificSuspicion>()
             .include_resource::<GameDate>()
-            .include_resource::<DiscoveriesLearned>()
+            .include_resource::<DiscoveriesResearched>()
             .include_resource::<ResearchPoints>();
         commands.trigger_save(event);
         // TODO: only do this if the save succeeded

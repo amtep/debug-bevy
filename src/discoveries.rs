@@ -11,7 +11,7 @@ pub fn plugin(app: &mut App) {
     app.add_plugins(TomlAssetPlugin::<DiscoveriesAsset>::new(&[
         "discoveries.toml",
     ]))
-    .init_resource::<DiscoveriesLearned>()
+    .init_resource::<DiscoveriesResearched>()
     .init_resource::<ResearchPoints>()
     .add_systems(OnEnter(GameState::Load), setup_load);
 }
@@ -22,9 +22,9 @@ struct DiscoveriesAsset(IndexMap<String, DiscoverySettings>);
 #[derive(Resource)]
 struct DiscoveriesHandle(Handle<DiscoveriesAsset>);
 
-#[derive(Resource, Default, Reflect)]
+#[derive(Resource, Default, Reflect, Deref)]
 #[reflect(Resource)]
-pub struct DiscoveriesLearned(pub HashSet<String>);
+pub struct DiscoveriesResearched(pub HashSet<String>);
 
 #[derive(Resource, Default, Reflect)]
 #[reflect(Resource)]
