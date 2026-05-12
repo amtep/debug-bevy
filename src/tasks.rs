@@ -10,6 +10,7 @@ use crate::{
     discoveries::ResearchPoints,
     followers::{Follower, FollowerCount},
     funds::{Expense, FundsAmount, Income},
+    modifiers::{Modifier, RecruitmentBy, RecruitmentByOf, RecruitmentOf},
     state::GameState,
     suspicion::SuspicionType,
 };
@@ -162,6 +163,9 @@ fn recruit(
     base_types_asset: Res<Assets<BasetypesAsset>>,
     task_handle: Res<TasksHandle>,
     task_assets: Res<Assets<TasksAsset>>,
+    m_by: Modifier<RecruitmentBy>,
+    m_of: Modifier<RecruitmentOf>,
+    m_by_of: Modifier<RecruitmentByOf>,
 ) {
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
     let task_types = &task_assets.get(task_handle.0.id()).unwrap().0;
@@ -172,7 +176,7 @@ fn recruit(
             continue;
         };
         if task_settings.recruit_progress > 0.0 {
-            let Ok((ChildOf(base_e), _, count)) = followers.get(*follower_e) else {
+            let Ok((ChildOf(base_e), follower, count)) = followers.get(*follower_e) else {
                 error!("Task without followers");
                 continue;
             };
@@ -198,7 +202,13 @@ fn recruit(
                 progress.0 = 0.0;
                 continue;
             }
-            progress.0 += task_settings.recruit_progress * **count as f64;
+
+            let mut base = task_settings.recruit_progress;
+            base = m_by.calc_with(base, |f| f.0 == follower.0);
+            base = m_of.calc_with(base, |f| f.0 == "minion");
+            base = m_by_of.calc_with(base, |f| f.0 == follower.0 && f.1 == "minion");
+
+            progress.0 += base * **count as f64;
             let mut new_minions = 0;
             #[expect(clippy::while_float)]
             while progress.0 >= NEW_MINION_PROGRESS {

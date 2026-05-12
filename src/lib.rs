@@ -9,6 +9,7 @@ mod dev;
 mod discoveries;
 mod followers;
 mod funds;
+mod modifiers;
 mod new_game;
 mod regions;
 mod rng;
