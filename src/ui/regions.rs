@@ -254,7 +254,7 @@ fn on_region_click(
                 let menu_clicked = menu_clickeds.get(menu_clicked.entity).unwrap();
                 let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
 
-                if let Some(clicked) = menu_clicked.0.strip_prefix("acquire-") {
+                if let Some(clicked) = menu_clicked.1.strip_prefix("acquire-") {
                     for (name, settings) in base_types {
                         if name == clicked {
                             let entity = commands

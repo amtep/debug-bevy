@@ -107,7 +107,7 @@ struct MenuHeadingUi;
 struct MenuItemUi;
 
 #[derive(Component)]
-pub struct MenuClicked(pub String);
+pub struct MenuClicked(pub String, pub String);
 
 pub fn setup(mut commands: Commands) {
     commands.add_observer(on_menu_add);
@@ -217,7 +217,7 @@ fn on_menu_add(
                     .with_children(|parent| {
                         parent.spawn(hrule.clone());
                         parent.spawn((
-                            entry.heading,
+                            entry.heading.clone(),
                             TextColor::from(TEXT_HIGHLIGHT),
                             font.clone(),
                             TextLayout::new_with_no_wrap(),
@@ -258,8 +258,9 @@ fn on_menu_add(
                                 ));
                             }
 
-
                             let text = item.text.0.clone();
+                            let heading = entry.heading.0.clone();
+
                             cmd.with_child((
                                 Node {
                                     margin: UiRect::axes(px(5), px(2)),
@@ -273,7 +274,7 @@ fn on_menu_add(
                                                      mut commands: Commands,
                                                      has_disableds: Query<Has<InteractionDisabled>, With<Button>>| {
                                             if click.button == PointerButton::Primary && !has_disableds.get(click.entity).unwrap() {
-                                                commands.entity(menu_entity).insert(MenuClicked(text.clone()));
+                                                commands.entity(menu_entity).insert(MenuClicked(heading.clone(), text.clone()));
                                                 commands.entity(menu_entity).despawn();
                                             }
                                 });

@@ -6,7 +6,7 @@ use crate::{
     followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
     regions::{BasePlot, Region},
     state::GameState,
-    tasks::{TasksAsset, TasksHandle},
+    tasks::{Task, TasksAsset, TasksHandle},
     text::TextKey,
     ui::{
         BasePlotUi, RegionSuspicionUi, UnicodeFontHandle,
@@ -149,8 +149,8 @@ fn on_base_click(
         return;
     }
 
-    let base = base_uis.get(click.entity).unwrap().0;
-    let (children, base) = bases.get(base).unwrap();
+    let base_entity = base_uis.get(click.entity).unwrap().0;
+    let (children, base) = bases.get(base_entity).unwrap();
     let task_settings = &task_assets.get(task_handle.0.id()).unwrap().0;
 
     let follower_iter = children
@@ -174,15 +174,42 @@ fn on_base_click(
         });
 
     commands
-        .entity(click.entity)
-        .with_child(
+        .spawn((
+            ChildOf(click.entity),
             Menu::new()
                 .with_title(format!("basetype-{}", base.0))
                 .with_entries_iter(follower_iter),
-        )
-        .observe(|menu_clicked: On<Add, MenuClicked>| {
-            // TODO: switch task
-        });
+        ))
+        .observe(
+            move |menu_clicked: On<Add, MenuClicked>,
+                  menu_clickeds: Query<&MenuClicked>,
+                  mut commands: Commands,
+                  bases: Query<&Children, With<Base>>,
+                  followers: Query<(&Follower, &Children)>,
+                  tasks: Query<&Task>| {
+                let MenuClicked(heading, item) = menu_clickeds.get(menu_clicked.entity).unwrap();
+
+                if let Some(follower) = heading.strip_prefix("follower-type-")
+                    && let Some(task) = item.strip_prefix("task-")
+                {
+                    let children = bases.get(base_entity).unwrap();
+                    let follower_children = children
+                        .iter()
+                        .find_map(|child| {
+                            followers
+                                .get(child)
+                                .ok()
+                                .and_then(|f| (**f.0 == follower).then_some(f.1))
+                        })
+                        .unwrap();
+                    let task_entity = follower_children
+                        .iter()
+                        .find(|c| tasks.contains(*c))
+                        .unwrap();
+                    commands.entity(task_entity).insert(Task(task.to_owned()));
+                }
+            },
+        );
 }
 
 pub fn on_follower_count_insert(
