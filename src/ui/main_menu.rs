@@ -25,7 +25,7 @@ struct CultSym(usize);
 struct CultSymbolChanged(usize);
 
 #[derive(Resource)]
-struct DifficultyName(String);
+struct DifficultySelected(String);
 
 #[derive(Component)]
 struct Difficulty(String);
@@ -285,7 +285,7 @@ fn setup_difficulties_dialog(
                         text_color.0 = WHITE.into();
                     }
                 }
-                commands.insert_resource(DifficultyName(event.0.clone()));
+                commands.insert_resource(DifficultySelected(event.0.clone()));
             },
         )
         .id();
@@ -414,7 +414,7 @@ fn setup_difficulties_dialog(
             move |_: On<Add, DialogConfirmed>,
                   mut commands: Commands,
                   mut game_state: ResMut<NextState<GameState>>,
-                  difficulty_name: Res<DifficultyName>,
+                  difficulty_name: Res<DifficultySelected>,
                   difficulties_handle: Res<DifficultiesHandle>,
                   difficulties_assets: Res<Assets<DifficultiesAsset>>| {
                 commands.entity(difficulty_observer).despawn();
@@ -427,11 +427,11 @@ fn setup_difficulties_dialog(
                     .clone();
                 commands.insert_resource(crate::common::Difficulty(difficulty_name.0.clone()));
                 commands.insert_resource(NewGame { difficulty });
-                commands.remove_resource::<DifficultyName>();
+                commands.remove_resource::<DifficultySelected>();
                 game_state.set(GameState::Main);
             },
         )
         .observe(move |_: On<Add, DialogCancelled>, mut commands: Commands| {
-            commands.remove_resource::<DifficultyName>();
+            commands.remove_resource::<DifficultySelected>();
         });
 }

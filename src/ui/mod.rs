@@ -447,8 +447,8 @@ fn setup_ui(
                     // Research points counter
                     parent.spawn(secondary_bundle(
                         px(60),
-                        TextKey::new("knowledge-point-tooltip"),
-                        '💡',
+                        TextKey::new("secrets-tooltip"),
+                        '🔓',
                         THEME_MAGENTA,
                         (
                             TextKey::new("research-display").add_arg("points", 0),

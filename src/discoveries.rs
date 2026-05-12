@@ -4,7 +4,7 @@ use indexmap::IndexMap;
 use serde_derive::Deserialize;
 
 use crate::{
-    funds::FundsAmount,
+    funds::{Funds, FundsAmount},
     new_game::NewGame,
     state::{GameState, MainSetupSet},
 };
@@ -46,6 +46,9 @@ pub struct DiscoverySettings {
     pub requires: Vec<String>,
 }
 
+#[derive(Resource)]
+pub struct DiscoverySelected(pub String, pub FundsAmount, pub usize);
+
 fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(DiscoveriesHandle(asset_server.load(DISCOVERIES_ASSET_PATH)));
 }
@@ -55,4 +58,17 @@ fn new_game(mut commands: Commands, _: If<Res<NewGame>>) {
     // have been there from a previous game.
     commands.insert_resource(DiscoveriesResearched::default());
     commands.insert_resource(ResearchPoints(0));
+}
+
+pub fn learn_new_discovery(
+    mut funds: ResMut<Funds>,
+    mut secrets: ResMut<ResearchPoints>,
+    mut discoveries_researched: ResMut<DiscoveriesResearched>,
+    discovery_selected: Res<DiscoverySelected>,
+) {
+    funds.0 -= discovery_selected.1;
+    secrets.0 -= discovery_selected.2;
+    discoveries_researched
+        .0
+        .insert(discovery_selected.0.clone());
 }

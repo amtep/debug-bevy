@@ -91,7 +91,6 @@ impl Tooltip {
         }
     }
 
-    #[expect(dead_code)]
     pub fn new_text_colors(
         text_colors: impl IntoIterator<Item = (impl Into<TextKey>, impl Into<Color>)>,
     ) -> Self {
