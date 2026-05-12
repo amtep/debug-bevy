@@ -64,7 +64,7 @@ pub fn open_discoveries_menu(
                 ChildOf(root),
                 Node {
                     width: percent(100),
-                    height: percent(50),
+                    height: percent(80),
                     ..default()
                 },
             ))
@@ -113,15 +113,23 @@ pub fn open_discoveries_menu(
     let available_node = make_tab("discoveries-menu.available");
     let discovered_node = make_tab("discoveries-menu.discovered");
 
-    for (name, discovery) in discoveries {
-        // TODO: check required discoveries in available_node, hide if not valid
+    'outer: for (name, discovery) in discoveries {
         // TODO: check funds and research cost in available_node, interaction disabled if not valid
         // TODO: allow selecting available discoveries
         // TODO: learn selected discovery on dialog confirm (if validity checks still pass)
-        let parent = if discovered.contains(name) {
-            discovered_node
-        } else {
+        let available = !discovered.contains(name);
+        if available {
+            // Check that all required discoveries have already been discovered
+            for req in &discovery.requires {
+                if !discovered.contains(req) {
+                    continue 'outer;
+                }
+            }
+        }
+        let parent = if available {
             available_node
+        } else {
+            discovered_node
         };
         commands.spawn((
             ChildOf(parent),

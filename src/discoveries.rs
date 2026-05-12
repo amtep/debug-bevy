@@ -39,11 +39,11 @@ pub struct ResearchPoints(pub usize);
 #[derive(Deserialize, Debug, Clone, Reflect)]
 #[serde(rename_all = "kebab-case")]
 pub struct DiscoverySettings {
-    research_cost: usize,
+    pub research_cost: usize,
     #[serde(default)]
-    funds_cost: FundsAmount,
+    pub funds_cost: FundsAmount,
     #[serde(default)]
-    requires: Vec<String>,
+    pub requires: Vec<String>,
 }
 
 fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {

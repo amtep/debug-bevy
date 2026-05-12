@@ -61,6 +61,8 @@ fn load_config(mut commands: Commands) {
     commands.init_resource::<Config>();
 }
 
+#[expect(dead_code)]
+#[expect(clippy::todo, reason = "dead code")]
 fn save_config() {
     todo!()
 }
