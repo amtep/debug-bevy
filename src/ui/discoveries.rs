@@ -28,6 +28,7 @@ pub fn open_discoveries_menu(
     let discoveries_root = commands
         .spawn(Node {
             width: percent(100),
+            height: percent(85),
             ..default()
         })
         .id();
@@ -67,7 +68,7 @@ pub fn open_discoveries_menu(
                 ChildOf(root),
                 Node {
                     width: percent(100),
-                    height: percent(80),
+                    height: percent(85),
                     ..default()
                 },
             ))
