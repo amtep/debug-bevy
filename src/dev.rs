@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     common::{CultName, CultSymbol, Dev, Difficulty},
+    discoveries::ResearchPoints,
     funds::Funds,
     new_game::{DifficultiesAsset, DifficultiesHandle, NewGame},
     state::GameState,
@@ -15,7 +16,11 @@ pub fn plugin(app: &mut App) {
     );
 }
 
-fn listen_dev_keys(keys: Res<ButtonInput<KeyCode>>, mut funds: ResMut<Funds>) {
+fn listen_dev_keys(
+    keys: Res<ButtonInput<KeyCode>>,
+    mut funds: ResMut<Funds>,
+    mut research_points: ResMut<ResearchPoints>,
+) {
     if keys.just_pressed(KeyCode::KeyF) {
         if keys.pressed(KeyCode::AltLeft) {
             // Alt + F
@@ -25,6 +30,9 @@ fn listen_dev_keys(keys: Res<ButtonInput<KeyCode>>, mut funds: ResMut<Funds>) {
             // Ctrl + F
             funds.0 -= 100_000;
         }
+    }
+    if keys.just_pressed(KeyCode::KeyD) && keys.pressed(KeyCode::AltLeft) {
+        research_points.0 += 1_000;
     }
 }
 

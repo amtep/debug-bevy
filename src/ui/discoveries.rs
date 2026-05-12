@@ -4,10 +4,7 @@ use bevy::{
 };
 
 use crate::{
-    constants::ui::{
-        colors::{BORDER, TEXT, TEXT_DISABLED},
-        fonts::{HEADING, NORMAL, SMALL, SUB_HEADING},
-    },
+    constants::ui::{colors::*, fonts::*},
     discoveries::{DiscoveriesAsset, DiscoveriesHandle, DiscoveriesResearched, ResearchPoints},
     funds::Funds,
     text::TextKey,
@@ -28,7 +25,7 @@ pub fn open_discoveries_menu(
     let discoveries_root = commands
         .spawn(Node {
             width: percent(100),
-            height: percent(85),
+            height: percent(82),
             ..default()
         })
         .id();
@@ -46,29 +43,20 @@ pub fn open_discoveries_menu(
                 Node {
                     align_self: AlignSelf::Center,
                     justify_content: JustifyContent::Center,
+                    margin: UiRect::bottom(px(5)),
                     ..default()
                 },
                 TextKey::new(textkey),
                 TextColor::from(TEXT),
-                TextFont::from_font_size(HEADING).with_font(font_handle.clone()),
+                TextFont::from_font_size(SUB_HEADING).with_font(font_handle.clone()),
             ))
-            .with_child(Node {
-                height: px(1),
-                width: percent(100),
-                margin: UiRect {
-                    top: px(5),
-                    bottom: px(10),
-                    ..default()
-                },
-                ..default()
-            })
             .id();
         let container = commands
             .spawn((
                 ChildOf(root),
                 Node {
                     width: percent(100),
-                    height: percent(85),
+                    height: percent(92),
                     ..default()
                 },
             ))
@@ -167,26 +155,22 @@ pub fn open_discoveries_menu(
                     TextFont::from_font_size(NORMAL).with_font(font_handle.clone()),
                 ));
                 if available && discovery.funds_cost > 0 {
-                    let mut e_c = parent.spawn((
+                    parent.spawn((
                         TextKey::new("discoveries-funds-cost")
                             .add_arg("funds", discovery.funds_cost),
                         TextColor::from(color),
                         TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
                     ));
-                    if discovery.funds_cost > funds.0 {
-                        e_c.insert(Strikethrough);
-                    }
+                    if discovery.funds_cost > funds.0 {}
                 }
                 if available && discovery.research_cost > 0 {
-                    let mut e_c = parent.spawn((
+                    parent.spawn((
                         TextKey::new("discoveries-research-cost")
                             .add_arg("points", discovery.research_cost as f64),
                         TextColor::from(color),
                         TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
                     ));
-                    if discovery.research_cost > knowledge.0 {
-                        e_c.insert(Strikethrough);
-                    }
+                    if discovery.research_cost > knowledge.0 {}
                 }
             });
     }
@@ -198,6 +182,7 @@ pub fn open_discoveries_menu(
             .with_title("discoveries-menu.title")
             .with_entity_body(discoveries_root)
             .with_confirm_label("discoveries-menu.confirm")
-            .with_cancel_label("discoveries-menu.cancel"),
+            .with_cancel_label("discoveries-menu.cancel")
+            .with_pause(),
     );
 }

@@ -42,7 +42,6 @@ pub mod ui {
 
         pub const THEME_DARK_PURPLE: Srgba = Srgba::rgb(0.102, 0.055, 0.243); // #1A0E3E
         pub const THEME_INDIGO: Srgba = Srgba::rgb(0.122, 0.102, 0.439); // #1F1A70
-        #[expect(dead_code)]
         pub const THEME_MAGENTA: Srgba = Srgba::rgb(0.859, 0.282, 0.545); // #DB488B
         pub const THEME_LIGHT_PINK: Srgba = Srgba::rgb(1.000, 0.514, 0.965); // #FF83F6
         pub const THEME_CYAN: Srgba = Srgba::rgb(0.243, 0.816, 0.922); // #3ED0EB

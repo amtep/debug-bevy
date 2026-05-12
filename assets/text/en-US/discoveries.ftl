@@ -5,8 +5,10 @@ discoveries-menu =
   .cancel = Back
   .confirm = Learn
   .confirm-tooltip = Select an available discovery
-discoveries-research-cost = { $points } knowledge
+discoveries-research-cost = { BIGNUM($points) } knowledge points
 discoveries-funds-cost = { FUNDS($funds) }
+
+discoveries-button-tooltip = Discoveries
 
 discovery-personal-magnetism = Personal Magnetism
   .desc = Priests recruit followers 20% faster.

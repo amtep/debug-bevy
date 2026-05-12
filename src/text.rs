@@ -296,15 +296,16 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 // TODO: localize decimal sign
-fn format_funds(mut f: f64) -> String {
+fn format_bignum(mut f: f64, symbol: Option<char>) -> String {
     let sign = if f < 0.0 {
         f = -f;
         "-"
     } else {
         ""
     };
+    let symbol = symbol.map(|s| s.to_string()).unwrap_or_default();
     if f < 100_000.0 {
-        format!("{sign}€{f:.0}")
+        format!("{sign}{symbol}{f:.0}")
     } else {
         let magnifiers = &["", "k", "M", "B", "T", "Q"];
         let mut i = 0;
@@ -321,18 +322,34 @@ fn format_funds(mut f: f64) -> String {
         } else {
             0
         };
-        format!("{sign}€{1:.0$}{2}", precision, f, magnifiers[i])
+        format!("{sign}{symbol}{1:.0$}{2}", precision, f, magnifiers[i])
     }
 }
 
 fn fluent_funds<'a>(positional: &[FluentValue<'a>], _named: &FluentArgs) -> FluentValue<'a> {
     match positional.first() {
         Some(FluentValue::Number(FluentNumber { value: f, .. })) => {
-            FluentValue::String(Cow::Owned(format_funds(*f)))
+            FluentValue::String(Cow::Owned(format_bignum(*f, Some('€'))))
         }
         Some(FluentValue::String(s)) => {
             if let Ok(f) = s.parse::<f64>() {
-                FluentValue::String(Cow::Owned(format_funds(f)))
+                FluentValue::String(Cow::Owned(format_bignum(f, Some('€'))))
+            } else {
+                FluentValue::Error
+            }
+        }
+        _ => FluentValue::Error,
+    }
+}
+
+fn fluent_bignum<'a>(positional: &[FluentValue<'a>], _named: &FluentArgs) -> FluentValue<'a> {
+    match positional.first() {
+        Some(FluentValue::Number(FluentNumber { value: f, .. })) => {
+            FluentValue::String(Cow::Owned(format_bignum(*f, None)))
+        }
+        Some(FluentValue::String(s)) => {
+            if let Ok(f) = s.parse::<f64>() {
+                FluentValue::String(Cow::Owned(format_bignum(f, None)))
             } else {
                 FluentValue::Error
             }
@@ -356,6 +373,10 @@ fn new_bundle<'a, I: Iterator<Item = &'a Arc<FluentResource>>>(
     }
     if let Err(e) = new_bundle.add_function("FUNDS", fluent_funds) {
         error!("could not add FUNDS to fluent bundle: {e}");
+        return None;
+    }
+    if let Err(e) = new_bundle.add_function("BIGNUM", fluent_bignum) {
+        error!("could not add BIGNUM to fluent bundle: {e}");
         return None;
     }
 
@@ -437,6 +458,10 @@ fn recalc_changed_texts(
 #[cfg(test)]
 mod test {
     use super::*;
+
+    fn format_funds(funds: f64) -> String {
+        format_bignum(funds, Some('€'))
+    }
 
     #[test]
     fn funds_low() {

@@ -1,5 +1,5 @@
 game-date-display = { DATETIME($date, dateStyle: "medium") }
-research-display = Knowledge: { $points }
+research-display = { BIGNUM($points) }
 
 dialog-confirm = Confirm
 dialog-cancel = Cancel
@@ -8,5 +8,4 @@ intelligence-suspicion-tooltip = Intelligence suspicion
 scientific-suspicion-tooltip = Scientific suspicion
 police-suspicion-tooltip = Police suspicion
 media-suspicion-tooltip = Media suspicion
-
-button-discoveries = Discoveries
+knowledge-point-tooltip = Knowledge points

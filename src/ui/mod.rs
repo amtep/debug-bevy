@@ -140,7 +140,7 @@ struct BasePlotUi;
 #[derive(Component)]
 struct RegionSuspicionUi;
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 #[require(Text, TextColor)]
 struct MeterDisplay<T: PartialOrd + ToString + Send + Sync + 'static> {
     value: T,
@@ -178,14 +178,48 @@ fn setup_ui(
     mut commands: Commands,
     mono_font_handle: Res<MonoFontHandle>,
     emoji_font_handle: Res<EmojiFontHandle>,
-    font_handle: Res<FontHandle>,
     asset_server: Res<AssetServer>,
     game_date: Res<GameDate>,
     cult_name: Res<CultName>,
     cult_symbol: Res<CultSymbol>,
 ) {
-    fn suspicion_bundle<T: Component>(
-        key: &str,
+    fn top_button_bundle(
+        tooltip: &str,
+        icon: char,
+        color: Srgba,
+        emoji_font_handle: Handle<Font>,
+    ) -> impl Bundle {
+        (
+            Node {
+                width: px(40),
+                padding: UiRect::all(px(2)),
+                margin: UiRect::axes(px(5), px(2)),
+                border: UiRect::all(px(1)),
+                border_radius: BorderRadius::all(px(5)),
+                align_self: AlignSelf::Stretch,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BorderColor::all(TEXT),
+            BackgroundColor::from(BUTTON_BACKGROUND),
+            Button,
+            Tooltip::new_text(tooltip),
+            children![(
+                Text::new(icon),
+                TextColor::from(color),
+                TextFont {
+                    font: emoji_font_handle,
+                    font_size: LARGE,
+                    ..default()
+                }
+            )],
+        )
+    }
+
+    fn secondary_bundle<T: Bundle>(
+        min_width: Val,
+        tooltip: TextKey,
         icon: char,
         color: Srgba,
         ui: T,
@@ -194,17 +228,12 @@ fn setup_ui(
     ) -> impl Bundle {
         (
             Node {
-                min_width: px(55),
-                padding: UiRect::horizontal(px(3)).with_top(px(3)),
-                margin: UiRect::vertical(px(2)).with_right(px(10)),
-                border: UiRect::all(px(1)),
-                border_radius: BorderRadius::all(px(10)),
-                justify_content: JustifyContent::SpaceBetween,
+                min_width,
+                height: percent(100),
+                align_items: AlignItems::Center,
                 ..default()
             },
-            BorderColor::all(color),
-            BackgroundColor::from(WHITE.with_alpha(0.01)),
-            Tooltip::new_text(key),
+            Tooltip::new_text(tooltip),
             children![
                 (
                     Text::new(icon),
@@ -218,15 +247,10 @@ fn setup_ui(
                 (
                     TextFont {
                         font: mono_font_handle,
-                        font_size: LARGE,
+                        font_size: NORMAL,
                         ..default()
                     },
                     TextColor::from(TEXT),
-                    MeterDisplay::<u32> {
-                        value: 0,
-                        low_threshold: 334,
-                        high_threshold: 667,
-                    },
                     ui
                 )
             ],
@@ -276,6 +300,7 @@ fn setup_ui(
                 .spawn((
                     Node {
                         width: percent(100.0),
+                        max_height: px(32),
                         position_type: PositionType::Absolute,
                         align_items: AlignItems::Center,
                         border: UiRect::vertical(px(2)),
@@ -308,28 +333,29 @@ fn setup_ui(
                             FundsUi,
                         ))
                         .observe(on_funds_tooltip_inner_add);
-                    // Suspicion meters
-                    parent.spawn(suspicion_bundle(
-                        "intelligence-suspicion-tooltip",
-                        '📡',
-                        THEME_LIGHT_PINK,
-                        IntelligenceSuspicionUi,
-                        emoji_font_handle.clone(),
-                        mono_font_handle.clone(),
-                    ));
-                    parent.spawn(suspicion_bundle(
-                        "scientific-suspicion-tooltip",
-                        '🔬',
-                        THEME_CYAN,
-                        ScientificSuspicionUi,
-                        emoji_font_handle.clone(),
-                        mono_font_handle.clone(),
-                    ));
+                    parent
+                        .spawn(top_button_bundle(
+                            "discoveries-button-tooltip",
+                            '🔭',
+                            TEXT,
+                            emoji_font_handle.clone(),
+                        ))
+                        .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
+                            if click.button == PointerButton::Primary {
+                                commands.run_system_cached(open_discoveries_menu);
+                            }
+                        });
+                    parent.spawn(Node {
+                        flex_grow: 1.0,
+                        ..default()
+                    });
                     // Game date display
                     parent
                         .spawn(Node {
                             padding: UiRect::top(px(2)),
-                            min_width: px(125),
+                            margin: UiRect::right(px(20)),
+                            min_width: px(150),
+                            justify_content: JustifyContent::End,
                             ..default()
                         })
                         .with_child((
@@ -338,33 +364,6 @@ fn setup_ui(
                             // will be updated by update_game_date
                             TextKey::new("game-date-display").add_arg("date", game_date.0),
                             GameDateUi,
-                        ));
-                    // Separate left-aligned and right-aligned status fields
-                    parent.spawn(Node {
-                        flex_grow: 1.0,
-                        ..default()
-                    });
-                    // Research points counter
-                    parent
-                        .spawn((
-                            Node {
-                                padding: UiRect {
-                                    top: px(2),
-                                    right: px(5),
-                                    ..default()
-                                },
-                                min_width: px(80),
-                                border: px(1).right(),
-                                ..default()
-                            },
-                            BorderColor::all(BORDER),
-                        ))
-                        .with_child((
-                            mono_text_font.clone(),
-                            // will be updated by update_research
-                            TextKey::new("research-display").add_arg("points", 0),
-                            TextColor::from(TEXT),
-                            ResearchPointsUi,
                         ));
                     parent
                         .spawn((
@@ -427,6 +426,63 @@ fn setup_ui(
                         ))
                         .observe(on_game_speed_clicked);
                 });
+            // Secondary bar
+            parent
+                .spawn((
+                    Node {
+                        left: px(72),
+                        top: px(32),
+                        max_height: px(24),
+                        position_type: PositionType::Absolute,
+                        border: UiRect::bottom(px(1.5)).with_right(px(1.5)),
+                        border_radius: BorderRadius::bottom_right(px(4)),
+                        padding: UiRect::horizontal(px(5)).with_top(px(2)),
+                        column_gap: px(5),
+                        ..default()
+                    },
+                    BorderColor::all(BORDER),
+                    BackgroundColor::from(THEME_DARK_PURPLE),
+                ))
+                .with_children(|parent| {
+                    // Research points counter
+                    parent.spawn(secondary_bundle(
+                        px(60),
+                        TextKey::new("knowledge-point-tooltip"),
+                        '💡',
+                        THEME_MAGENTA,
+                        (
+                            TextKey::new("research-display").add_arg("points", 0),
+                            ResearchPointsUi,
+                        ),
+                        emoji_font_handle.clone(),
+                        mono_font_handle.clone(),
+                    ));
+                    // Suspicion meters
+                    let meter = MeterDisplay::<u32> {
+                        value: 0,
+                        low_threshold: 334,
+                        high_threshold: 667,
+                    };
+                    parent.spawn(secondary_bundle(
+                        px(40),
+                        TextKey::new("intelligence-suspicion-tooltip"),
+                        '📡',
+                        THEME_LIGHT_PINK,
+                        (IntelligenceSuspicionUi, meter.clone()),
+                        emoji_font_handle.clone(),
+                        mono_font_handle.clone(),
+                    ));
+                    parent.spawn(secondary_bundle(
+                        px(40),
+                        TextKey::new("scientific-suspicion-tooltip"),
+                        '🔬',
+                        THEME_CYAN,
+                        (ScientificSuspicionUi, meter),
+                        emoji_font_handle.clone(),
+                        mono_font_handle.clone(),
+                    ));
+                    // TODO: Add total follower counts
+                });
             // Cult symbol
             parent
                 .spawn((
@@ -454,39 +510,6 @@ fn setup_ui(
                     )),
                     color: WHITE.into(),
                     ..default()
-                });
-            // Discoveries button
-            parent
-                .spawn((
-                    Button,
-                    Node {
-                        position_type: PositionType::Absolute,
-                        padding: px(4).all(),
-                        border: px(3).all(),
-                        border_radius: BorderRadius::all(px(2)),
-                        left: percent(50),
-                        bottom: px(10),
-                        ..default()
-                    },
-                    BackgroundColor::from(BUTTON_BACKGROUND),
-                    BorderColor::all(BORDER),
-                    UiTransform {
-                        translation: Val2::percent(-50.0, -50.0),
-                        ..Default::default()
-                    },
-                ))
-                .with_child((
-                    TextFont {
-                        font: font_handle.clone(),
-                        font_size: LARGE,
-                        ..default()
-                    },
-                    TextKey::new("button-discoveries"),
-                ))
-                .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
-                    if click.button == PointerButton::Primary {
-                        commands.run_system_cached(open_discoveries_menu);
-                    }
                 });
         });
 }
