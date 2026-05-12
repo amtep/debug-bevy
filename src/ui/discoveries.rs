@@ -5,10 +5,11 @@ use bevy::{
 
 use crate::{
     constants::ui::{
-        colors::{BORDER, TEXT},
-        fonts::{HEADING, NORMAL, SUB_HEADING},
+        colors::{BORDER, TEXT, TEXT_DISABLED},
+        fonts::{HEADING, NORMAL, SMALL, SUB_HEADING},
     },
-    discoveries::{DiscoveriesAsset, DiscoveriesHandle, DiscoveriesResearched},
+    discoveries::{DiscoveriesAsset, DiscoveriesHandle, DiscoveriesResearched, ResearchPoints},
+    funds::Funds,
     text::TextKey,
     ui::{FontHandle, dialog::Dialog, scroll::on_scroll},
 };
@@ -19,6 +20,8 @@ pub fn open_discoveries_menu(
     discoveries_assets: Res<Assets<DiscoveriesAsset>>,
     discovered: Res<DiscoveriesResearched>,
     font_handle: Res<FontHandle>,
+    knowledge: Res<ResearchPoints>,
+    funds: Res<Funds>,
 ) {
     let discoveries = &discoveries_assets.get(discoveries_handle.0.id()).unwrap().0;
 
@@ -131,30 +134,60 @@ pub fn open_discoveries_menu(
         } else {
             discovered_node
         };
-        commands.spawn((
-            ChildOf(parent),
-            Button,
-            Node {
-                flex_direction: FlexDirection::Column,
-                border: px(2).all(),
-                border_radius: BorderRadius::all(px(10)),
-                padding: px(4).all(),
-                ..default()
-            },
-            BorderColor::all(BORDER),
-            children![
-                (
+        let color = if available
+            && (discovery.research_cost > knowledge.0 || discovery.funds_cost > funds.0)
+        {
+            TEXT_DISABLED
+        } else {
+            TEXT
+        };
+        commands
+            .spawn((
+                ChildOf(parent),
+                Button,
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    border: px(2).all(),
+                    border_radius: BorderRadius::all(px(10)),
+                    padding: px(4).all(),
+                    ..default()
+                },
+                BorderColor::all(BORDER),
+            ))
+            .with_children(|parent| {
+                parent.spawn((
                     TextKey::new(format!("discovery-{name}")),
-                    TextColor::from(TEXT),
+                    TextColor::from(color),
                     TextFont::from_font_size(SUB_HEADING).with_font(font_handle.clone()),
-                ),
-                (
+                ));
+                parent.spawn((
                     TextKey::new(format!("discovery-{name}.desc")),
-                    TextColor::from(TEXT),
+                    TextColor::from(color),
                     TextFont::from_font_size(NORMAL).with_font(font_handle.clone()),
-                ),
-            ],
-        ));
+                ));
+                if available && discovery.funds_cost > 0 {
+                    let mut e_c = parent.spawn((
+                        TextKey::new("discoveries-funds-cost")
+                            .add_arg("funds", discovery.funds_cost),
+                        TextColor::from(color),
+                        TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
+                    ));
+                    if discovery.funds_cost > funds.0 {
+                        e_c.insert(Strikethrough);
+                    }
+                }
+                if available && discovery.research_cost > 0 {
+                    let mut e_c = parent.spawn((
+                        TextKey::new("discoveries-research-cost")
+                            .add_arg("points", discovery.research_cost as f64),
+                        TextColor::from(color),
+                        TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
+                    ));
+                    if discovery.research_cost > knowledge.0 {
+                        e_c.insert(Strikethrough);
+                    }
+                }
+            });
     }
 
     // TODO: figure out why confirm and cancel buttons don't show up

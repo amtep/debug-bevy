@@ -51,6 +51,8 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn new_game(mut commands: Commands, _: If<Res<NewGame>>) {
-    commands.init_resource::<DiscoveriesResearched>();
-    commands.init_resource::<ResearchPoints>();
+    // This has to be insert_resource not init_resource, to override whatever may
+    // have been there from a previous game.
+    commands.insert_resource(DiscoveriesResearched::default());
+    commands.insert_resource(ResearchPoints(0));
 }
