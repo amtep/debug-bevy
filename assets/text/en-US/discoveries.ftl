@@ -40,7 +40,7 @@ discovery-unlock-oceania = Unlock Oceania
   .desc = Forged papers and bribes to enable a foothold in Oceania.
 
 discovery-esoteric-knowledge = Esoteric Knowledge
-  .desc = ~ < << WoOoooo >> > ~
+  .desc = Learn to do rituals in dedicated hideouts.
 
 discovery-election-interference = Election Interference
   .desc = Achieve supreme executive power
