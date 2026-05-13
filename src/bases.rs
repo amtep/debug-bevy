@@ -12,6 +12,7 @@ use crate::{
     regions::{BasePlot, Region},
     rng::RandomSource,
     state::{GameState, MainSetupSet},
+    suspicion::{MediaSuspicionChange, PoliceSuspicionChange},
     tasks::{RecruitMinionProgress, Task, TasksAsset, TasksHandle},
 };
 
@@ -40,8 +41,8 @@ pub struct BasetypeSettings {
     pub max_pop: usize,
     pub cost_per_day: FundsAmount,
     pub initial_cost: FundsAmount,
-    pub police_suspicion: u32,
-    pub media_suspicion: u32,
+    pub police_suspicion: f32,
+    pub media_suspicion: f32,
     #[serde(default)]
     pub regions: Vec<String>,
     pub requires_discovery: Option<String>,
@@ -52,7 +53,7 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(BasetypesHandle(asset_server.load(BASETYPES_ASSET_PATH)));
 }
 
-/// A marker component for bases in the game state.
+/// Basetype name
 #[derive(Component, Reflect, Clone)]
 #[reflect(Component)]
 #[require(Save, RecruitMinionProgress)]
@@ -92,13 +93,19 @@ fn spawn_base_inner(
 ) {
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
     let base_type_settings = base_types.get(&base_type).unwrap();
-    let base = commands
-        .spawn((
-            Base(base_type),
-            Expense(base_type_settings.cost_per_day, "base".into(), 1),
-            ChildOf(base_plot),
-        ))
-        .id();
+    let mut entity_command = commands.spawn((
+        Base(base_type),
+        Expense(base_type_settings.cost_per_day, "base".into(), 1),
+        ChildOf(base_plot),
+    ));
+    if base_type_settings.media_suspicion != 0.0 {
+        entity_command.insert(MediaSuspicionChange(base_type_settings.media_suspicion));
+    }
+    if base_type_settings.police_suspicion != 0.0 {
+        entity_command.insert(PoliceSuspicionChange(base_type_settings.police_suspicion));
+    }
+    let base = entity_command.id();
+
     if !free {
         funds.0 -= base_type_settings.initial_cost;
     }

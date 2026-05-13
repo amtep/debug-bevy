@@ -3,7 +3,7 @@ basetype-old-farmhouse = Old Farmhouse
 basetype-abandoned-hospital = Abandoned Hospital
 basetype-castle = Castle
 
-menu-region-bases = Bases
+menu-region-bases = Hideouts
 
 acquire-apartment = Rent apartment
 acquire-old-farmhouse = Buy old farmhouse

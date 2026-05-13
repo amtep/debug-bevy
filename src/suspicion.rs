@@ -4,8 +4,7 @@ use rand_distr::Poisson;
 use serde::Deserialize;
 
 use crate::{
-    bases::{Base, BasetypesAsset, BasetypesHandle},
-    regions::{BasePlot, Region},
+    regions::Region,
     rng::RandomSource,
     state::{GameState, MainSetupSet},
     time::GameDate,
@@ -50,6 +49,22 @@ pub struct PoliceSuspicion(pub u32);
 #[reflect(Component)]
 pub struct MediaSuspicion(pub u32);
 
+#[derive(Component, Default, Reflect)]
+#[reflect(Component)]
+pub struct IntelligenceSuspicionChange(pub f32);
+
+#[derive(Component, Default, Reflect)]
+#[reflect(Component)]
+pub struct ScientificSuspicionChange(pub f32);
+
+#[derive(Component, Default, Reflect)]
+#[reflect(Component)]
+pub struct PoliceSuspicionChange(pub f32);
+
+#[derive(Component, Default, Reflect)]
+#[reflect(Component)]
+pub struct MediaSuspicionChange(pub f32);
+
 fn setup_main(mut commands: Commands) {
     commands.init_resource::<IntelligenceSuspicion>();
     commands.init_resource::<ScientificSuspicion>();
@@ -60,39 +75,49 @@ fn setup_main(mut commands: Commands) {
 fn update_suspicion(
     mut intel_suspicion: ResMut<IntelligenceSuspicion>,
     mut scien_suspicion: ResMut<ScientificSuspicion>,
-    mut regions: Query<(&mut PoliceSuspicion, &mut MediaSuspicion, &Children), With<Region>>,
-    base_plots: Query<&Children, With<BasePlot>>,
-    base_types_handle: Res<BasetypesHandle>,
-    base_types_asset: Res<Assets<BasetypesAsset>>,
-    bases: Query<&Base>,
+    mut regions: Query<(Entity, &mut PoliceSuspicion, &mut MediaSuspicion), With<Region>>,
+    intel_suspicion_changes: Query<&IntelligenceSuspicionChange>,
+    scien_suspicion_changes: Query<&ScientificSuspicionChange>,
+    police_suspicion_changes: Query<&PoliceSuspicionChange>,
+    media_suspicion_changes: Query<&MediaSuspicionChange>,
+    children: Query<&Children>,
     mut random: ResMut<RandomSource>,
 ) {
-    intel_suspicion.0 += random.0.sample(Poisson::new(1.0).unwrap()) as u32;
-    scien_suspicion.0 += random.0.sample(Poisson::new(1.0).unwrap()) as u32;
+    let intel_suspicion_change = 1.0 + intel_suspicion_changes.iter().map(|s| s.0).sum::<f32>();
+    let scien_suspicion_change = 1.0 + scien_suspicion_changes.iter().map(|s| s.0).sum::<f32>();
 
-    let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
+    if intel_suspicion_change > 0.0 {
+        intel_suspicion.0 += random
+            .0
+            .sample(Poisson::new(intel_suspicion_change).unwrap())
+            as u32;
+    }
+    if scien_suspicion_change > 0.0 {
+        scien_suspicion.0 += random
+            .0
+            .sample(Poisson::new(scien_suspicion_change).unwrap())
+            as u32;
+    }
 
-    for (mut police_suspicion, mut media_suspicion, children) in &mut regions {
-        let mut police = 0;
-        let mut media = 0;
+    for (entity, mut police_suspicion, mut media_suspicion) in &mut regions {
+        let mut police = 0.0;
+        let mut media = 0.0;
 
-        for child in children {
-            if let Ok(children) = base_plots.get(*child) {
-                for child in children {
-                    let base_type = bases.get(*child).unwrap();
-                    let settings = base_types.get(&base_type.0).unwrap();
-                    police += settings.police_suspicion;
-                    media += settings.media_suspicion;
-                }
+        for desc in children.iter_descendants(entity) {
+            if let Ok(police_suspicion_change) = police_suspicion_changes.get(desc) {
+                police += police_suspicion_change.0;
+            }
+            if let Ok(media_suspicion_change) = media_suspicion_changes.get(desc) {
+                media += media_suspicion_change.0;
             }
         }
 
-        if police != 0 {
-            police_suspicion.0 += random.0.sample(Poisson::new(police as f32).unwrap()) as u32;
+        if police > 0.0 {
+            police_suspicion.0 += random.0.sample(Poisson::new(police).unwrap()) as u32;
         }
 
-        if media != 0 {
-            media_suspicion.0 += random.0.sample(Poisson::new(media as f32).unwrap()) as u32;
+        if media > 0.0 {
+            media_suspicion.0 += random.0.sample(Poisson::new(media).unwrap()) as u32;
         }
     }
 }

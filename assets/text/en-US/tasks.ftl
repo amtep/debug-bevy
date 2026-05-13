@@ -3,7 +3,7 @@ task-security = Security
 task-petty-crime = Petty crime
 task-priest-recruit-minions = Recruitment
 task-minion-recruit-minions = Recruitment
-task-research = Research
+task-research = Secrets
 
 switch-task-gig-work-tooltip = toil in menial jobs
 switch-task-security-tooltip = protect the cult

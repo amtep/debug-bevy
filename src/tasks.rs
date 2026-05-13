@@ -12,7 +12,10 @@ use crate::{
     funds::{Expense, FundsAmount, Income},
     modifiers::{Modifier, RecruitmentBy, RecruitmentByOf, RecruitmentOf},
     state::GameState,
-    suspicion::SuspicionType,
+    suspicion::{
+        IntelligenceSuspicionChange, MediaSuspicionChange, PoliceSuspicionChange,
+        ScientificSuspicionChange, SuspicionType,
+    },
 };
 
 const TASKS_ASSET_PATH: &str = "data/define.tasks.toml";
@@ -42,7 +45,7 @@ pub struct TaskSettings {
     pub income_per_day: Option<(FundsAmount, String)>,
     pub expense_per_day: Option<(FundsAmount, String)>,
     #[serde(default)]
-    pub suspicion: IndexMap<SuspicionType, u32>,
+    pub suspicions: IndexMap<SuspicionType, f32>,
     #[serde(default)]
     pub recruit_progress: f64,
     #[serde(default)]
@@ -69,7 +72,7 @@ fn on_task_changed<C: Component>(
     state: Res<State<GameState>>,
     task_handle: Res<TasksHandle>,
     task_assets: Res<Assets<TasksAsset>>,
-    tasks: Query<(Entity, &ChildOf, &Task)>,
+    tasks: Query<(&ChildOf, &Task)>,
     followers: Query<&FollowerCount>,
     follower_children: Query<&Children, With<FollowerCount>>,
 ) {
@@ -79,7 +82,7 @@ fn on_task_changed<C: Component>(
 
     let task_settings = &task_assets.get(task_handle.0.id()).unwrap().0;
 
-    let entity = if C::is::<Task>() {
+    let task_entity = if C::is::<Task>() {
         insert.entity
     } else if let Ok(children) = follower_children.get(insert.entity)
         && let Some(task_entity) = children.iter().find(|e| tasks.contains(*e))
@@ -89,14 +92,14 @@ fn on_task_changed<C: Component>(
         return;
     };
 
-    let (entity, ChildOf(parent), Task(task)) = tasks.get(entity).unwrap();
+    let (ChildOf(follower_entity), Task(task)) = tasks.get(task_entity).unwrap();
 
     let Some(settings) = task_settings.get(task) else {
         error!("Task {task} not known");
         return;
     };
 
-    let Ok(count) = followers.get(*parent) else {
+    let Ok(count) = followers.get(*follower_entity) else {
         error!("Task without Follower parent");
         return;
     };
@@ -104,21 +107,47 @@ fn on_task_changed<C: Component>(
     // Handle task income/expense
     if let Some((income, category)) = &settings.income_per_day {
         commands
-            .entity(entity)
+            .entity(task_entity)
             .insert(Income(*income, category.clone(), count.0));
     } else {
-        commands.entity(entity).try_remove::<Income>();
+        commands.entity(task_entity).try_remove::<Income>();
     }
 
     if let Some((expense, category)) = &settings.expense_per_day {
         commands
-            .entity(entity)
+            .entity(task_entity)
             .insert(Expense(*expense, category.clone(), count.0));
     } else {
-        commands.entity(entity).try_remove::<Expense>();
+        commands.entity(task_entity).try_remove::<Expense>();
     }
 
-    // TODO: handle suspicions
+    commands.entity(task_entity).try_remove::<(
+        IntelligenceSuspicionChange,
+        ScientificSuspicionChange,
+        PoliceSuspicionChange,
+        MediaSuspicionChange,
+    )>();
+
+    if !settings.suspicions.is_empty() {
+        for (suspicion, amount) in &settings.suspicions {
+            #[allow(clippy::cast_possible_truncation)]
+            let amount = count.0 as f32 * *amount;
+            match *suspicion {
+                SuspicionType::Intelligence => commands
+                    .entity(task_entity)
+                    .insert(IntelligenceSuspicionChange(amount)),
+                SuspicionType::Scientific => commands
+                    .entity(task_entity)
+                    .insert(ScientificSuspicionChange(amount)),
+                SuspicionType::Police => commands
+                    .entity(task_entity)
+                    .insert(PoliceSuspicionChange(amount)),
+                SuspicionType::Media => commands
+                    .entity(task_entity)
+                    .insert(MediaSuspicionChange(amount)),
+            };
+        }
+    }
     // TODO: handle research
 }
 
