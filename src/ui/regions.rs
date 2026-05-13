@@ -308,7 +308,7 @@ fn on_region_click(
                             let mut dialog = Dialog::new()
                                 .with_pause()
                                 .with_cancel()
-                                .with_title(menu_clicked.0.as_str())
+                                .with_title(menu_clicked.1.as_str())
                                 .with_entity_body(entity);
 
                             if settings.initial_cost > funds.0 {
