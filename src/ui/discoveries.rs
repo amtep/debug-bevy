@@ -126,9 +126,6 @@ pub fn open_discoveries_menu(
     let discovered_node = make_tab("discoveries-menu.discovered");
 
     'outer: for (name, discovery) in discoveries {
-        // TODO: check funds and research cost in available_node, interaction disabled if not valid
-        // TODO: allow selecting available discoveries
-        // TODO: learn selected discovery on dialog confirm (if validity checks still pass)
         let available = !discovered.contains(name);
         if available {
             // Check that all required discoveries have already been discovered
