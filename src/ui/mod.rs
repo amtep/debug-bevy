@@ -265,10 +265,13 @@ fn setup_ui(
     };
 
     let funds_tooltip = commands
-        .spawn(Node {
-            flex_direction: FlexDirection::Column,
-            ..default()
-        })
+        .spawn((
+            Node {
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            DespawnOnExit(GameState::Main),
+        ))
         .id();
 
     commands

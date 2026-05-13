@@ -73,7 +73,7 @@ fn listen_dev_keys_main_menu(
 fn debug_entity_count(world: &World, mut count: Local<u32>) {
     let entity_count = world.entity_count();
     if *count != entity_count {
-        warn!(entity_count);
+        info!(entity_count);
     }
     *count = entity_count;
 }

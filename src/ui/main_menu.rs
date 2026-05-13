@@ -140,7 +140,9 @@ pub fn setup_main_menu(
                                     ..Default::default()
                                 });
                                 let entity = entity_commands.id();
-                                entity_commands.with_child(
+                                entity_commands
+                                    .add_child(cult_symbol_observer)
+                                    .with_child(
                                     (
                                         TextInputNode {
                                             mode: TextInputMode::SingleLine,
@@ -229,7 +231,6 @@ pub fn setup_main_menu(
                                              let text = text_input_buffer.get_text();
                                              let text = if text.is_empty() { "Nameless".into() } else { text };
                                              commands.insert_resource(CultName(text));
-                                             commands.entity(cult_symbol_observer).despawn();
                                              commands.run_system_cached(setup_difficulties_dialog);
                                         }
                                     )
@@ -297,6 +298,7 @@ fn setup_difficulties_dialog(
             column_gap: px(20),
             ..default()
         })
+        .add_child(difficulty_observer)
         .with_children(|parent| {
             for (name, settings) in &difficulties_assets
                 .get(difficulties_handle.0.id())
@@ -435,7 +437,6 @@ fn setup_difficulties_dialog(
                   difficulty_name: Res<DifficultySelected>,
                   difficulties_handle: Res<DifficultiesHandle>,
                   difficulties_assets: Res<Assets<DifficultiesAsset>>| {
-                commands.entity(difficulty_observer).despawn();
                 let difficulty = difficulties_assets
                     .get(difficulties_handle.0.id())
                     .unwrap()

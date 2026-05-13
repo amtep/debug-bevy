@@ -372,6 +372,7 @@ fn on_dialog_add(
                         move |click: On<Pointer<Click>>, mut commands: Commands| {
                             if click.button == PointerButton::Primary {
                                 commands.entity(dialog_entity).insert(DialogCancelled);
+                                commands.entity(dialog_entity).despawn();
                                 commands.entity(dialog_root).despawn();
                             }
                         },
@@ -399,6 +400,7 @@ fn on_dialog_add(
                             && !has_disableds.get(click.entity).unwrap()
                         {
                             commands.entity(dialog_entity).insert(DialogConfirmed);
+                            commands.entity(dialog_entity).despawn();
                             commands.entity(dialog_root).despawn();
                         }
                     },
