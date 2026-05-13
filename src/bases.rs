@@ -13,7 +13,7 @@ use crate::{
     rng::RandomSource,
     state::{GameState, MainSetupSet},
     suspicion::{MediaSuspicionChange, PoliceSuspicionChange},
-    tasks::{RecruitMinionProgress, Task, TasksAsset, TasksHandle},
+    tasks::{Task, TasksAsset, TasksHandle},
 };
 
 const BASETYPES_ASSET_PATH: &str = "data/define.basetypes.toml";
@@ -38,7 +38,7 @@ pub struct BasetypesHandle(pub Handle<BasetypesAsset>);
 #[derive(Deserialize, Debug, Clone, Reflect)]
 #[serde(rename_all = "kebab-case")]
 pub struct BasetypeSettings {
-    pub max_pop: usize,
+    pub max_follower_count: usize,
     pub cost_per_day: FundsAmount,
     pub initial_cost: FundsAmount,
     pub police_suspicion: f32,
@@ -56,7 +56,7 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// Basetype name
 #[derive(Component, Reflect, Clone)]
 #[reflect(Component)]
-#[require(Save, RecruitMinionProgress)]
+#[require(Save)]
 pub struct Base(pub String);
 
 fn new_game(

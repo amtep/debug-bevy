@@ -24,7 +24,8 @@ pub fn plugin(app: &mut App) {
     )
     .add_systems(Update, listen_speed_keys.run_if(in_state(GameState::Main)))
     .add_observer(on_force_pause_insert)
-    .add_observer(on_force_pause_remove);
+    .add_observer(on_force_pause_remove)
+    .add_observer(on_game_speed_changed);
 }
 
 #[derive(Resource, Clone, Reflect, Serialize, Deserialize)]
@@ -50,9 +51,6 @@ fn setup(mut commands: Commands, mut time: ResMut<Time<Virtual>>) {
     time.unpause();
     commands.insert_resource(Time::<Fixed>::from_seconds(1.0));
     commands.insert_resource(CurrentGameSpeed::default());
-    commands
-        .add_observer(on_game_speed_changed)
-        .insert(DespawnOnExit(GameState::Main));
 }
 
 fn new_game(mut commands: Commands) {

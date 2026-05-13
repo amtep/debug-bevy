@@ -278,7 +278,7 @@ fn on_region_click(
                                     parent.spawn(line(
                                         "acquire-basetype-dialog-max-pop",
                                         "count",
-                                        settings.max_pop as f64,
+                                        settings.max_follower_count as f64,
                                     ));
                                     parent.spawn(line(
                                         "acquire-basetype-dialog-initial-cost",

@@ -9,11 +9,12 @@ use crate::{
 };
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(Update, listen_dev_keys.run_if(in_state(GameState::Main)));
-    app.add_systems(
-        Update,
-        listen_dev_keys_main_menu.run_if(in_state(GameState::MainMenu)),
-    );
+    app.add_systems(Update, listen_dev_keys.run_if(in_state(GameState::Main)))
+        .add_systems(
+            Update,
+            listen_dev_keys_main_menu.run_if(in_state(GameState::MainMenu)),
+        )
+        .add_systems(Update, debug_entity_count);
 }
 
 fn listen_dev_keys(
@@ -67,4 +68,12 @@ fn listen_dev_keys_main_menu(
         });
         next_state.set(GameState::Main);
     }
+}
+
+fn debug_entity_count(world: &World, mut count: Local<u32>) {
+    let entity_count = world.entity_count();
+    if *count != entity_count {
+        warn!(entity_count);
+    }
+    *count = entity_count;
 }

@@ -6,11 +6,9 @@ use moonshine_save::save::Save;
 use serde_derive::Deserialize;
 
 use crate::{
-    bases::{Base, BasetypesAsset, BasetypesHandle},
-    discoveries::ResearchPoints,
-    followers::{Follower, FollowerCount},
+    discoveries::Research,
+    followers::{FollowerCount, Recruit, RecruitProgress},
     funds::{Expense, FundsAmount, Income},
-    modifiers::{Modifier, RecruitmentBy, RecruitmentByOf, RecruitmentOf},
     state::GameState,
     suspicion::{
         IntelligenceSuspicionChange, MediaSuspicionChange, PoliceSuspicionChange,
@@ -23,10 +21,6 @@ const TASKS_ASSET_PATH: &str = "data/define.tasks.toml";
 pub fn plugin(app: &mut App) {
     app.add_plugins(TomlAssetPlugin::<TasksAsset>::new(&["tasks.toml"]))
         .add_systems(OnEnter(GameState::Load), setup_load)
-        .add_systems(
-            FixedUpdate,
-            (recruit, research).run_if(in_state(GameState::Main)),
-        )
         .add_observer(on_task_changed::<Task>)
         .add_observer(on_task_changed::<FollowerCount>);
 }
@@ -46,12 +40,11 @@ pub struct TaskSettings {
     pub expense_per_day: Option<(FundsAmount, String)>,
     #[serde(default)]
     pub suspicions: IndexMap<SuspicionType, f32>,
+    pub recruit_progress: Option<(String, f32)>,
     #[serde(default)]
-    pub recruit_progress: f64,
+    pub research: u32,
     #[serde(default)]
-    pub research: usize,
-    #[serde(default)]
-    pub security: usize,
+    pub security: u32,
 }
 
 fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -61,7 +54,7 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// A component added as a child of a Follower entity, to mark this as a task those followers are doing.
 #[derive(Component, Reflect)]
 #[reflect(Component)]
-#[require(Save)]
+#[require(Save, RecruitProgress)]
 #[component(immutable)]
 pub struct Task(pub String);
 
@@ -148,115 +141,20 @@ fn on_task_changed<C: Component>(
             };
         }
     }
-    // TODO: handle research
-}
 
-fn research(
-    tasks: Query<(&ChildOf, &Task)>,
-    followers: Query<&FollowerCount>,
-    task_handle: Res<TasksHandle>,
-    task_assets: Res<Assets<TasksAsset>>,
-    mut points: ResMut<ResearchPoints>,
-) {
-    let task_types = &task_assets.get(task_handle.0.id()).unwrap().0;
-    for (ChildOf(follower_e), Task(task)) in tasks {
-        let Some(task_settings) = task_types.get(task) else {
-            error!("Unknown task '{task}'");
-            continue;
-        };
-        if task_settings.research > 0 {
-            let Ok(count) = followers.get(*follower_e) else {
-                error!("Task without followers");
-                continue;
-            };
-            points.0 += task_settings.research * **count;
-        }
+    if settings.research != 0 {
+        commands
+            .entity(task_entity)
+            .insert(Research(settings.research));
+    } else {
+        commands.entity(task_entity).try_remove::<Research>();
     }
-}
 
-const NEW_MINION_PROGRESS: f64 = 100.0;
-
-/// A component to track recruitment of new minions.
-/// A new minion is spawned if this rolls over the [`NEW_MINION_PROGRESS`] constant.
-/// It's locked to 0 if the base is full.
-#[derive(Component, Default, Reflect)]
-#[reflect(Component)]
-pub struct RecruitMinionProgress(f64);
-
-fn recruit(
-    mut commands: Commands,
-    tasks: Query<(&ChildOf, &Task)>,
-    followers: Query<(&ChildOf, &Follower, &FollowerCount)>,
-    mut bases: Query<(&Base, &mut RecruitMinionProgress, &Children)>,
-    base_types_handle: Res<BasetypesHandle>,
-    base_types_asset: Res<Assets<BasetypesAsset>>,
-    task_handle: Res<TasksHandle>,
-    task_assets: Res<Assets<TasksAsset>>,
-    m_by: Modifier<RecruitmentBy>,
-    m_of: Modifier<RecruitmentOf>,
-    m_by_of: Modifier<RecruitmentByOf>,
-) {
-    let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
-    let task_types = &task_assets.get(task_handle.0.id()).unwrap().0;
-
-    for (ChildOf(follower_e), Task(task)) in tasks {
-        let Some(task_settings) = task_types.get(task) else {
-            error!("Unknown task '{task}'");
-            continue;
-        };
-        if task_settings.recruit_progress > 0.0 {
-            let Ok((ChildOf(base_e), follower, count)) = followers.get(*follower_e) else {
-                error!("Task without followers");
-                continue;
-            };
-            let Ok((Base(basetype), mut progress, children)) = bases.get_mut(*base_e) else {
-                error!("Followers without base");
-                continue;
-            };
-            let Some(base_type_settings) = base_types.get(basetype) else {
-                error!("Unknown basetype '{basetype}'");
-                continue;
-            };
-            let total_followers: usize = children
-                .iter()
-                .map(|e| {
-                    if let Ok((_, _, count)) = followers.get(e) {
-                        **count
-                    } else {
-                        0
-                    }
-                })
-                .sum();
-            if total_followers >= base_type_settings.max_pop {
-                progress.0 = 0.0;
-                continue;
-            }
-
-            let mut base = task_settings.recruit_progress;
-            base = m_by.calc_with(base, |f| f.0 == follower.0);
-            base = m_of.calc_with(base, |f| f.0 == "minion");
-            base = m_by_of.calc_with(base, |f| f.0 == follower.0 && f.1 == "minion");
-
-            progress.0 += base * **count as f64;
-            let mut new_minions = 0;
-            #[expect(clippy::while_float)]
-            while progress.0 >= NEW_MINION_PROGRESS {
-                progress.0 -= NEW_MINION_PROGRESS;
-                new_minions += 1;
-                if total_followers + new_minions >= base_type_settings.max_pop {
-                    progress.0 = 0.0;
-                }
-            }
-
-            // FIXME: remove hardcode
-            for e in children {
-                if let Ok((_, Follower(f), count)) = followers.get(*e)
-                    && f == "minion"
-                {
-                    let new_count = FollowerCount(**count + new_minions);
-                    commands.entity(*e).insert(new_count);
-                }
-            }
-        }
+    if let Some((follower, recruit_progress)) = &settings.recruit_progress {
+        commands
+            .entity(task_entity)
+            .insert(Recruit(follower.clone(), *recruit_progress));
+    } else {
+        commands.entity(task_entity).try_remove::<Recruit>();
     }
 }

@@ -15,12 +15,12 @@ suspicions = { police = 0.5 }
 
 [priest-recruit-minions]
 follower-types = ["priest"]
-recruit-progress = 1.0
+recruit-progress = ["minion", 1.0]
 
 [minion-recruit-minions]
 follower-types = ["minion"]
 requires-discovery = "minions-can-recruit"
-recruit-progress = 1
+recruit-progress = ["minion", 0.5]
 
 [research]
 follower-types = ["priest"]
