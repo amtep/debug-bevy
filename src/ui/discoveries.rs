@@ -43,7 +43,8 @@ pub fn open_discoveries_menu(
     let discoveries_root = commands
         .spawn(Node {
             width: percent(100),
-            height: percent(82),
+            min_height: px(430),
+            max_height: px(430),
             column_gap: px(10),
             ..default()
         })
