@@ -21,8 +21,8 @@ expense-category-global = { $count ->
 }
 
 expense-category-base = { $count ->
-    [one] Base
-    *[other] Bases
+    [one] Hideout
+    *[other] Hideouts
 }
 expense-category-research = Research
 
