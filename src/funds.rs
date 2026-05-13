@@ -80,7 +80,5 @@ fn update_funds(
         expense += amount * (*count as FundsAmount);
     }
 
-    info!("Income {income} modified {}", m_i.calc(income as f64));
-
     funds.0 += (m_i.calc(income as f64) - m_e.calc(expense as f64)).round() as i64;
 }
