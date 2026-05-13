@@ -2,11 +2,13 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 
 use moonshine_save::save::Save;
 
+use crate::state::GameState;
+
 /// The kind of modifier: `_add` or `_mult`.
 /// `Add`s are performed before `Multiply`s.
 #[derive(Component, Reflect)]
 #[reflect(Component)]
-#[require(Save)]
+#[require(Save, DespawnOnExit::<GameState>(GameState::Main))]
 pub enum Operation {
     Add,
     Multiply,
@@ -47,6 +49,14 @@ pub struct RecruitmentOf(pub String);
 #[reflect(Component)]
 pub struct RecruitmentByOf(pub String, pub String);
 
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct GlobalIncomeModifier;
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct GlobalExpenseModifier;
+
 /// A system parameter that can be used to calculate modifiers to a base value.
 /// Use it like `m: Modifier<RecruitmentBy>`, then `m.calc_with(base, |r| r.0 == follower)`
 /// where `base` and `follower` are provided by the system that uses this parameter.
@@ -60,20 +70,8 @@ where
 
 impl<C: Component> Modifier<'_, '_, C> {
     /// Apply all modifiers of category `C` to the `base` value and return the result.
-    #[expect(dead_code)]
-    pub fn calc(&self, mut base: f64) -> f64 {
-        let mut factor: f64 = 1.0;
-        for (_, o, v) in &self.q {
-            match o {
-                Operation::Add => {
-                    base += v.0;
-                }
-                Operation::Multiply => {
-                    factor *= v.0;
-                }
-            }
-        }
-        base * factor
+    pub fn calc(&self, base: f64) -> f64 {
+        self.calc_with(base, |_| true)
     }
 
     /// Apply all modifiers of category `C` that match the filter `f(&C)` to the `base` value and return the result.
@@ -88,6 +86,51 @@ impl<C: Component> Modifier<'_, '_, C> {
                     Operation::Add => {
                         base += v.0;
                     }
+                    Operation::Multiply => {
+                        factor *= v.0;
+                    }
+                }
+            }
+        }
+        base * factor
+    }
+
+    #[expect(dead_code)]
+    pub fn calc_add(&self) -> f64 {
+        self.calc_add_with(|_| true)
+    }
+
+    pub fn calc_add_with<F>(&self, f: F) -> f64
+    where
+        F: Fn(&C) -> bool,
+    {
+        let mut base = 0.0;
+        for (c, o, v) in &self.q {
+            if f(c) {
+                match o {
+                    Operation::Add => {
+                        base += v.0;
+                    }
+                    Operation::Multiply => (),
+                }
+            }
+        }
+        base
+    }
+
+    pub fn calc_mult(&self, base: f64) -> f64 {
+        self.calc_mult_with(base, |_| true)
+    }
+
+    pub fn calc_mult_with<F>(&self, base: f64, f: F) -> f64
+    where
+        F: Fn(&C) -> bool,
+    {
+        let mut factor = 1.0;
+        for (c, o, v) in &self.q {
+            if f(c) {
+                match o {
+                    Operation::Add => (),
                     Operation::Multiply => {
                         factor *= v.0;
                     }
@@ -120,6 +163,10 @@ pub fn spawn_modifier(mut commands: Commands, modifier: &str, value: f64, source
         }
     } else if let Some(follower) = name.strip_prefix("recruitment-of-") {
         commands.spawn((RecruitmentOf(follower.to_string()), bundle));
+    } else if name == "income" {
+        commands.spawn((GlobalIncomeModifier, bundle));
+    } else if name == "expense" {
+        commands.spawn((GlobalExpenseModifier, bundle));
     } else {
         error!("Unknown modifier {modifier}");
     }

@@ -4,6 +4,9 @@ starting-followers = {
     priest = 1,
     minion = 1
 }
+modifiers = {
+    income-mult = 1.1
+}
 
 [normal]
 default = true
@@ -16,4 +19,7 @@ starting-followers = {
 starting-funds = 10000
 starting-followers = {
     priest = 1,
+}
+modifiers = {
+    income-mult = 0.9
 }

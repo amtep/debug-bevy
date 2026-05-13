@@ -4,7 +4,9 @@ use indexmap::IndexMap;
 use serde::Deserialize;
 
 use crate::{
+    common::Difficulty,
     funds::FundsAmount,
+    modifiers::{Source, spawn_modifier},
     state::{GameState, MainSetupSet},
 };
 
@@ -17,7 +19,10 @@ pub fn plugin(app: &mut App) {
     .add_systems(OnEnter(GameState::Load), setup_load)
     .add_systems(
         OnEnter(GameState::Main),
-        remove_new_game.in_set(MainSetupSet::Late),
+        (
+            add_difficulty_modifiers.in_set(MainSetupSet::Default),
+            remove_new_game.in_set(MainSetupSet::Late),
+        ),
     );
 }
 
@@ -41,11 +46,28 @@ pub struct DifficultySettings {
     pub default: bool,
     pub starting_funds: FundsAmount,
     pub starting_followers: IndexMap<String, usize>,
+    #[serde(default)]
+    pub modifiers: IndexMap<String, f64>,
 }
 
 #[derive(Resource, Clone)]
 pub struct NewGame {
     pub difficulty: DifficultySettings,
+}
+
+fn add_difficulty_modifiers(
+    mut commands: Commands,
+    new_game: If<Res<NewGame>>,
+    difficulty: Res<Difficulty>,
+) {
+    for (modifier, value) in &new_game.difficulty.modifiers {
+        spawn_modifier(
+            commands.reborrow(),
+            modifier,
+            *value,
+            Source::Difficulty(difficulty.0.clone()),
+        );
+    }
 }
 
 fn remove_new_game(mut commands: Commands) {

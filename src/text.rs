@@ -358,6 +358,29 @@ fn fluent_bignum<'a>(positional: &[FluentValue<'a>], _named: &FluentArgs) -> Flu
     }
 }
 
+fn fluent_sign<'a>(positional: &[FluentValue<'a>], _named: &FluentArgs) -> FluentValue<'a> {
+    fn f64_sign(f: f64) -> FluentValue<'static> {
+        if f > 0.0 {
+            FluentValue::String(Cow::Borrowed("positive"))
+        } else if f < 0.0 {
+            FluentValue::String(Cow::Borrowed("negative"))
+        } else {
+            FluentValue::String(Cow::Borrowed("zero"))
+        }
+    }
+    match positional.first() {
+        Some(FluentValue::Number(FluentNumber { value: f, .. })) => f64_sign(*f),
+        Some(FluentValue::String(s)) => {
+            if let Ok(f) = s.parse::<f64>() {
+                f64_sign(f)
+            } else {
+                FluentValue::Error
+            }
+        }
+        _ => FluentValue::Error,
+    }
+}
+
 fn new_bundle<'a, I: Iterator<Item = &'a Arc<FluentResource>>>(
     bundle_resource: &FluentBundleWrapper,
     resource_iter: I,
@@ -377,6 +400,10 @@ fn new_bundle<'a, I: Iterator<Item = &'a Arc<FluentResource>>>(
     }
     if let Err(e) = new_bundle.add_function("BIGNUM", fluent_bignum) {
         error!("could not add BIGNUM to fluent bundle: {e}");
+        return None;
+    }
+    if let Err(e) = new_bundle.add_function("SIGN", fluent_sign) {
+        error!("could not add SIGN to fluent bundle: {e}");
         return None;
     }
 

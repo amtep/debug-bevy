@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use moonshine_save::save::Save;
 
 use crate::{
+    modifiers::{GlobalExpenseModifier, GlobalIncomeModifier, Modifier},
     new_game::NewGame,
     state::{GameState, MainSetupSet},
     time::GameDate,
@@ -61,11 +62,25 @@ fn setup_funds(mut commands: Commands, new_game: Res<NewGame>) {
     commands.insert_resource(Funds(new_game.difficulty.starting_funds));
 }
 
-fn update_funds(mut funds: ResMut<Funds>, incomes: Query<&Income>, expenses: Query<&Expense>) {
+#[expect(clippy::cast_possible_truncation, reason = "funds won't go that high")]
+fn update_funds(
+    mut funds: ResMut<Funds>,
+    incomes: Query<&Income>,
+    expenses: Query<&Expense>,
+    m_i: Modifier<GlobalIncomeModifier>,
+    m_e: Modifier<GlobalExpenseModifier>,
+) {
+    let mut income = 0;
+    let mut expense = 0;
+
     for Income(amount, _, count) in incomes {
-        funds.0 += amount * (*count as FundsAmount);
+        income += amount * (*count as FundsAmount);
     }
     for Expense(amount, _, count) in expenses {
-        funds.0 -= amount * (*count as FundsAmount);
+        expense += amount * (*count as FundsAmount);
     }
+
+    info!("Income {income} modified {}", m_i.calc(income as f64));
+
+    funds.0 += (m_i.calc(income as f64) - m_e.calc(expense as f64)).round() as i64;
 }

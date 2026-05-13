@@ -10,6 +10,7 @@ use crate::{
     },
     discoveries::ResearchPoints,
     funds::{Expense, Funds, FundsAmount, Income, IncomeExpenseUpdatedEvent},
+    modifiers::{GlobalExpenseModifier, GlobalIncomeModifier, Modifier},
     new_game::NewGame,
     state::{GameState, MainSetupSet},
     suspicion::{IntelligenceSuspicion, ScientificSuspicion},
@@ -518,26 +519,13 @@ fn on_funds_tooltip_inner_add(
     open: On<Add, TooltipOpen>,
     mut commands: Commands,
     tooltip_opens: Query<&TooltipOpen>,
-    incomes: Query<&Income>,
-    expenses: Query<&Expense>,
-    font_handle: Res<FontHandle>,
 ) {
     let TooltipOpen(tooltip_box, tooltip_inner) = *tooltip_opens.get(open.entity).unwrap();
-    update_funds_tooltip(
-        tooltip_inner,
-        commands.reborrow(),
-        incomes,
-        expenses,
-        font_handle,
-    );
+    commands.run_system_cached_with(update_funds_tooltip, tooltip_inner);
     let observer = commands
         .add_observer(
-            move |_: On<IncomeExpenseUpdatedEvent>,
-                  commands: Commands,
-                  incomes: Query<&Income>,
-                  expenses: Query<&Expense>,
-                  font_handle: Res<FontHandle>| {
-                update_funds_tooltip(tooltip_inner, commands, incomes, expenses, font_handle);
+            move |_: On<IncomeExpenseUpdatedEvent>, mut commands: Commands| {
+                commands.run_system_cached_with(update_funds_tooltip, tooltip_inner);
             },
         )
         .id();
@@ -657,11 +645,17 @@ fn update_game_speed_state(
     }
 }
 
+/// A one-shot system that rebuilds the income/expense tooltip
+// TODO: handle income_add and expense_add modifiers properly.
+// (Currently it adds them to every category)
+#[expect(clippy::cast_possible_truncation, reason = "funds won't go that high")]
 fn update_funds_tooltip(
-    tooltip_inner: Entity,
+    In(tooltip_inner): In<Entity>,
     mut commands: Commands,
     incomes: Query<&Income>,
     expenses: Query<&Expense>,
+    m_i: Modifier<GlobalIncomeModifier>,
+    m_e: Modifier<GlobalExpenseModifier>,
     font_handle: Res<FontHandle>,
 ) {
     fn income_expense_row(
@@ -733,9 +727,21 @@ fn update_funds_tooltip(
                 &text_font,
                 category,
                 *count,
-                *funds,
+                m_i.calc_mult(*funds as f64).round() as i64,
             );
         }
+    }
+
+    let global_income_add = m_i.calc(0.0).round() as i64;
+    if global_income_add != 0 {
+        income_expense_row(
+            commands.reborrow(),
+            tooltip_inner,
+            &text_font,
+            "income-category-global".to_string(),
+            1,
+            global_income_add,
+        );
     }
 
     commands.spawn(hrule.clone());
@@ -763,9 +769,21 @@ fn update_funds_tooltip(
                 &text_font,
                 category,
                 *count,
-                *funds,
+                m_e.calc_mult(*funds as f64).round() as i64,
             );
         }
+    }
+
+    let global_expense_add = m_e.calc(0.0).round() as i64;
+    if global_expense_add != 0 {
+        income_expense_row(
+            commands.reborrow(),
+            tooltip_inner,
+            &text_font,
+            "expense-category-global".to_string(),
+            1,
+            global_expense_add,
+        );
     }
 }
 

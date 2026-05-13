@@ -4,11 +4,21 @@ funds = { FUNDS($funds) }
 income-tooltip-header = Income
 expense-tooltip-header = Expenses
 
+income-category-global = { $count ->
+    [one] Modifier
+    *[other] Modifiers
+}
+
 income-category-job = { $count ->
     [one] Job
     *[other] Jobs
 }
 income-category-crime = Crime
+
+expense-category-global = { $count ->
+    [one] Modifier
+    *[other] Modifiers
+}
 
 expense-category-base = { $count ->
     [one] Base

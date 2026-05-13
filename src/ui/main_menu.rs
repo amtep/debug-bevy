@@ -380,6 +380,24 @@ fn setup_difficulties_dialog(
                                     ));
                                 }
                             });
+                        parent
+                            .spawn(Node {
+                                height: px(75),
+                                flex_direction: FlexDirection::Column,
+                                align_items: AlignItems::Center,
+                                margin: UiRect::vertical(px(8)),
+                                ..default()
+                            })
+                            .with_children(|parent| {
+                                for (modifier, value) in &settings.modifiers {
+                                    parent.spawn(condition(
+                                        TextKey::new(format!("modifier-{modifier}"))
+                                            .add_arg("value", *value)
+                                            .add_arg("percent", ((value - 1.0) * 100.0).round()),
+                                        2,
+                                    ));
+                                }
+                            });
                     })
                     .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
                         if click.button == PointerButton::Primary {
