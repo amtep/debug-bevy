@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use moonshine_save::save::Save;
 
 use crate::{
-    modifiers::{GlobalExpenseModifier, GlobalIncomeModifier, Modifier},
+    modifiers::{ExpenseModifier, IncomeModifier, Modifier},
     new_game::NewGame,
     state::{GameState, MainSetupSet},
     time::GameDate,
@@ -11,13 +11,17 @@ use crate::{
 pub fn plugin(app: &mut App) {
     app.add_systems(
         OnEnter(GameState::Main),
-        setup_funds
+        new_game
             .run_if(resource_exists::<NewGame>)
             .in_set(MainSetupSet::Default),
     )
     .add_systems(
         FixedUpdate,
         update_funds.run_if(resource_exists_and_changed::<GameDate>.and(in_state(GameState::Main))),
+    )
+    .add_systems(
+        OnEnter(GameState::Main),
+        setup_main.in_set(MainSetupSet::Late),
     )
     .add_observer(|_: On<Insert, Income>, mut commands: Commands| {
         commands.trigger(IncomeExpenseUpdatedEvent);
@@ -29,6 +33,18 @@ pub fn plugin(app: &mut App) {
         commands.trigger(IncomeExpenseUpdatedEvent);
     })
     .add_observer(|_: On<Remove, Expense>, mut commands: Commands| {
+        commands.trigger(IncomeExpenseUpdatedEvent);
+    })
+    .add_observer(|_: On<Insert, IncomeModifier>, mut commands: Commands| {
+        commands.trigger(IncomeExpenseUpdatedEvent);
+    })
+    .add_observer(|_: On<Remove, IncomeModifier>, mut commands: Commands| {
+        commands.trigger(IncomeExpenseUpdatedEvent);
+    })
+    .add_observer(|_: On<Insert, ExpenseModifier>, mut commands: Commands| {
+        commands.trigger(IncomeExpenseUpdatedEvent);
+    })
+    .add_observer(|_: On<Remove, ExpenseModifier>, mut commands: Commands| {
         commands.trigger(IncomeExpenseUpdatedEvent);
     });
 }
@@ -58,27 +74,50 @@ pub struct Income(pub FundsAmount, pub String, pub usize);
 #[derive(Debug, Event, Clone, Copy)]
 pub struct IncomeExpenseUpdatedEvent;
 
-fn setup_funds(mut commands: Commands, new_game: Res<NewGame>) {
+fn new_game(mut commands: Commands, new_game: Res<NewGame>) {
     commands.insert_resource(Funds(new_game.difficulty.starting_funds));
 }
 
-#[expect(clippy::cast_possible_truncation, reason = "funds won't go that high")]
+fn setup_main(mut commands: Commands) {
+    commands.init_resource::<TotalIncome>();
+    commands.init_resource::<TotalExpense>();
+    // do NOT trigger on load with lots of insertion.
+    commands
+        .add_observer(on_income_expense_updated)
+        .insert(DespawnOnExit(GameState::Main));
+    commands.trigger(IncomeExpenseUpdatedEvent);
+}
+
+#[derive(Resource, Default)]
+struct TotalIncome(FundsAmount);
+
+#[derive(Resource, Default)]
+struct TotalExpense(FundsAmount);
+
+#[allow(clippy::cast_possible_truncation)]
+fn on_income_expense_updated(
+    _: On<IncomeExpenseUpdatedEvent>,
+    mut total_income: ResMut<TotalIncome>,
+    mut total_expense: ResMut<TotalExpense>,
+    incomes: Query<(Entity, &Income)>,
+    expenses: Query<(Entity, &Expense)>,
+    m_i: Modifier<IncomeModifier>,
+    m_e: Modifier<ExpenseModifier>,
+) {
+    for (entity, Income(amount, _, count)) in &incomes {
+        let income = (amount * (*count as FundsAmount)) as f64;
+        total_income.0 += m_i.calc(income, entity) as FundsAmount;
+    }
+    for (entity, Expense(amount, _, count)) in &expenses {
+        let expense = (amount * (*count as FundsAmount)) as f64;
+        total_expense.0 += m_e.calc(expense, entity) as FundsAmount;
+    }
+}
+
 fn update_funds(
     mut funds: ResMut<Funds>,
-    incomes: Query<&Income>,
-    expenses: Query<&Expense>,
-    m_i: Modifier<GlobalIncomeModifier>,
-    m_e: Modifier<GlobalExpenseModifier>,
+    total_income: Res<TotalIncome>,
+    total_expense: Res<TotalExpense>,
 ) {
-    let mut income = 0;
-    let mut expense = 0;
-
-    for Income(amount, _, count) in incomes {
-        income += amount * (*count as FundsAmount);
-    }
-    for Expense(amount, _, count) in expenses {
-        expense += amount * (*count as FundsAmount);
-    }
-
-    funds.0 += (m_i.calc(income as f64) - m_e.calc(expense as f64)).round() as i64;
+    funds.0 += total_income.0 - total_expense.0;
 }

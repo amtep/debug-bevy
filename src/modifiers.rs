@@ -51,11 +51,11 @@ pub struct RecruitmentByOf(pub String, pub String);
 
 #[derive(Component, Reflect)]
 #[reflect(Component)]
-pub struct GlobalIncomeModifier;
+pub struct IncomeModifier;
 
 #[derive(Component, Reflect)]
 #[reflect(Component)]
-pub struct GlobalExpenseModifier;
+pub struct ExpenseModifier;
 
 /// A system parameter that can be used to calculate modifiers to a base value.
 /// Use it like `m: Modifier<RecruitmentBy>`, then `m.calc_with(base, |r| r.0 == follower)`
@@ -65,51 +65,75 @@ pub struct Modifier<'w, 's, C>
 where
     C: Component,
 {
-    q: Query<'w, 's, (&'static C, &'static Operation, &'static Value)>,
+    child_ofs: Query<'w, 's, &'static ChildOf>,
+    modifiers: Query<
+        'w,
+        's,
+        (
+            &'static C,
+            &'static Operation,
+            &'static Value,
+            Option<&'static ChildOf>,
+        ),
+    >,
 }
 
 impl<C: Component> Modifier<'_, '_, C> {
+    #[inline]
+    fn entities(&self, entity: Entity) -> Vec<Entity> {
+        std::iter::once(entity)
+            .chain(self.child_ofs.iter_ancestors(entity))
+            .collect()
+    }
+
     /// Apply all modifiers of category `C` to the `base` value and return the result.
-    pub fn calc(&self, base: f64) -> f64 {
-        self.calc_with(base, |_| true)
+    pub fn calc(&self, base: f64, entity: Entity) -> f64 {
+        self.calc_with(base, entity, |_| true)
     }
 
     /// Apply all modifiers of category `C` that match the filter `f(&C)` to the `base` value and return the result.
-    pub fn calc_with<F>(&self, mut base: f64, f: F) -> f64
+    pub fn calc_with<F>(&self, mut base: f64, entity: Entity, f: F) -> f64
     where
         F: Fn(&C) -> bool,
     {
         let mut factor: f64 = 1.0;
-        for (c, o, v) in &self.q {
-            if f(c) {
-                match o {
+
+        let entities = self.entities(entity);
+
+        for (component, operation, value, parent) in &self.modifiers {
+            if parent.is_none_or(|p| entities.contains(&p.0) && f(component)) {
+                match operation {
                     Operation::Add => {
-                        base += v.0;
+                        base += value.0;
                     }
                     Operation::Multiply => {
-                        factor *= v.0;
+                        factor *= value.0;
                     }
                 }
             }
         }
+
         base * factor
     }
 
     #[expect(dead_code)]
-    pub fn calc_add(&self) -> f64 {
-        self.calc_add_with(|_| true)
+    pub fn calc_add(&self, entity: Entity) -> f64 {
+        self.calc_add_with(entity, |_| true)
     }
 
-    pub fn calc_add_with<F>(&self, f: F) -> f64
+    pub fn calc_add_with<F>(&self, entity: Entity, f: F) -> f64
     where
         F: Fn(&C) -> bool,
     {
         let mut base = 0.0;
-        for (c, o, v) in &self.q {
-            if f(c) {
-                match o {
+
+        let entities = self.entities(entity);
+
+        for (component, operation, value, parent) in &self.modifiers {
+            if parent.is_none_or(|p| entities.contains(&p.0) && f(component)) {
+                match operation {
                     Operation::Add => {
-                        base += v.0;
+                        base += value.0;
                     }
                     Operation::Multiply => (),
                 }
@@ -118,25 +142,29 @@ impl<C: Component> Modifier<'_, '_, C> {
         base
     }
 
-    pub fn calc_mult(&self, base: f64) -> f64 {
-        self.calc_mult_with(base, |_| true)
+    pub fn calc_mult(&self, base: f64, entity: Entity) -> f64 {
+        self.calc_mult_with(base, entity, |_| true)
     }
 
-    pub fn calc_mult_with<F>(&self, base: f64, f: F) -> f64
+    pub fn calc_mult_with<F>(&self, base: f64, entity: Entity, f: F) -> f64
     where
         F: Fn(&C) -> bool,
     {
         let mut factor = 1.0;
-        for (c, o, v) in &self.q {
-            if f(c) {
-                match o {
+
+        let entities = self.entities(entity);
+
+        for (component, operation, value, parent) in &self.modifiers {
+            if parent.is_none_or(|p| entities.contains(&p.0) && f(component)) {
+                match operation {
                     Operation::Add => (),
                     Operation::Multiply => {
-                        factor *= v.0;
+                        factor *= value.0;
                     }
                 }
             }
         }
+
         base * factor
     }
 }
@@ -164,9 +192,9 @@ pub fn spawn_modifier(mut commands: Commands, modifier: &str, value: f64, source
     } else if let Some(follower) = name.strip_prefix("recruitment-of-") {
         commands.spawn((RecruitmentOf(follower.to_string()), bundle));
     } else if name == "income" {
-        commands.spawn((GlobalIncomeModifier, bundle));
+        commands.spawn((IncomeModifier, bundle));
     } else if name == "expense" {
-        commands.spawn((GlobalExpenseModifier, bundle));
+        commands.spawn((ExpenseModifier, bundle));
     } else {
         error!("Unknown modifier {modifier}");
     }

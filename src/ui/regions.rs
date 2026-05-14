@@ -162,7 +162,9 @@ pub fn setup(
                     });
             });
         for child in children {
-            let location = base_plots.get(*child).unwrap();
+            let Ok(location) = base_plots.get(*child) else {
+                continue;
+            };
             commands.spawn((
                 ChildOf(*map_ui),
                 ViewOf(*child),

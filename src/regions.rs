@@ -20,7 +20,7 @@ pub fn plugin(app: &mut App) {
         .add_systems(OnExit(GameState::Load), cleanup_load)
         .add_systems(
             OnEnter(GameState::Main),
-            setup_main
+            new_game
                 .run_if(resource_exists::<NewGame>)
                 .in_set(MainSetupSet::Regions),
         )
@@ -84,7 +84,7 @@ fn cleanup_load(mut messages: ResMut<Messages<AssetEvent<RegionsAsset>>>) {
 }
 
 /// Create `Region` and `BasePlot` entities based on the regions asset file.
-fn setup_main(
+fn new_game(
     mut commands: Commands,
     regions_handle: Res<RegionsHandle>,
     regions_asset: Res<Assets<RegionsAsset>>,

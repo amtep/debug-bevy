@@ -105,7 +105,7 @@ fn recruit(
     mut commands: Commands,
     bases: Query<(&Base, &Children)>,
     followers: Query<(&ChildOf, &Follower, &FollowerCount)>,
-    mut recruits: Query<(&ChildOf, &Recruit, &mut RecruitProgress)>,
+    mut recruits: Query<(Entity, &ChildOf, &Recruit, &mut RecruitProgress)>,
     m_by: Modifier<RecruitmentBy>,
     m_of: Modifier<RecruitmentOf>,
     m_by_of: Modifier<RecruitmentByOf>,
@@ -114,9 +114,9 @@ fn recruit(
 ) {
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
 
-    for (parent, recruit, mut recruit_progress) in &mut recruits {
+    for (entity, follower_entity, recruit, mut recruit_progress) in &mut recruits {
         let (ChildOf(base_entity), follower, FollowerCount(follower_count)) =
-            followers.get(parent.0).unwrap();
+            followers.get(follower_entity.0).unwrap();
         let (base, children) = bases.get(*base_entity).unwrap();
         let max_follower_count = base_types.get(&base.0).unwrap().max_follower_count;
 
@@ -130,9 +130,9 @@ fn recruit(
         }
 
         let mut base = recruit.1 as f64;
-        base = m_by.calc_with(base, |f| f.0 == follower.0);
-        base = m_of.calc_with(base, |f| f.0 == recruit.0);
-        base = m_by_of.calc_with(base, |f| f.0 == follower.0 && f.1 == recruit.0);
+        base = m_by.calc_with(base, entity, |f| f.0 == follower.0);
+        base = m_of.calc_with(base, entity, |f| f.0 == recruit.0);
+        base = m_by_of.calc_with(base, entity, |f| f.0 == follower.0 && f.1 == recruit.0);
 
         let recruit_progress = recruit_progress.0.entry(recruit.0.clone()).or_default();
         *recruit_progress += (base as f32) * (*follower_count as f32);

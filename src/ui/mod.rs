@@ -10,7 +10,7 @@ use crate::{
     },
     discoveries::ResearchPoints,
     funds::{Expense, Funds, FundsAmount, Income, IncomeExpenseUpdatedEvent},
-    modifiers::{GlobalExpenseModifier, GlobalIncomeModifier, Modifier},
+    modifiers::{ExpenseModifier, IncomeModifier, Modifier},
     new_game::NewGame,
     state::{GameState, MainSetupSet},
     suspicion::{IntelligenceSuspicion, ScientificSuspicion},
@@ -655,10 +655,10 @@ fn update_game_speed_state(
 fn update_funds_tooltip(
     In(tooltip_inner): In<Entity>,
     mut commands: Commands,
-    incomes: Query<&Income>,
-    expenses: Query<&Expense>,
-    m_i: Modifier<GlobalIncomeModifier>,
-    m_e: Modifier<GlobalExpenseModifier>,
+    incomes: Query<(Entity, &Income)>,
+    expenses: Query<(Entity, &Expense)>,
+    m_i: Modifier<IncomeModifier>,
+    m_e: Modifier<ExpenseModifier>,
     font_handle: Res<FontHandle>,
 ) {
     fn income_expense_row(
@@ -715,9 +715,11 @@ fn update_funds_tooltip(
     commands.spawn(hrule.clone());
 
     let mut income_ledger: BTreeMap<String, (FundsAmount, usize)> = BTreeMap::default();
-    for Income(amount, category, icount) in incomes {
+
+    for (entity, Income(amount, category, icount)) in incomes {
         let (funds, count) = income_ledger.entry(category.clone()).or_default();
-        *funds += amount * (*icount as FundsAmount);
+        let income = (amount * (*icount as FundsAmount)) as f64;
+        *funds += m_i.calc(income, entity) as FundsAmount;
         *count += icount;
     }
 
@@ -730,21 +732,9 @@ fn update_funds_tooltip(
                 &text_font,
                 category,
                 *count,
-                m_i.calc_mult(*funds as f64).round() as i64,
+                *funds,
             );
         }
-    }
-
-    let global_income_add = m_i.calc(0.0).round() as i64;
-    if global_income_add != 0 {
-        income_expense_row(
-            commands.reborrow(),
-            tooltip_inner,
-            &text_font,
-            "income-category-global".to_string(),
-            1,
-            global_income_add,
-        );
     }
 
     commands.spawn(hrule.clone());
@@ -757,9 +747,10 @@ fn update_funds_tooltip(
 
     let mut expense_ledger: BTreeMap<String, (FundsAmount, usize)> = BTreeMap::default();
 
-    for Expense(amount, category, ecount) in expenses {
+    for (entity, Expense(amount, category, ecount)) in expenses {
         let (funds, count) = expense_ledger.entry(category.clone()).or_default();
-        *funds += amount * (*ecount as FundsAmount);
+        let expense = (amount * (*ecount as FundsAmount)) as f64;
+        *funds += m_e.calc(expense, entity) as FundsAmount;
         *count += ecount;
     }
 
@@ -772,21 +763,9 @@ fn update_funds_tooltip(
                 &text_font,
                 category,
                 *count,
-                m_e.calc_mult(*funds as f64).round() as i64,
+                *funds,
             );
         }
-    }
-
-    let global_expense_add = m_e.calc(0.0).round() as i64;
-    if global_expense_add != 0 {
-        income_expense_row(
-            commands.reborrow(),
-            tooltip_inner,
-            &text_font,
-            "expense-category-global".to_string(),
-            1,
-            global_expense_add,
-        );
     }
 }
 
