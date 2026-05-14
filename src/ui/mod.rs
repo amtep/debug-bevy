@@ -9,7 +9,9 @@ use crate::{
         ui::{colors::*, fonts::*},
     },
     discoveries::ResearchPoints,
-    funds::{Expense, Funds, FundsAmount, Income, IncomeExpenseUpdatedEvent},
+    funds::{
+        Expense, Funds, FundsAmount, Income, IncomeExpenseUpdatedEvent, TotalExpense, TotalIncome,
+    },
     modifiers::{ExpenseModifier, IncomeModifier, Modifier},
     new_game::NewGame,
     state::{GameState, MainSetupSet},
@@ -59,35 +61,29 @@ pub fn plugin(app: &mut App) {
     .add_systems(Update, read_window_resized_messages)
     .add_systems(
         Update,
-        regions::update_regional_suspicion.run_if(in_state(GameState::Main)),
-    )
-    .add_systems(
-        Update,
-        update_game_date
-            .run_if(resource_exists_and_changed::<GameDate>.and(in_state(GameState::Main))),
-    )
-    .add_systems(
-        Update,
         (
+            regions::update_regional_suspicion.run_if(in_state(GameState::Main)),
+            update_game_date
+                .run_if(resource_exists_and_changed::<GameDate>.and(in_state(GameState::Main))),
             update_funds
                 .run_if(resource_exists_and_changed::<Funds>.and(in_state(GameState::Main))),
+            update_funds_change.run_if(
+                (resource_exists_and_changed::<TotalIncome>
+                    .or(resource_exists_and_changed::<TotalExpense>))
+                .and(in_state(GameState::Main)),
+            ),
             update_research.run_if(
                 resource_exists_and_changed::<ResearchPoints>.and(in_state(GameState::Main)),
             ),
+            update_suspicion.run_if(
+                (resource_exists_and_changed::<IntelligenceSuspicion>
+                    .or(resource_exists_and_changed::<ScientificSuspicion>))
+                .and(in_state(GameState::Main)),
+            ),
+            update_game_speed_state.run_if(
+                resource_exists_and_changed::<CurrentGameSpeed>.and(in_state(GameState::Main)),
+            ),
         ),
-    )
-    .add_systems(
-        Update,
-        update_suspicion.run_if(
-            (resource_exists_and_changed::<IntelligenceSuspicion>
-                .or(resource_exists_and_changed::<ScientificSuspicion>))
-            .and(in_state(GameState::Main)),
-        ),
-    )
-    .add_systems(
-        Update,
-        update_game_speed_state
-            .run_if(resource_exists_and_changed::<CurrentGameSpeed>.and(in_state(GameState::Main))),
     )
     .add_systems(
         PostUpdate,
@@ -131,6 +127,9 @@ struct GameDateUi;
 
 #[derive(Component)]
 struct FundsUi;
+
+#[derive(Component)]
+struct FundsChangeUi;
 
 #[derive(Component)]
 struct ResearchPointsUi;
@@ -324,7 +323,8 @@ fn setup_ui(
                         .spawn((
                             Node {
                                 padding: UiRect::top(px(2)),
-                                min_width: px(80),
+                                min_width: px(130),
+                                column_gap: px(2),
                                 ..default()
                             },
                             Tooltip::new_custom(funds_tooltip),
@@ -335,6 +335,17 @@ fn setup_ui(
                             TextKey::new("funds-display").add_arg("funds", 0),
                             TextColor::from(TEXT_FUNDS),
                             FundsUi,
+                        ))
+                        .with_child((
+                            Node {
+                                align_self: AlignSelf::End,
+                                ..default()
+                            },
+                            mono_text_font.clone().with_font_size(NORMAL),
+                            // funds and text color will both be updated
+                            TextKey::new("funds-change-display").add_arg("funds", 1500),
+                            TextColor::from(TEXT),
+                            FundsChangeUi,
                         ))
                         .observe(on_funds_tooltip_inner_add);
                     parent
@@ -646,6 +657,25 @@ fn update_game_speed_state(
             }
         }
     }
+}
+
+#[allow(clippy::comparison_chain)]
+fn update_funds_change(
+    mut funds_change_ui: Single<(&mut TextColor, &mut TextKey), With<FundsChangeUi>>,
+    total_income: Res<TotalIncome>,
+    total_expense: Res<TotalExpense>,
+) {
+    let change = total_income.0 - total_expense.0;
+    *funds_change_ui.0 = if change == 0 {
+        TEXT
+    } else if change > 0 {
+        TEXT_POSITIVE
+    } else {
+        TEXT_NEGATIVE
+    }
+    .into();
+
+    funds_change_ui.1.replace_arg("funds", change as f64);
 }
 
 /// A one-shot system that rebuilds the income/expense tooltip

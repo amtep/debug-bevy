@@ -88,11 +88,11 @@ fn setup_main(mut commands: Commands) {
     commands.trigger(IncomeExpenseUpdatedEvent);
 }
 
-#[derive(Resource, Default)]
-struct TotalIncome(FundsAmount);
+#[derive(Resource, Default, PartialEq, Eq)]
+pub struct TotalIncome(pub FundsAmount);
 
-#[derive(Resource, Default)]
-struct TotalExpense(FundsAmount);
+#[derive(Resource, Default, PartialEq, Eq)]
+pub struct TotalExpense(pub FundsAmount);
 
 #[allow(clippy::cast_possible_truncation)]
 fn on_income_expense_updated(
@@ -104,14 +104,20 @@ fn on_income_expense_updated(
     m_i: Modifier<IncomeModifier>,
     m_e: Modifier<ExpenseModifier>,
 ) {
+    let mut total_income_temp = 0;
+    let mut total_expense_temp = 0;
+
     for (entity, Income(amount, _, count)) in &incomes {
         let income = (amount * (*count as FundsAmount)) as f64;
-        total_income.0 += m_i.calc(income, entity) as FundsAmount;
+        total_income_temp += m_i.calc(income, entity) as FundsAmount;
     }
     for (entity, Expense(amount, _, count)) in &expenses {
         let expense = (amount * (*count as FundsAmount)) as f64;
-        total_expense.0 += m_e.calc(expense, entity) as FundsAmount;
+        total_expense_temp += m_e.calc(expense, entity) as FundsAmount;
     }
+
+    total_income.set_if_neq(TotalIncome(total_income_temp));
+    total_expense.set_if_neq(TotalExpense(total_expense_temp));
 }
 
 fn update_funds(

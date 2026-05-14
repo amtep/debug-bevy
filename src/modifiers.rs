@@ -142,6 +142,7 @@ impl<C: Component> Modifier<'_, '_, C> {
         base
     }
 
+    #[expect(dead_code)]
     pub fn calc_mult(&self, base: f64, entity: Entity) -> f64 {
         self.calc_mult_with(base, entity, |_| true)
     }

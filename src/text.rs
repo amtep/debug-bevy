@@ -296,44 +296,88 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 // TODO: localize decimal sign
-fn format_bignum(mut f: f64, symbol: Option<char>) -> String {
+fn format_bignum(
+    mut f: f64,
+    symbol: Option<char>,
+    sign: bool,
+    max_dp: usize,
+    lower_limit: f64,
+) -> String {
     let sign = if f < 0.0 {
         f = -f;
         "-"
+    } else if sign && f != 0.0 {
+        "+"
     } else {
         ""
     };
+
     let symbol = symbol.map(|s| s.to_string()).unwrap_or_default();
-    if f < 100_000.0 {
+    if f < lower_limit {
         format!("{sign}{symbol}{f:.0}")
     } else {
         let magnifiers = &["", "k", "M", "B", "T", "Q"];
         let mut i = 0;
-        while f >= 1000.0 && i + 1 < magnifiers.len() {
-            f /= 1000.0;
+        let mut k = 1.0;
+        while f >= k * 1000.0 && i + 1 < magnifiers.len() {
+            k *= 1000.0;
             i += 1;
         }
-        // Keep 3 significant digits, unless f is way over the Q range
-        #[expect(clippy::bool_to_int_with_if)]
-        let precision = if f < 10.0 {
-            2
-        } else if f < 100.0 {
-            1
-        } else {
-            0
-        };
-        format!("{sign}{symbol}{1:.0$}{2}", precision, f, magnifiers[i])
+        f /= k;
+
+        let mut dp = max_dp;
+        let mut d = 10.0;
+        while f >= d && dp != 0 {
+            d *= 10.0;
+            dp -= 1;
+        }
+        format!("{sign}{symbol}{0:.1$}{2}", f, dp, magnifiers[i])
     }
 }
 
-fn fluent_funds<'a>(positional: &[FluentValue<'a>], _named: &FluentArgs) -> FluentValue<'a> {
-    match positional.first() {
-        Some(FluentValue::Number(FluentNumber { value: f, .. })) => {
-            FluentValue::String(Cow::Owned(format_bignum(*f, Some('€'))))
+#[allow(clippy::cast_possible_truncation)]
+#[allow(clippy::cast_sign_loss)]
+fn fluent_funds<'a>(positional: &[FluentValue<'a>], named: &FluentArgs) -> FluentValue<'a> {
+    let max_dp = if let Some(max_dp) = named.get("max_dp") {
+        match max_dp {
+            FluentValue::Number(fluent_number) => fluent_number.value as usize,
+            _ => return FluentValue::Error,
         }
+    } else {
+        2
+    };
+
+    let lower_limit = if let Some(lower_limit) = named.get("lower_limit") {
+        match lower_limit {
+            FluentValue::Number(fluent_number) => fluent_number.value,
+            _ => return FluentValue::Error,
+        }
+    } else {
+        100_000.0
+    };
+
+    let sign = if let Some(sign) = named.get("sign") {
+        match sign {
+            FluentValue::String(cow) => cow == "true",
+            _ => return FluentValue::Error,
+        }
+    } else {
+        false
+    };
+
+    match positional.first() {
+        Some(FluentValue::Number(FluentNumber { value: f, .. })) => FluentValue::String(
+            Cow::Owned(format_bignum(*f, Some('€'), sign, max_dp, lower_limit)),
+        ),
         Some(FluentValue::String(s)) => {
             if let Ok(f) = s.parse::<f64>() {
-                FluentValue::String(Cow::Owned(format_bignum(f, Some('€'))))
+                FluentValue::String(Cow::Owned(format_bignum(
+                    f,
+                    Some('€'),
+                    sign,
+                    max_dp,
+                    lower_limit,
+                )))
             } else {
                 FluentValue::Error
             }
@@ -345,11 +389,11 @@ fn fluent_funds<'a>(positional: &[FluentValue<'a>], _named: &FluentArgs) -> Flue
 fn fluent_bignum<'a>(positional: &[FluentValue<'a>], _named: &FluentArgs) -> FluentValue<'a> {
     match positional.first() {
         Some(FluentValue::Number(FluentNumber { value: f, .. })) => {
-            FluentValue::String(Cow::Owned(format_bignum(*f, None)))
+            FluentValue::String(Cow::Owned(format_bignum(*f, None, false, 2, 100_000.0)))
         }
         Some(FluentValue::String(s)) => {
             if let Ok(f) = s.parse::<f64>() {
-                FluentValue::String(Cow::Owned(format_bignum(f, None)))
+                FluentValue::String(Cow::Owned(format_bignum(f, None, false, 2, 100_000.0)))
             } else {
                 FluentValue::Error
             }
@@ -487,7 +531,7 @@ mod test {
     use super::*;
 
     fn format_funds(funds: f64) -> String {
-        format_bignum(funds, Some('€'))
+        format_bignum(funds, Some('€'), false, 2, 100_000.0)
     }
 
     #[test]
