@@ -5,6 +5,8 @@ task-priest-recruit-minions = Recruitment
 task-minion-recruit-minions = Recruitment
 task-research = Secrets
 
+switch-task-current-task-tooltip = current task
+
 switch-task-gig-work-tooltip = toil in menial jobs
 switch-task-security-tooltip = protect the cult
 switch-task-petty-crime-tooltip = engage in theft, larceny and more unspeakable acts

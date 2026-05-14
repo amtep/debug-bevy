@@ -141,7 +141,8 @@ fn on_base_click(
     mut commands: Commands,
     base_uis: Query<&ViewOf, With<BaseUi>>,
     bases: Query<(&Children, &Base)>,
-    followers: Query<(&Follower, &FollowerCount)>,
+    followers: Query<(&Follower, &FollowerCount, &Children)>,
+    tasks: Query<&Task>,
     task_handle: Res<TasksHandle>,
     task_assets: Res<Assets<TasksAsset>>,
 ) {
@@ -156,15 +157,24 @@ fn on_base_click(
     let follower_iter = children
         .iter()
         .filter_map(|child| followers.get(child).ok())
-        .filter(|(_, c)| c.0 != 0)
-        .map(|(f, c)| {
+        .filter(|(_, c, _)| c.0 != 0)
+        .map(|(f, c, children)| {
+            let current_task = children.iter().find_map(|c| tasks.get(c).ok()).unwrap();
             let task_iter = task_settings
                 .iter()
                 .filter(|(_, v)| v.follower_types.contains(f))
-                .map(|(k, _)| MenuItem {
-                    enabled: true,
-                    text: TextKey::new(format!("task-{k}")),
-                    tooltip: TextKey::new(format!("switch-task-{k}-tooltip")),
+                .map(|(k, _)| {
+                    let enabled = &current_task.0 != k;
+                    let tooltip = if enabled {
+                        TextKey::new(format!("switch-task-{k}-tooltip"))
+                    } else {
+                        TextKey::new("switch-task-current-task-tooltip")
+                    };
+                    MenuItem {
+                        enabled,
+                        text: TextKey::new(format!("task-{k}")),
+                        tooltip,
+                    }
                 });
 
             MenuEntry::new(
