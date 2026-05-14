@@ -120,7 +120,7 @@ pub fn open_load_game_popup(
                     flex_direction: FlexDirection::Column,
                     border: UiRect::all(px(2)),
                     border_radius: BorderRadius::all(px(10.0)),
-                    padding: UiRect::all(px(4)),
+                    padding: UiRect::all(px(6)),
                     ..default()
                 },
                 BorderColor::all(BORDER),
@@ -203,10 +203,13 @@ pub fn open_load_game_popup(
                         for (e, mut node) in &mut q {
                             commands.entity(e).remove::<Selected>();
                             node.border = UiRect::all(px(2));
+                            node.padding = px(6).all();
                         }
                         commands.entity(container).insert(DialogConfirm(true));
                         commands.entity(click.entity).insert(Selected);
-                        q.get_mut(click.entity).unwrap().1.border = UiRect::all(px(4));
+                        let mut node = q.get_mut(click.entity).unwrap().1;
+                        node.border = UiRect::all(px(4));
+                        node.padding = px(4).all();
                     }
                 },
             );
