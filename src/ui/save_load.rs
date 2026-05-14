@@ -149,6 +149,16 @@ pub fn open_load_game_popup(
                                 text_font.clone(),
                                 TextColor(TEXT.into()),
                             ),
+                            Node {
+                                padding: px(5).left(),
+                                flex_grow: 1.0,
+                                ..default()
+                            },
+                            (
+                                TextKey::new(format!("difficulty-{}", metadata.difficulty)),
+                                text_font.clone(),
+                                TextColor(TEXT.into()),
+                            ),
                         ]
                     ),
                     (

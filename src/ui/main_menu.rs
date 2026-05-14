@@ -323,7 +323,7 @@ fn setup_difficulties_dialog(
                     ))
                     .with_children(|parent| {
                         parent.spawn((
-                            TextKey::new(format!("main-menu-difficulty-{name}")),
+                            TextKey::new(format!("difficulty-{name}")),
                             TextColor::from(TEXT),
                             TextFont::from_font_size(HEADING)
                                 .with_font(display_font_handle.clone()),

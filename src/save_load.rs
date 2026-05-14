@@ -63,6 +63,7 @@ pub struct SaveMetadata {
     pub cult_symbol: usize,
     pub game_date: NaiveDate,
     pub funds: FundsAmount,
+    pub difficulty: String,
 }
 
 #[derive(Resource, Deref, Clone, Copy)]
@@ -144,6 +145,7 @@ pub fn save(
     cult_symbol: Res<CultSymbol>,
     game_date: Res<GameDate>,
     funds: Res<Funds>,
+    difficulty: Res<Difficulty>,
 ) {
     let index = if let Some(index) = campaign {
         **index
@@ -166,6 +168,7 @@ pub fn save(
         cult_symbol: cult_symbol.0,
         game_date: game_date.0,
         funds: funds.0,
+        difficulty: difficulty.0.clone(),
     };
     if let Err(e) = save_inner(commands.reborrow(), index, metadata) {
         error!("Save error! {e}");

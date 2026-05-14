@@ -13,6 +13,6 @@ main-menu-new-game-difficulty-starting-funds = Starting funds: { funds }
 main-menu-new-game-difficulty-starting-followers = Starting followers
 main-menu-new-game-difficulty-confirm = Start!
 
-main-menu-difficulty-easy = Easy
-main-menu-difficulty-normal = Normal
-main-menu-difficulty-hard = Hard
+difficulty-easy = Easy
+difficulty-normal = Normal
+difficulty-hard = Hard
