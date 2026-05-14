@@ -142,8 +142,8 @@ pub fn setup_main_menu(
                                 let entity = entity_commands.id();
                                 entity_commands
                                     .add_child(cult_symbol_observer)
-                                    .with_child(
-                                    (
+                                .with_children(|parent| {
+                                    parent.spawn((
                                         TextInputNode {
                                             mode: TextInputMode::SingleLine,
                                             justification: Justify::Center,
@@ -164,9 +164,9 @@ pub fn setup_main_menu(
                                         TextFont::from_font_size(SUB_HEADING).with_font(font_handle.clone()),
                                         TextColor::from(TEXT_NEUTRAL),
                                         BackgroundColor::from(BLACK),
-                                    )
-                                )
-                                .with_children(|parent| {
+                                    )).observe(|mut drag: On<Pointer<Drag>>| {
+                                        drag.propagate(false);
+                                    });
                                     parent.spawn(Node {
                                         display: Display::Grid,
                                         grid_template_columns: RepeatedGridTrack::flex(4, 1.0),
