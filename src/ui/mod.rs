@@ -134,6 +134,9 @@ struct FollowerCountUi;
 struct GameDateUi;
 
 #[derive(Component)]
+struct GameDateTooltipUi;
+
+#[derive(Component)]
 struct FundsUi;
 
 #[derive(Component)]
@@ -375,13 +378,17 @@ fn setup_ui(
                     });
                     // Game date display
                     parent
-                        .spawn(Node {
-                            padding: UiRect::top(px(2)),
-                            margin: UiRect::right(px(20)),
-                            min_width: px(150),
-                            justify_content: JustifyContent::End,
-                            ..default()
-                        })
+                        .spawn((
+                            Node {
+                                padding: UiRect::top(px(2)),
+                                margin: UiRect::right(px(20)),
+                                min_width: px(150),
+                                justify_content: JustifyContent::End,
+                                ..default()
+                            },
+                            GameDateTooltipUi,
+                            Tooltip::new_text(TextKey::new("game-date-tooltip").add_arg("days", 0)),
+                        ))
                         .with_child((
                             mono_text_font.clone(),
                             TextColor::from(TEXT),
@@ -563,8 +570,12 @@ fn on_funds_tooltip_inner_add(
 
 fn update_game_date(
     game_date: Res<GameDate>,
+    mut tooltip: Single<&mut Tooltip, With<GameDateTooltipUi>>,
     mut text_key: Single<&mut TextKey, With<GameDateUi>>,
 ) {
+    **tooltip = Tooltip::new_text(
+        TextKey::new("game-date-tooltip").add_arg("days", game_date.days_since_start() as f64),
+    );
     text_key.replace_arg("date", game_date.0);
 }
 

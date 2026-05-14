@@ -40,9 +40,19 @@ pub struct GameDate(pub NaiveDate);
 #[derive(Component)]
 pub struct ForcePause;
 
+const START_DATE: NaiveDate = NaiveDate::from_ymd_opt(2026, 4, 15).unwrap();
+
 impl Default for GameDate {
     fn default() -> Self {
-        Self(NaiveDate::from_ymd_opt(2026, 4, 15).unwrap())
+        Self(START_DATE)
+    }
+}
+
+impl GameDate {
+    #[allow(clippy::cast_sign_loss)]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn days_since_start(&self) -> usize {
+        (self.0 - START_DATE).num_days() as usize
     }
 }
 
