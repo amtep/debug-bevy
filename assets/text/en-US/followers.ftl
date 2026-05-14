@@ -16,3 +16,5 @@ follower-list-tooltip = { $count } { $follower-type ->
     [goon] { follower-type-goon }
     [minion] { follower-type-minion }
 }
+
+follower-count = { BIGNUM($count, lower-limit: 1000) }

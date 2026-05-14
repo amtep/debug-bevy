@@ -338,7 +338,7 @@ fn format_bignum(
 #[allow(clippy::cast_possible_truncation)]
 #[allow(clippy::cast_sign_loss)]
 fn fluent_funds<'a>(positional: &[FluentValue<'a>], named: &FluentArgs) -> FluentValue<'a> {
-    let max_dp = if let Some(max_dp) = named.get("max_dp") {
+    let max_dp = if let Some(max_dp) = named.get("max-dp") {
         match max_dp {
             FluentValue::Number(fluent_number) => fluent_number.value as usize,
             _ => return FluentValue::Error,
@@ -347,7 +347,7 @@ fn fluent_funds<'a>(positional: &[FluentValue<'a>], named: &FluentArgs) -> Fluen
         2
     };
 
-    let lower_limit = if let Some(lower_limit) = named.get("lower_limit") {
+    let lower_limit = if let Some(lower_limit) = named.get("lower-limit") {
         match lower_limit {
             FluentValue::Number(fluent_number) => fluent_number.value,
             _ => return FluentValue::Error,
@@ -386,14 +386,49 @@ fn fluent_funds<'a>(positional: &[FluentValue<'a>], named: &FluentArgs) -> Fluen
     }
 }
 
-fn fluent_bignum<'a>(positional: &[FluentValue<'a>], _named: &FluentArgs) -> FluentValue<'a> {
-    match positional.first() {
-        Some(FluentValue::Number(FluentNumber { value: f, .. })) => {
-            FluentValue::String(Cow::Owned(format_bignum(*f, None, false, 2, 100_000.0)))
+#[allow(clippy::cast_possible_truncation)]
+#[allow(clippy::cast_sign_loss)]
+fn fluent_bignum<'a>(positional: &[FluentValue<'a>], named: &FluentArgs) -> FluentValue<'a> {
+    let max_dp = if let Some(max_dp) = named.get("max-dp") {
+        match max_dp {
+            FluentValue::Number(fluent_number) => fluent_number.value as usize,
+            _ => return FluentValue::Error,
         }
+    } else {
+        2
+    };
+
+    let lower_limit = if let Some(lower_limit) = named.get("lower-limit") {
+        match lower_limit {
+            FluentValue::Number(fluent_number) => fluent_number.value,
+            _ => return FluentValue::Error,
+        }
+    } else {
+        100_000.0
+    };
+
+    let sign = if let Some(sign) = named.get("sign") {
+        match sign {
+            FluentValue::String(cow) => cow == "true",
+            _ => return FluentValue::Error,
+        }
+    } else {
+        false
+    };
+
+    match positional.first() {
+        Some(FluentValue::Number(FluentNumber { value: f, .. })) => FluentValue::String(
+            Cow::Owned(format_bignum(*f, None, sign, max_dp, lower_limit)),
+        ),
         Some(FluentValue::String(s)) => {
             if let Ok(f) = s.parse::<f64>() {
-                FluentValue::String(Cow::Owned(format_bignum(f, None, false, 2, 100_000.0)))
+                FluentValue::String(Cow::Owned(format_bignum(
+                    f,
+                    None,
+                    sign,
+                    max_dp,
+                    lower_limit,
+                )))
             } else {
                 FluentValue::Error
             }

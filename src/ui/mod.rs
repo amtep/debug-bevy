@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use bevy::{input_focus::InputFocus, prelude::*, ui::UiSystems, window::WindowResized};
+use indexmap::IndexMap;
 
 use crate::{
     common::{CultName, CultSymbol, Dev},
@@ -9,6 +10,7 @@ use crate::{
         ui::{colors::*, fonts::*},
     },
     discoveries::ResearchPoints,
+    followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
     funds::{
         Expense, Funds, FundsAmount, Income, IncomeExpenseUpdatedEvent, TotalExpense, TotalIncome,
     },
@@ -123,6 +125,12 @@ struct EmojiFontHandle(pub Handle<Font>);
 struct MapUi;
 
 #[derive(Component)]
+struct SecondaryBarUi;
+
+#[derive(Component)]
+struct FollowerCountUi;
+
+#[derive(Component)]
 struct GameDateUi;
 
 #[derive(Component)]
@@ -174,6 +182,47 @@ fn read_window_resized_messages(
     }
 }
 
+fn secondary_bundle<T: Bundle>(
+    min_width: Val,
+    tooltip: TextKey,
+    icon: char,
+    color: Srgba,
+    ui: T,
+    icon_font_handle: Handle<Font>,
+    mono_font_handle: Handle<Font>,
+) -> impl Bundle {
+    (
+        Node {
+            min_width,
+            height: percent(100),
+            align_items: AlignItems::Center,
+            column_gap: px(2),
+            ..default()
+        },
+        Tooltip::new_text(tooltip),
+        children![
+            (
+                Text::new(icon),
+                TextColor::from(color),
+                TextFont {
+                    font: icon_font_handle,
+                    font_size: SMALL,
+                    ..default()
+                }
+            ),
+            (
+                TextFont {
+                    font: mono_font_handle,
+                    font_size: NORMAL,
+                    ..default()
+                },
+                TextColor::from(TEXT),
+                ui
+            )
+        ],
+    )
+}
+
 fn setup_ui(
     mut commands: Commands,
     mono_font_handle: Res<MonoFontHandle>,
@@ -214,46 +263,6 @@ fn setup_ui(
                     ..default()
                 }
             )],
-        )
-    }
-
-    fn secondary_bundle<T: Bundle>(
-        min_width: Val,
-        tooltip: TextKey,
-        icon: char,
-        color: Srgba,
-        ui: T,
-        emoji_font_handle: Handle<Font>,
-        mono_font_handle: Handle<Font>,
-    ) -> impl Bundle {
-        (
-            Node {
-                min_width,
-                height: percent(100),
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            Tooltip::new_text(tooltip),
-            children![
-                (
-                    Text::new(icon),
-                    TextColor::from(color),
-                    TextFont {
-                        font: emoji_font_handle,
-                        font_size: SMALL,
-                        ..default()
-                    }
-                ),
-                (
-                    TextFont {
-                        font: mono_font_handle,
-                        font_size: NORMAL,
-                        ..default()
-                    },
-                    TextColor::from(TEXT),
-                    ui
-                )
-            ],
         )
     }
 
@@ -457,6 +466,7 @@ fn setup_ui(
                     },
                     BorderColor::all(BORDER),
                     BackgroundColor::from(THEME_DARK_PURPLE),
+                    SecondaryBarUi,
                 ))
                 .with_children(|parent| {
                     // Research points counter
@@ -479,7 +489,7 @@ fn setup_ui(
                         high_threshold: 667,
                     };
                     parent.spawn(secondary_bundle(
-                        px(40),
+                        px(45),
                         TextKey::new("intelligence-suspicion-tooltip"),
                         '📡',
                         THEME_LIGHT_PINK,
@@ -488,7 +498,7 @@ fn setup_ui(
                         mono_font_handle.clone(),
                     ));
                     parent.spawn(secondary_bundle(
-                        px(40),
+                        px(45),
                         TextKey::new("scientific-suspicion-tooltip"),
                         '🔬',
                         THEME_CYAN,
@@ -496,7 +506,10 @@ fn setup_ui(
                         emoji_font_handle.clone(),
                         mono_font_handle.clone(),
                     ));
-                    // TODO: Add total follower counts
+                    parent
+                        .commands()
+                        .add_observer(on_follower_count_insert)
+                        .insert(DespawnOnExit(GameState::Main));
                 });
             // Cult symbol
             parent
@@ -808,4 +821,53 @@ fn setup_intro(mut commands: Commands, new_game: Option<Res<NewGame>>, dev: Opti
                 .with_confirm_label("new-game-confirm"),
         );
     }
+}
+
+fn on_follower_count_insert(
+    _: On<Insert, FollowerCount>,
+    mut commands: Commands,
+    secondary_bar_ui: Single<Entity, With<SecondaryBarUi>>,
+    follower_count_uis: Query<Entity, With<FollowerCountUi>>,
+    follower_counts: Query<(&Follower, &FollowerCount)>,
+    followers_handle: Res<FollowersHandle>,
+    followers_asset: Res<Assets<FollowersAsset>>,
+    unicode_font_handle: Res<UnicodeFontHandle>,
+    mono_font_handle: Res<MonoFontHandle>,
+) {
+    let mut followers: IndexMap<String, (usize, char)> = followers_asset
+        .get(followers_handle.0.id())
+        .unwrap()
+        .0
+        .iter()
+        .map(|(k, v)| (k.clone(), (0, v.symbol)))
+        .collect();
+
+    for (follower, count) in &follower_counts {
+        followers.get_mut(&follower.0).unwrap().0 += count.0;
+    }
+
+    follower_count_uis
+        .iter()
+        .for_each(|e| commands.entity(e).despawn());
+
+    commands.entity(*secondary_bar_ui).with_children(|parent| {
+        for (follower, (count, symbol)) in &followers {
+            if *count != 0 {
+                parent.spawn((
+                    secondary_bundle(
+                        px(60),
+                        TextKey::new("follower-list-tooltip")
+                            .add_arg("count", *count as f64)
+                            .add_arg("follower-type", follower.as_str()),
+                        *symbol,
+                        TEXT,
+                        TextKey::new("follower-count").add_arg("count", *count as f64),
+                        unicode_font_handle.clone(),
+                        mono_font_handle.clone(),
+                    ),
+                    FollowerCountUi,
+                ));
+            }
+        }
+    });
 }
