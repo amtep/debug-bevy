@@ -9,7 +9,6 @@ use serde::Deserialize;
 use crate::{
     achievements::AchievedEvent,
     bases::{Base, BasetypesAsset, BasetypesHandle},
-    constants::achievements::FIRST_MINION_RECRUIT,
     funds::{Expense, FundsAmount},
     modifiers::{Modifier, RecruitmentBy, RecruitmentByOf, RecruitmentOf},
     new_game::NewGame,
@@ -39,11 +38,12 @@ pub struct FollowersHandle(pub Handle<FollowersAsset>);
 /// These are the general settings for all follower types.
 /// Once there are also specific follower settings, there
 /// will need to be an enum to distinguish them.
-#[derive(Deserialize, Debug, Clone, Copy)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct FollowerSettings {
     pub cost_per_day: FundsAmount,
     pub symbol: char,
+    pub first_recruit_achievement: Option<String>,
 }
 
 #[derive(Component, Reflect, Clone, Deserialize, Debug, Deref, PartialEq, Eq)]
@@ -113,8 +113,11 @@ fn recruit(
     m_by_of: Modifier<RecruitmentByOf>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
     base_types_handle: Res<BasetypesHandle>,
+    followers_asset: Res<Assets<FollowersAsset>>,
+    followers_handle: Res<FollowersHandle>,
 ) {
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
+    let followers_types = &followers_asset.get(followers_handle.0.id()).unwrap().0;
 
     for (entity, follower_entity, recruit, mut recruit_progress) in &mut recruits {
         let (ChildOf(base_entity), follower, FollowerCount(follower_count)) =
@@ -153,9 +156,12 @@ fn recruit(
                 .unwrap();
             follower_count.0 += additional_followers;
             commands.entity(follower_entity).insert(follower_count);
-            if recruit.0 == "minion" {
+            if let Some(achievement) = followers_types
+                .get(&recruit.0)
+                .and_then(|f| f.first_recruit_achievement.as_ref())
+            {
                 commands.trigger(AchievedEvent {
-                    achievement: FIRST_MINION_RECRUIT.to_string(),
+                    achievement: achievement.clone(),
                 });
             }
         }

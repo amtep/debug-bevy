@@ -5,6 +5,7 @@ symbol = "\u2600"
 [minion]
 cost-per-day = 20
 symbol = "\u2608"
+first-recruit-achievement = "first-minion-recruit"
 
 [goon]
 cost-per-day = 20
