@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_common_assets::toml::TomlAssetPlugin;
 use indexmap::IndexMap;
 use moonshine_save::save::Save;
-use rand::{RngExt, seq::IndexedRandom};
+use rand::seq::IndexedRandom;
 use serde_derive::Deserialize;
 
 use crate::{
@@ -64,11 +64,22 @@ fn new_game(
     base_types_handle: Res<BasetypesHandle>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
     mut random_source: ResMut<RandomSource>,
-    base_plots: Query<Entity, With<BasePlot>>,
+    new_game: Res<NewGame>,
+    regions: Query<(&Children, &Region)>,
+    base_plots: Query<(), With<BasePlot>>,
 ) {
     info!("Creating starting base");
-    let i = random_source.0.random_range(0..base_plots.count());
-    let base_plot = base_plots.iter().nth(i).unwrap();
+    let region = &new_game.region;
+    let base_plots: Vec<Entity> = regions
+        .iter()
+        .find(|(_, r)| r.name == region.name)
+        .unwrap()
+        .0
+        .iter()
+        .filter(|c| base_plots.contains(*c))
+        .collect();
+
+    let base_plot = *base_plots.choose(&mut random_source.0).unwrap();
 
     let (base_type, _) = base_types_asset
         .get(base_types_handle.0.id())

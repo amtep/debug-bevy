@@ -205,11 +205,11 @@ pub fn open_load_game_popup(
                             node.border = UiRect::all(px(2));
                             node.padding = px(6).all();
                         }
-                        commands.entity(container).insert(DialogConfirm(true));
-                        commands.entity(click.entity).insert(Selected);
                         let mut node = q.get_mut(click.entity).unwrap().1;
                         node.border = UiRect::all(px(4));
                         node.padding = px(4).all();
+                        commands.entity(click.entity).insert(Selected);
+                        commands.entity(container).insert(DialogConfirm(true));
                     }
                 },
             );

@@ -8,13 +8,15 @@ use crate::{
         ui::{colors::*, fonts::*},
     },
     new_game::{DifficultiesAsset, DifficultiesHandle, NewGame},
+    regions::{Region, RegionsAsset, RegionsHandle},
     save_load::any_save_file_exists,
     state::GameState,
     text::TextKey,
     ui::{
-        DisplayFontHandle, FontHandle,
+        DisplayFontHandle, EmojiFontHandle, FontHandle, Selected,
         dialog::{Dialog, DialogCancelled, DialogConfirm, DialogConfirmed},
         save_load::{load_most_recent_game, open_load_game_popup},
+        tooltip::Tooltip,
     },
 };
 
@@ -32,6 +34,9 @@ struct Difficulty(String);
 
 #[derive(Event)]
 struct DifficultyChanged(String);
+
+#[derive(Component)]
+struct RegionSelectorUi(String);
 
 pub fn setup_main_menu(
     mut commands: Commands,
@@ -433,7 +438,6 @@ fn setup_difficulties_dialog(
         .observe(
             move |_: On<Add, DialogConfirmed>,
                   mut commands: Commands,
-                  mut game_state: ResMut<NextState<GameState>>,
                   difficulty_name: Res<DifficultySelected>,
                   difficulties_handle: Res<DifficultiesHandle>,
                   difficulties_assets: Res<Assets<DifficultiesAsset>>| {
@@ -445,12 +449,129 @@ fn setup_difficulties_dialog(
                     .unwrap()
                     .clone();
                 commands.insert_resource(crate::common::Difficulty(difficulty_name.0.clone()));
-                commands.insert_resource(NewGame { difficulty });
+                commands.insert_resource(NewGame {
+                    difficulty,
+                    // placeholder
+                    region: Region {
+                        name: String::new(),
+                    },
+                });
                 commands.remove_resource::<DifficultySelected>();
-                game_state.set(GameState::Main);
+                commands.run_system_cached(setup_region_selection_dialog);
             },
         )
         .observe(move |_: On<Add, DialogCancelled>, mut commands: Commands| {
             commands.remove_resource::<DifficultySelected>();
+        });
+}
+
+fn setup_region_selection_dialog(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    regions_handle: Res<RegionsHandle>,
+    regions_asset: Res<Assets<RegionsAsset>>,
+    emoji_font_handle: Res<EmojiFontHandle>,
+) {
+    let mut entity_commands = commands.spawn((
+        Node {
+            width: px(720),
+            height: px(400),
+            margin: px(10).vertical(),
+            ..default()
+        },
+        ImageNode {
+            image: asset_server.load(TEXTURE_EARTH_BACKGROUND),
+            image_mode: NodeImageMode::Stretch,
+            ..default()
+        },
+    ));
+    let entity = entity_commands.id();
+    entity_commands.with_children(|parent| {
+        for (name, settings) in &regions_asset.get(regions_handle.0.id()).unwrap().0 {
+            if settings.hidden {
+                continue;
+            }
+            parent
+                .spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: percent(settings.location.x),
+                        top: percent(settings.location.y),
+                        width: px(25),
+                        height: px(25),
+                        border: UiRect::all(px(1)),
+                        border_radius: BorderRadius::all(px(4)),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                    UiTransform {
+                        translation: Val2::percent(-50.0, -50.0),
+                        ..default()
+                    },
+                    Button,
+                    BorderColor::all(BORDER),
+                    BackgroundColor::from(BUTTON_BACKGROUND),
+                    Tooltip::new_text(TextKey::new(format!("region-{name}"))),
+                    RegionSelectorUi(name.clone()),
+                ))
+                .with_child((
+                    Text::new('🧭'),
+                    TextFont::from_font_size(NORMAL).with_font(emoji_font_handle.clone()),
+                    TextColor::from(TEXT),
+                ))
+                .observe(
+                    move |click: On<Pointer<Click>>,
+                          mut commands: Commands,
+                          region_selector_uis: Query<
+                        (Entity, &Children),
+                        With<RegionSelectorUi>,
+                    >,
+                          mut text_colors: Query<&mut TextColor>| {
+                        if click.button == PointerButton::Primary {
+                            for (e, children) in &region_selector_uis {
+                                commands.entity(e).remove::<Selected>();
+                                text_colors.get_mut(*children.first().unwrap()).unwrap().0 =
+                                    TEXT.into();
+                            }
+                            let child = region_selector_uis
+                                .get(click.entity)
+                                .unwrap()
+                                .1
+                                .first()
+                                .unwrap();
+                            text_colors.get_mut(*child).unwrap().0 = TEXT_NEUTRAL.into();
+                            commands.entity(click.entity).insert(Selected);
+                            commands.entity(entity).insert(DialogConfirm(true));
+                        }
+                    },
+                );
+        }
+    });
+
+    commands
+        .spawn(
+            Dialog::new()
+                .with_title("main-menu-new-game-region-title")
+                .with_entity_body(entity)
+                .with_cancel()
+                .with_max_height(percent(80))
+                .with_max_width(percent(80))
+                .with_confirm_disabled("main-menu-new-game-region-confirm-tooltip")
+                .with_confirm_label("main-menu-new-game-region-confirm"),
+        )
+        .observe(
+            move |_: On<Add, DialogConfirmed>,
+                  mut new_game: ResMut<NewGame>,
+                  region_selector_ui: Single<&RegionSelectorUi, With<Selected>>,
+                  mut game_state: ResMut<NextState<GameState>>| {
+                new_game.region = Region {
+                    name: region_selector_ui.0.clone(),
+                };
+                game_state.set(GameState::Main);
+            },
+        )
+        .observe(move |_: On<Add, DialogCancelled>, mut commands: Commands| {
+            commands.remove_resource::<NewGame>();
         });
 }

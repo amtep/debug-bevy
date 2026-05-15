@@ -5,6 +5,7 @@ use crate::{
     discoveries::ResearchPoints,
     funds::Funds,
     new_game::{DifficultiesAsset, DifficultiesHandle, NewGame},
+    regions::Region,
     state::GameState,
 };
 
@@ -65,6 +66,9 @@ fn listen_dev_keys_main_menu(
         commands.insert_resource(Difficulty(name.clone()));
         commands.insert_resource(NewGame {
             difficulty: difficulty.clone(),
+            region: Region {
+                name: String::from("north-america"),
+            },
         });
         next_state.set(GameState::Main);
     }

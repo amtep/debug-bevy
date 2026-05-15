@@ -92,7 +92,6 @@ impl Dialog {
         }
     }
 
-    #[expect(dead_code)]
     pub fn with_max_height(self, max_height: Val) -> Self {
         Self {
             max_width: Some(max_height),

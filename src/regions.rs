@@ -28,10 +28,10 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Deserialize, Asset, TypePath)]
-struct RegionsAsset(HashMap<String, RegionSettings>);
+pub struct RegionsAsset(pub HashMap<String, RegionSettings>);
 
 #[derive(Resource)]
-struct RegionsHandle(Handle<RegionsAsset>);
+pub struct RegionsHandle(pub Handle<RegionsAsset>);
 
 #[derive(Debug, Deserialize, Clone, Copy, PartialEq, Component, Reflect)]
 #[reflect(Component)]
@@ -53,7 +53,7 @@ pub struct RegionSettings {
     pub base_plots: HashMap<String, Location>,
 }
 
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Clone)]
 #[reflect(Component)]
 #[require(Save, DespawnOnExit::<GameState>(GameState::Main))]
 pub struct Region {

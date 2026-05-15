@@ -7,6 +7,7 @@ use crate::{
     common::Difficulty,
     funds::FundsAmount,
     modifiers::{Source, spawn_modifier},
+    regions::Region,
     state::{GameState, MainSetupSet},
 };
 
@@ -53,6 +54,7 @@ pub struct DifficultySettings {
 #[derive(Resource, Clone)]
 pub struct NewGame {
     pub difficulty: DifficultySettings,
+    pub region: Region,
 }
 
 fn add_difficulty_modifiers(
