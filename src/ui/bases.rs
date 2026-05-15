@@ -1,15 +1,19 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, ui::InteractionDisabled};
 
 use crate::{
     bases::{Base, BasetypesAsset, BasetypesHandle},
-    constants::ui::{colors::*, fonts::SMALL},
+    constants::{
+        files::TEXTURE_EARTH_BACKGROUND,
+        ui::{colors::*, fonts::SMALL},
+    },
     followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
-    regions::{BasePlot, Region},
+    regions::{BasePlot, Location, Region},
     state::GameState,
     tasks::{Task, TasksAsset, TasksHandle},
     text::TextKey,
     ui::{
-        BasePlotUi, RegionSuspicionUi, UnicodeFontHandle,
+        BasePlotUi, RegionSuspicionUi, Selected, UnicodeFontHandle,
+        dialog::{Dialog, DialogConfirm, DialogConfirmed},
         menu::{Menu, MenuClicked, MenuEntry, MenuItem},
         tooltip::Tooltip,
     },
@@ -27,6 +31,9 @@ pub struct FollowerListUi;
 
 #[derive(Component)]
 pub struct FollowerListBoxUi;
+
+#[derive(Component)]
+struct FollowerTransferBaseSelectorUi(Entity);
 
 pub fn on_spawn_base(
     event: On<Insert, Base>,
@@ -177,10 +184,19 @@ fn on_base_click(
                     }
                 });
 
-            MenuEntry::new(
+            let entry = MenuEntry::new(
                 TextKey::new(format!("follower-type-{}", f.0)).add_arg("count", c.0 as f64),
-            )
-            .with_items_iter(task_iter)
+            );
+            // another base exists for transfer
+            if bases.count() == 1 {
+                entry.with_items_iter(task_iter)
+            } else {
+                entry.with_items_iter(task_iter.chain(std::iter::once(MenuItem {
+                    enabled: true,
+                    text: TextKey::new("follower-transfer"),
+                    tooltip: TextKey::new("follower-transfer-tooltip"),
+                })))
+            }
         });
 
     commands
@@ -195,31 +211,206 @@ fn on_base_click(
                   menu_clickeds: Query<&MenuClicked>,
                   mut commands: Commands,
                   bases: Query<&Children, With<Base>>,
-                  followers: Query<(&Follower, &Children)>,
+                  followers: Query<(&Follower, &FollowerCount, &Children)>,
                   tasks: Query<&Task>| {
                 let MenuClicked(heading, item) = menu_clickeds.get(menu_clicked.entity).unwrap();
 
-                if let Some(follower) = heading.strip_prefix("follower-type-")
-                    && let Some(task) = item.strip_prefix("task-")
-                {
+                if let Some(follower) = heading.strip_prefix("follower-type-") {
                     let children = bases.get(base_entity).unwrap();
-                    let follower_children = children
-                        .iter()
-                        .find_map(|child| {
-                            followers
-                                .get(child)
-                                .ok()
-                                .and_then(|f| (**f.0 == follower).then_some(f.1))
-                        })
-                        .unwrap();
-                    let task_entity = follower_children
-                        .iter()
-                        .find(|c| tasks.contains(*c))
-                        .unwrap();
-                    commands.entity(task_entity).insert(Task(task.to_owned()));
+                    if let Some(task) = item.strip_prefix("task-") {
+                        let follower_children = children
+                            .iter()
+                            .find_map(|child| {
+                                followers
+                                    .get(child)
+                                    .ok()
+                                    .and_then(|f| (**f.0 == follower).then_some(f.2))
+                            })
+                            .unwrap();
+                        let task_entity = follower_children
+                            .iter()
+                            .find(|c| tasks.contains(*c))
+                            .unwrap();
+                        commands.entity(task_entity).insert(Task(task.to_owned()));
+                    } else if item == "follower-transfer" {
+                        let (follower_entity, follower_count) = children
+                            .iter()
+                            .find_map(|child| {
+                                followers
+                                    .get(child)
+                                    .ok()
+                                    .and_then(|f| (**f.0 == follower).then_some((child, f.1)))
+                            })
+                            .unwrap();
+                        commands.run_system_cached_with(
+                            transfer_follower_dialog,
+                            (
+                                base_entity,
+                                follower_entity,
+                                follower.to_owned(),
+                                *follower_count,
+                            ),
+                        );
+                    }
                 }
             },
         );
+}
+
+fn transfer_follower_dialog(
+    In((base_entity, follower_entity, follower, follower_count)): In<(
+        Entity,
+        Entity,
+        String,
+        FollowerCount,
+    )>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    bases: Query<(Entity, &Base, &ChildOf, &Children)>,
+    follower_counts: Query<&FollowerCount>,
+    base_plots: Query<&Location, With<BasePlot>>,
+    base_types_handle: Res<BasetypesHandle>,
+    base_types_asset: Res<Assets<BasetypesAsset>>,
+) {
+    let entity = commands
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            ..default()
+        })
+        .id();
+
+    commands
+        .spawn((
+            ChildOf(entity),
+            Node {
+                width: px(720),
+                height: px(400),
+                margin: px(10).vertical(),
+                ..default()
+            },
+            ImageNode {
+                image: asset_server.load(TEXTURE_EARTH_BACKGROUND),
+                image_mode: NodeImageMode::Stretch,
+                ..default()
+            },
+        ))
+        .with_children(|parent| {
+            let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
+
+            for (base_e, base, base_plot_entity, children) in &bases {
+                let location = base_plots.get(base_plot_entity.0).unwrap();
+                let max_follower_count = base_types.get(&base.0).unwrap().max_follower_count;
+                let current_follower_count = children
+                    .iter()
+                    .filter_map(|c| follower_counts.get(c).ok().map(|c| c.0))
+                    .sum::<usize>();
+
+                let mut entity_commands = parent.spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: percent(location.x),
+                        top: percent(location.y),
+                        width: px(25),
+                        height: px(25),
+                        border: UiRect::all(px(1)),
+                        border_radius: BorderRadius::all(px(4)),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                    UiTransform {
+                        translation: Val2::percent(-50.0, -50.0),
+                        ..default()
+                    },
+                    Button,
+                    BorderColor::all(BORDER),
+                    BackgroundColor::from(BUTTON_BACKGROUND),
+                    FollowerTransferBaseSelectorUi(base_e),
+                    Tooltip::new_texts([
+                        TextKey::new("follower-transfer-current-follower-count")
+                            .add_arg("count", current_follower_count as f64),
+                        TextKey::new("follower-transfer-maximum-follower-count")
+                            .add_arg("count", max_follower_count as f64),
+                    ]),
+                ));
+
+                if base_e == base_entity {
+                    entity_commands.insert(InteractionDisabled);
+                }
+
+                entity_commands
+                    .with_child((
+                        Node {
+                            width: percent(100),
+                            height: percent(100),
+                            ..default()
+                        },
+                        ImageNode {
+                            image: asset_server.load(format!("textures/{}.png", base.0)),
+                            image_mode: NodeImageMode::Stretch,
+                            color: (if base_e == base_entity { RED } else { WHITE }).into(),
+                            ..default()
+                        },
+                    ))
+                    .observe(
+                        move |click: On<Pointer<Click>>,
+                              mut commands: Commands,
+                              follower_transfer_base_selector_uis: Query<
+                            (Entity, &Children, Has<InteractionDisabled>),
+                            With<FollowerTransferBaseSelectorUi>,
+                        >,
+                              mut image_nodes: Query<&mut ImageNode>| {
+                            if click.button == PointerButton::Primary
+                                && !follower_transfer_base_selector_uis
+                                    .get(click.entity)
+                                    .unwrap()
+                                    .2
+                            {
+                                for (e, children, has_interaction_disabled) in
+                                    &follower_transfer_base_selector_uis
+                                {
+                                    if !has_interaction_disabled {
+                                        commands.entity(e).remove::<Selected>();
+                                        image_nodes
+                                            .get_mut(*children.first().unwrap())
+                                            .unwrap()
+                                            .color = WHITE.into();
+                                    }
+                                }
+                                let child = follower_transfer_base_selector_uis
+                                    .get(click.entity)
+                                    .unwrap()
+                                    .1
+                                    .first()
+                                    .unwrap();
+                                image_nodes.get_mut(*child).unwrap().color = GREEN.into();
+                                commands.entity(click.entity).insert(Selected);
+                                commands.entity(entity).insert(DialogConfirm(true));
+                            }
+                        },
+                    );
+            }
+        });
+
+    // TODO: slider with the max value being the minimum of the follower count and the remaining capacity of the destination base.
+
+    commands.spawn(
+        Dialog::new()
+            .with_title(
+                TextKey::new("follower-transfer-title")
+                    .add_arg("follower-type", follower.as_str())
+                    .add_arg("count", follower_count.0 as f64),
+            )
+            .with_entity_body(entity)
+            .with_cancel()
+            .with_max_height(percent(80))
+            .with_max_width(percent(80))
+            .with_confirm_disabled("follower-transfer-confirm-tooltip")
+            .with_confirm_label("follower-transfer-confirm")
+            .with_pause(),
+    );
+
+    // TODO: transfer logic
 }
 
 pub fn on_follower_count_insert(

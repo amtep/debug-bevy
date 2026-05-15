@@ -11,10 +11,22 @@ follower-type-minion = { $count ->
     *[other] Minions
 }
 
-follower-list-tooltip = { $count } { $follower-type ->
+follower-type-name = { $follower-type ->
     *[priest] { follower-type-priest }
     [goon] { follower-type-goon }
     [minion] { follower-type-minion }
 }
 
+follower-list-tooltip = { $count } { follower-type-name }
+
 follower-count = { BIGNUM($count, lower-limit: 1000) }
+
+follower-transfer = Transfer
+follower-transfer-tooltip = move some to a another base
+
+follower-transfer-current-follower-count = Current follower count: { follower-count }
+follower-transfer-maximum-follower-count = Maximum follower count: { follower-count }
+
+follower-transfer-title = Transfer { follower-type-name }
+follower-transfer-confirm = Go
+follower-transfer-confirm-tooltip = select a destination base first!
