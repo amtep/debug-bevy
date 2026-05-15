@@ -16,6 +16,7 @@ suspicions = { police = 0.5 }
 [priest-recruit-minions]
 follower-types = ["priest"]
 recruit-progress = ["minion", 1.0]
+achievement = "started-recruiting"
 
 [minion-recruit-minions]
 follower-types = ["minion"]

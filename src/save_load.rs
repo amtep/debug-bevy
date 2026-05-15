@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::{
+    achievements::{Achievements, RecentlyAchieved},
     bases::Base,
     common::{CultName, CultSymbol, Difficulty},
     config::Config,
@@ -128,7 +129,9 @@ fn save_inner(
             .include_resource::<ScientificSuspicion>()
             .include_resource::<GameDate>()
             .include_resource::<DiscoveriesResearched>()
-            .include_resource::<ResearchPoints>();
+            .include_resource::<ResearchPoints>()
+            .include_resource::<Achievements>()
+            .include_resource::<RecentlyAchieved>();
         commands.trigger_save(event);
         // TODO: only do this if the save succeeded
         rename(temp_path, &path).map_err(|e| SaveLoadError::RenameError(path.clone(), e))?;

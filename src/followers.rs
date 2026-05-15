@@ -7,7 +7,9 @@ use moonshine_save::save::Save;
 use serde::Deserialize;
 
 use crate::{
+    achievements::AchievedEvent,
     bases::{Base, BasetypesAsset, BasetypesHandle},
+    constants::achievements::FIRST_MINION_RECRUIT,
     funds::{Expense, FundsAmount},
     modifiers::{Modifier, RecruitmentBy, RecruitmentByOf, RecruitmentOf},
     new_game::NewGame,
@@ -62,7 +64,7 @@ pub struct Recruit(pub String, pub f32);
 
 /// A component to track recruitment of new minions.
 /// A new minion is spawned if this rolls over the [`NEW_MINION_PROGRESS`] constant.
-/// It's locked to 0 if the base is full.
+/// Progress does not advance if the base is full.
 #[derive(Component, Reflect, Default)]
 #[reflect(Component)]
 pub struct RecruitProgress(HashMap<String, f32>);
@@ -125,6 +127,7 @@ fn recruit(
             .filter_map(|c| followers.get(c).ok().map(|(_, _, c)| c.0))
             .sum::<usize>();
 
+        // TODO: automatically switch to the default task if the base is full
         if total_followers >= max_follower_count {
             continue;
         }
@@ -150,6 +153,11 @@ fn recruit(
                 .unwrap();
             follower_count.0 += additional_followers;
             commands.entity(follower_entity).insert(follower_count);
+            if recruit.0 == "minion" {
+                commands.trigger(AchievedEvent {
+                    achievement: FIRST_MINION_RECRUIT.to_string(),
+                });
+            }
         }
     }
 }

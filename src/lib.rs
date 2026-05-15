@@ -1,5 +1,6 @@
 pub mod main_loop;
 
+mod achievements;
 mod bases;
 mod common;
 mod config;

@@ -31,7 +31,7 @@ use crate::{
 
 mod bases;
 mod buttons;
-mod dialog;
+pub mod dialog;
 mod discoveries;
 mod esc_menu;
 mod main_menu;

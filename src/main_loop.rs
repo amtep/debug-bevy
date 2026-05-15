@@ -38,8 +38,8 @@ pub fn main_loop() {
                 crate::suspicion::plugin,
                 crate::new_game::plugin,
                 crate::save_load::plugin,
-            ),
-            (crate::config::plugin),
+            ), // need a new tuple because of length
+            (crate::config::plugin, crate::achievements::plugin),
         ))
         .run();
 }

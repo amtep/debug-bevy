@@ -6,6 +6,7 @@ use moonshine_save::save::Save;
 use serde_derive::Deserialize;
 
 use crate::{
+    achievements::AchievedEvent,
     discoveries::Research,
     followers::{FollowerCount, Recruit, RecruitProgress},
     funds::{Expense, FundsAmount, Income},
@@ -45,6 +46,7 @@ pub struct TaskSettings {
     pub research: u32,
     #[serde(default)]
     pub security: u32,
+    pub achievement: Option<String>,
 }
 
 fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -91,6 +93,12 @@ fn on_task_changed<C: Component>(
         error!("Task {task} not known");
         return;
     };
+
+    if let Some(achievement) = settings.achievement.as_ref() {
+        commands.trigger(AchievedEvent {
+            achievement: achievement.clone(),
+        });
+    }
 
     let Ok(count) = followers.get(*follower_entity) else {
         error!("Task without Follower parent");

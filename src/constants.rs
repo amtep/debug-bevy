@@ -116,3 +116,8 @@ pub mod ui {
     pub const ZINDEX_TOOLTIP: i32 = 200;
     pub const ZINDEX_ESC_MENU: i32 = 1000;
 }
+
+pub mod achievements {
+    pub const STARTED_RECRUITING: &str = "starting-recruitment";
+    pub const FIRST_MINION_RECRUIT: &str = "first-minion-recruit";
+}
