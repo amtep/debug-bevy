@@ -168,20 +168,26 @@ fn on_dialog_add(
     add: On<Add, Dialog>,
     mut commands: Commands,
     dialogs: Query<&Dialog>,
-    dialog_roots: Query<&DialogRoot>,
+    dialog_roots: Query<&ZIndex, With<DialogRoot>>,
     dialog_background: Single<Entity, With<DialogBackground>>,
     font_handle: Res<FontHandle>,
 ) {
     let dialog_entity = add.entity;
     let dialog = dialogs.get(dialog_entity).unwrap().clone();
-    #[allow(clippy::cast_possible_truncation)]
-    let index = dialog_roots.count() as i32;
     let font = font_handle.clone();
+
+    let index = dialog_roots
+        .iter()
+        .map(|z| z.0)
+        .max()
+        .map(|z| z + 1)
+        .unwrap_or_default();
 
     let dialog_root = commands
         .spawn((
             ChildOf(*dialog_background),
             DialogRoot(dialog_entity),
+            // TODO: wrap around the left/top so not outside screen.
             Node {
                 left: percent(50 + index),
                 top: percent(50 + index),
@@ -449,8 +455,7 @@ fn listen_dialog_confirm(
             return;
         }
 
-        #[allow(clippy::cast_possible_truncation)]
-        let top = (dialog_roots.count() - 1) as i32;
+        let top = dialog_roots.iter().map(|(_, z, _, _)| z.0).max().unwrap();
         let (dialog_root, dialog_entity, confirm_button) = dialog_roots
             .iter()
             .find_map(|(entity, z_index, dialog_root, confirm_button)| {
