@@ -15,7 +15,8 @@ pub fn plugin(app: &mut App) {
             Update,
             listen_dev_keys_main_menu.run_if(in_state(GameState::MainMenu)),
         )
-        .add_systems(Update, debug_entity_count);
+        .add_systems(Update, debug_entity_count)
+        .add_systems(OnExit(GameState::Main), cleanup_main);
 }
 
 fn listen_dev_keys(
@@ -80,4 +81,8 @@ fn debug_entity_count(world: &World, mut count: Local<u32>) {
         info!(entity_count);
     }
     *count = entity_count;
+}
+
+fn cleanup_main(mut commands: Commands) {
+    commands.remove_resource::<Dev>();
 }
