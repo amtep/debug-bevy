@@ -1,4 +1,4 @@
-use bevy::{platform::collections::HashSet, prelude::*};
+use bevy::prelude::*;
 use bevy_common_assets::toml::TomlAssetPlugin;
 use indexmap::IndexMap;
 use moonshine_save::save::Save;
@@ -31,9 +31,16 @@ pub struct DiscoveriesAsset(pub IndexMap<String, DiscoverySettings>);
 #[derive(Resource)]
 pub struct DiscoveriesHandle(pub Handle<DiscoveriesAsset>);
 
+#[derive(Clone, Copy, PartialEq, Eq, Reflect)]
+pub enum DiscoveryVisibility {
+    Hidden,
+    Shown,
+}
+
+/// The discoveries that have been discovered by the player, ordered by when they were discovered.
 #[derive(Resource, Default, Reflect, Deref)]
 #[reflect(Resource)]
-pub struct DiscoveriesResearched(pub HashSet<String>);
+pub struct DiscoveriesResearched(pub IndexMap<String, DiscoveryVisibility>);
 
 #[derive(Resource, Default, Reflect)]
 #[reflect(Resource)]
@@ -96,7 +103,7 @@ pub fn learn_new_discovery(
 
     discoveries_researched
         .0
-        .insert(discovery_selected.0.clone());
+        .insert(discovery_selected.0.clone(), DiscoveryVisibility::Shown);
 }
 
 fn research(researches: Query<&Research>, mut points: ResMut<ResearchPoints>) {

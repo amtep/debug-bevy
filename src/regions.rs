@@ -6,6 +6,7 @@ use moonshine_save::save::Save;
 use serde::Deserialize;
 
 use crate::{
+    discoveries::{DiscoveriesResearched, DiscoveryVisibility},
     new_game::NewGame,
     state::{GameState, MainSetupSet},
     suspicion::{MediaSuspicion, PoliceSuspicion},
@@ -20,9 +21,7 @@ pub fn plugin(app: &mut App) {
         .add_systems(OnExit(GameState::Load), cleanup_load)
         .add_systems(
             OnEnter(GameState::Main),
-            new_game
-                .run_if(resource_exists::<NewGame>)
-                .in_set(MainSetupSet::Regions),
+            new_game.in_set(MainSetupSet::Regions),
         )
         .add_systems(FixedUpdate, reload.run_if(not(in_state(GameState::Load))));
 }
@@ -46,7 +45,6 @@ pub struct Location {
 pub struct RegionSettings {
     #[serde(flatten)]
     pub location: Location,
-    #[serde(default)]
     pub requires_discovery: Option<String>,
     #[serde(default)]
     pub hidden: bool,
@@ -88,8 +86,21 @@ fn new_game(
     mut commands: Commands,
     regions_handle: Res<RegionsHandle>,
     regions_asset: Res<Assets<RegionsAsset>>,
+    new_game: If<Res<NewGame>>,
+    mut discoveries: ResMut<DiscoveriesResearched>,
 ) {
     let regions = &regions_asset.get(regions_handle.0.id()).unwrap().0;
+
+    if let Some(discovery) = regions
+        .get(&new_game.region.name)
+        .and_then(|r| r.requires_discovery.as_ref())
+    {
+        info!("Automatically unlocking starting region");
+        discoveries
+            .0
+            .insert(discovery.clone(), DiscoveryVisibility::Hidden);
+    }
+
     for (name, settings) in regions {
         if !settings.hidden {
             commands

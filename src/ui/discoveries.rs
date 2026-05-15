@@ -8,7 +8,7 @@ use crate::{
     constants::ui::{colors::*, fonts::*},
     discoveries::{
         DiscoveriesAsset, DiscoveriesHandle, DiscoveriesResearched, DiscoverySelected,
-        ResearchPoints, learn_new_discovery,
+        DiscoveryVisibility, ResearchPoints, learn_new_discovery,
     },
     funds::Funds,
     text::TextKey,
@@ -126,13 +126,18 @@ pub fn open_discoveries_menu(
     let discovered_node = make_tab("discoveries-menu.discovered");
 
     'outer: for (name, discovery) in discoveries {
-        let available = !discovered.contains(name);
+        let available = !discovered.contains_key(name);
         if available {
             // Check that all required discoveries have already been discovered
             for req in &discovery.requires {
-                if !discovered.contains(req) {
+                if !discovered.contains_key(req) {
                     continue 'outer;
                 }
+            }
+        } else {
+            // SAFETY: we already know !available, so discovered.contains_key.
+            if *discovered.get(name).unwrap() == DiscoveryVisibility::Hidden {
+                continue;
             }
         }
         let parent = if available {

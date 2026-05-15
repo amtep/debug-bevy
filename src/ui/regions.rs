@@ -1,11 +1,11 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, ui::InteractionDisabled};
 
 use crate::{
     bases::{BasetypesAsset, BasetypesHandle, spawn_base},
     constants::ui::{colors::*, fonts::*},
     discoveries::DiscoveriesResearched,
     funds::Funds,
-    regions::{BasePlot, Location, Region},
+    regions::{BasePlot, Location, Region, RegionsAsset, RegionsHandle},
     suspicion::{MediaSuspicion, PoliceSuspicion},
     text::TextKey,
     ui::{
@@ -42,32 +42,41 @@ pub fn setup(
     display_font_handle: Res<DisplayFontHandle>,
     mono_font_handle: Res<MonoFontHandle>,
     emoji_font_handle: Res<EmojiFontHandle>,
+    regions_handle: Res<RegionsHandle>,
+    regions_assets: Res<Assets<RegionsAsset>>,
+    discovered: Res<DiscoveriesResearched>,
 ) {
+    let region_settings = &regions_assets.get(regions_handle.0.id()).unwrap().0;
+
     for (entity, region, location, children) in regions.iter() {
-        commands
-            .spawn((
-                ChildOf(*map_ui),
-                ViewOf(entity),
-                Node {
-                    position_type: PositionType::Absolute,
-                    left: percent(location.x),
-                    top: percent(location.y),
-                    flex_direction: FlexDirection::Column,
-                    border: UiRect::all(px(1.5)),
-                    border_radius: BorderRadius::all(px(10)),
-                    padding: UiRect::all(px(5)),
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                UiTransform {
-                    translation: Val2::percent(-50.0, -50.0),
-                    ..default()
-                },
-                Button,
-                RegionUi,
-                BorderColor::all(BORDER),
-                BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(OVERLAY_ALPHA)),
-            ))
+        let Some(settings) = region_settings.get(&region.name) else {
+            error!("Unknown region {}", &region.name);
+            continue;
+        };
+        let mut region_commands = commands.spawn((
+            ChildOf(*map_ui),
+            ViewOf(entity),
+            Node {
+                position_type: PositionType::Absolute,
+                left: percent(location.x),
+                top: percent(location.y),
+                flex_direction: FlexDirection::Column,
+                border: UiRect::all(px(1.5)),
+                border_radius: BorderRadius::all(px(10)),
+                padding: UiRect::all(px(5)),
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            UiTransform {
+                translation: Val2::percent(-50.0, -50.0),
+                ..default()
+            },
+            Button,
+            RegionUi,
+            BorderColor::all(BORDER),
+            BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(OVERLAY_ALPHA)),
+        ));
+        region_commands
             .observe(on_region_click)
             .with_children(|parent| {
                 parent.spawn((
@@ -161,6 +170,15 @@ pub fn setup(
                         out.propagate(false);
                     });
             });
+        if let Some(discovery) = settings.requires_discovery.as_ref()
+            && !discovered.0.contains_key(discovery)
+        {
+            region_commands.insert((
+                InteractionDisabled,
+                Tooltip::new_text_color("region-needs-unlock-tooltip", TEXT_NEGATIVE),
+            ));
+        }
+
         for child in children {
             let Ok(location) = base_plots.get(*child) else {
                 continue;
@@ -206,7 +224,7 @@ fn on_location_reloaded(
 fn on_region_click(
     click: On<Pointer<Click>>,
     mut commands: Commands,
-    region_uis: Query<&ViewOf, With<RegionUi>>,
+    region_uis: Query<(&ViewOf, Has<InteractionDisabled>), With<RegionUi>>,
     regions: Query<(&Region, &Children)>,
     base_plots: Query<Has<Children>, With<BasePlot>>,
     base_types_handle: Res<BasetypesHandle>,
@@ -216,7 +234,11 @@ fn on_region_click(
     if click.button != PointerButton::Primary {
         return;
     }
-    let region_entity = region_uis.get(click.entity).unwrap().0;
+    let (ViewOf(region_entity), disabled) = region_uis.get(click.entity).unwrap();
+    let region_entity = *region_entity;
+    if disabled {
+        return;
+    }
     let (region, children) = regions.get(region_entity).unwrap();
     let is_any_base_plot_vacant = children
         .iter()
@@ -230,7 +252,7 @@ fn on_region_click(
                 && settings
                     .requires_discovery
                     .as_ref()
-                    .is_none_or(|discovery| discoveries_researched.contains(discovery))
+                    .is_none_or(|discovery| discoveries_researched.contains_key(discovery))
         })
         .map(|(name, _)| MenuItem {
             enabled: is_any_base_plot_vacant,
