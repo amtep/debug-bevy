@@ -70,9 +70,10 @@ pub fn plugin(app: &mut App) {
             update_funds
                 .run_if(resource_exists_and_changed::<Funds>.and(in_state(GameState::Main))),
             update_funds_change.run_if(
-                (resource_exists_and_changed::<TotalIncome>
-                    .or(resource_exists_and_changed::<TotalExpense>))
-                .and(in_state(GameState::Main)),
+                in_state(GameState::Main).and(
+                    resource_exists_and_changed::<TotalIncome>
+                        .or(resource_exists_and_changed::<TotalExpense>),
+                ),
             ),
             update_research.run_if(
                 resource_exists_and_changed::<ResearchPoints>.and(in_state(GameState::Main)),
@@ -355,7 +356,7 @@ fn setup_ui(
                             },
                             mono_text_font.clone().with_font_size(NORMAL),
                             // funds and text color will both be updated
-                            TextKey::new("funds-change-display").add_arg("funds", 1500),
+                            TextKey::new("funds-change-display").add_arg("funds", 0),
                             TextColor::from(TEXT),
                             FundsChangeUi,
                         ))
