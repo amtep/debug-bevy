@@ -58,7 +58,7 @@ struct DialogBackground(u32);
 
 pub fn plugin(app: &mut App) {
     app.add_systems(OnExit(GameState::Load), setup_observe_dialogs)
-        .add_systems(Update, listen_dialog_confirm);
+        .add_systems(Update, listen_dialog_keys);
 }
 
 fn setup_observe_dialogs(mut commands: Commands) {
@@ -440,10 +440,11 @@ fn on_dialog_root_remove(
     }
 }
 
-fn listen_dialog_confirm(
+fn listen_dialog_keys(
     mut commands: Commands,
     keys: Res<ButtonInput<KeyCode>>,
     dialog_roots: Query<(Entity, &ZIndex, &DialogRoot, &ConfirmButton)>,
+    dialogs: Query<&Dialog>,
     has_disableds: Query<Has<InteractionDisabled>, With<Button>>,
     input_focus: Res<InputFocus>,
     text_inputs: Query<(), With<TextInputNode>>,
@@ -468,8 +469,12 @@ fn listen_dialog_confirm(
                 return;
             }
             commands.entity(dialog_entity).insert(DialogConfirmed);
+        } else if dialogs.get(dialog_entity).unwrap().cancel_label.is_some() {
+            commands.entity(dialog_entity).insert(DialogCancelled);
+        } else {
+            return;
         }
-
+        commands.entity(dialog_entity).despawn();
         commands.entity(dialog_root).despawn();
     }
 }
