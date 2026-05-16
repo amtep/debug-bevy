@@ -1,4 +1,8 @@
-use bevy::{prelude::*, ui::InteractionDisabled};
+use bevy::{
+    prelude::*,
+    ui::InteractionDisabled,
+    ui_widgets::{SliderRange, SliderValue},
+};
 
 use crate::{
     bases::{Base, BasetypesAsset, BasetypesHandle, transfer_followers},
@@ -18,7 +22,7 @@ use crate::{
         BasePlotUi, FontHandle, MonoFontHandle, RegionSuspicionUi, Selected, UnicodeFontHandle,
         dialog::{Dialog, DialogConfirm, DialogConfirmed},
         menu::{Menu, MenuClicked, MenuEntry, MenuItem},
-        sliders::{Slider, SliderText, SliderValue},
+        sliders::{Slider, SliderText},
         tooltip::Tooltip,
     },
 };
@@ -414,7 +418,11 @@ fn transfer_followers_dialog(
                             (Entity, &Children, Has<InteractionDisabled>),
                             With<FollowerTransferBaseSelectorUi>,
                         >,
-                              mut image_nodes: Query<&mut ImageNode>| {
+                              mut image_nodes: Query<&mut ImageNode>,
+                              follower_slider_ui: Single<
+                            (Entity, &SliderRange, &SliderValue),
+                            With<FollowerSliderUi>,
+                        >| {
                             if click.button == PointerButton::Primary
                                 && !follower_transfer_base_selector_uis
                                     .get(click.entity)
@@ -440,6 +448,17 @@ fn transfer_followers_dialog(
                                     .unwrap();
                                 image_nodes.get_mut(*child).unwrap().color = GREEN.into();
                                 commands.entity(click.entity).insert(Selected);
+                                let max = (follower_count.0)
+                                    .min(max_follower_count - current_follower_count)
+                                    as f32;
+                                commands
+                                    .entity(follower_slider_ui.0)
+                                    .insert(SliderRange::from_range(0.0..=max));
+                                let value = follower_slider_ui.2.0.min(max);
+                                commands
+                                    .entity(follower_slider_ui.0)
+                                    .insert(SliderValue(value));
+
                                 commands.entity(entity).insert(DialogConfirm(true));
                             }
                         },
@@ -465,14 +484,11 @@ fn transfer_followers_dialog(
                 TextFont::from_font_size(NORMAL).with_font(font_handle.clone()),
             ));
 
-            // TODO: use background to show available capacity
             let slider = parent
                 .spawn((
                     FollowerSliderUi,
-                    Slider::new(false)
-                        .with_major_axis_size(px(150))
-                        .with_initial_value(0 as f32)
-                        .with_range((0.0..=follower_count.0 as f32).into()),
+                    Slider::new(false).with_major_axis_size(px(150)),
+                    SliderRange::new(0.0, follower_count.0 as f32),
                 ))
                 .id();
 

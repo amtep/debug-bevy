@@ -1,11 +1,9 @@
-use std::range::RangeInclusive;
-
 use bevy::{
     picking::hover::Hovered,
     prelude::*,
     ui_widgets::{
         CoreSliderDragState, Slider as BevySlider, SliderPrecision, SliderRange, SliderThumb,
-        TrackClick, observe, slider_self_update,
+        SliderValue, TrackClick, observe, slider_self_update,
     },
 };
 
@@ -14,19 +12,16 @@ use crate::{
     text::TextKey,
 };
 
-pub use bevy::ui_widgets::SliderValue;
-
 pub fn plugin(app: &mut App) {
     app.add_observer(on_slider_add)
         .add_systems(Update, (update_slider_visuals, update_slider_texts));
 }
 
 #[derive(Component)]
+#[require(SliderValue(0.0), SliderRange::new(0.0, 100.0))]
 pub struct Slider {
     major_axis_size: Val,
     is_vertical: bool,
-    initial_value: f32,
-    range: RangeInclusive<f32>,
     precision: i32,
 }
 
@@ -42,11 +37,6 @@ impl Slider {
         Self {
             major_axis_size: Val::Auto,
             is_vertical,
-            initial_value: 0.0,
-            range: RangeInclusive {
-                start: 0.0,
-                last: 100.0,
-            },
             precision: 0,
         }
     }
@@ -58,17 +48,6 @@ impl Slider {
         }
     }
 
-    pub fn with_initial_value(self, initial_value: f32) -> Self {
-        Self {
-            initial_value,
-            ..self
-        }
-    }
-
-    pub fn with_range(self, range: RangeInclusive<f32>) -> Self {
-        Self { range, ..self }
-    }
-
     pub fn with_precision(self, precision: i32) -> Self {
         Self { precision, ..self }
     }
@@ -78,13 +57,6 @@ const SLIDER_CONSTANT: u32 = 4;
 
 fn on_slider_add(add: On<Add, Slider>, mut commands: Commands, sliders: Query<&Slider>) {
     let slider = sliders.get(add.entity).unwrap();
-
-    if !slider.range.contains(&slider.initial_value) {
-        error!(
-            "slider range ({:?}) does not contain initial value ({:?})",
-            slider.range, slider.initial_value
-        );
-    }
 
     let node = if slider.is_vertical {
         Node {
@@ -174,9 +146,7 @@ fn on_slider_add(add: On<Add, Slider>, mut commands: Commands, sliders: Query<&S
             BevySlider {
                 track_click: TrackClick::Snap,
             },
-            SliderValue(slider.initial_value),
             SliderPrecision(slider.precision),
-            SliderRange::new(slider.range.start, slider.range.last),
             children![
                 (bar_node, BackgroundColor::from(DARK_GREY)),
                 (
