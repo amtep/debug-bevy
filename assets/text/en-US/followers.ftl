@@ -22,14 +22,14 @@ follower-list-tooltip = { $count } { follower-type-name }
 follower-count = { BIGNUM($count, lower-limit: 1000) }
 
 follower-transfer = Transfer
-follower-transfer-tooltip = move some to a another base
+follower-transfer-tooltip = move some to a another hideout
 
 follower-transfer-current-follower-count = Current follower count: { follower-count }
 follower-transfer-maximum-follower-count = Maximum follower count: { follower-count }
-follower-transfer-source-base = Source base
-follower-transfer-full-base = Full base
+follower-transfer-source-base = Source hideout
+follower-transfer-full-base = Full hideout
 
 
 follower-transfer-title = Transfer { follower-type-name }
 follower-transfer-confirm = Go
-follower-transfer-confirm-tooltip = select a destination base first!
+follower-transfer-confirm-tooltip = select a destination hideout first!
