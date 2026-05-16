@@ -26,6 +26,9 @@ follower-transfer-tooltip = move some to a another base
 
 follower-transfer-current-follower-count = Current follower count: { follower-count }
 follower-transfer-maximum-follower-count = Maximum follower count: { follower-count }
+follower-transfer-source-base = Source base
+follower-transfer-full-base = Full base
+
 
 follower-transfer-title = Transfer { follower-type-name }
 follower-transfer-confirm = Go

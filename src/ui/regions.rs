@@ -83,92 +83,79 @@ pub fn setup(
                     region.get_text_key(),
                     TextFont::from_font_size(SUB_HEADING).with_font(display_font_handle.clone()),
                 ));
-                parent
-                    .spawn((
-                        ViewOf(entity),
-                        RegionSuspicionUi,
-                        Node {
-                            top: percent(100),
-                            position_type: PositionType::Absolute,
-                            flex_direction: FlexDirection::Row,
-                            justify_content: JustifyContent::Center,
-                            display: Display::None,
-                            margin: UiRect::top(px(4)),
-                            column_gap: px(5),
-                            border: UiRect::bottom(px(1)),
-                            ..default()
-                        },
-                        BorderColor::all(BORDER),
-                        BackgroundColor::from(DARK_OVERLAY),
-                        children![
-                            (
-                                Node {
-                                    min_width: px(38),
-                                    justify_content: JustifyContent::SpaceBetween,
-                                    ..default()
-                                },
-                                Tooltip::new_text("police-suspicion-tooltip"),
-                                children![
-                                    (
-                                        Text::new('🚨'),
-                                        TextColor::from(TEXT),
-                                        TextFont::from_font_size(TINY)
-                                            .with_font(emoji_font_handle.clone()),
-                                    ),
-                                    (
-                                        TextFont::from_font_size(SMALL)
-                                            .with_font(mono_font_handle.clone()),
-                                        MeterDisplay::<u32> {
-                                            value: 0,
-                                            low_threshold: 334,
-                                            high_threshold: 667,
-                                        },
-                                        PoliceSuspicionUi,
-                                        ViewOf(entity),
-                                    )
-                                ]
-                            ),
-                            (
-                                Node {
-                                    min_width: px(38),
-                                    justify_content: JustifyContent::SpaceBetween,
-                                    ..default()
-                                },
-                                Tooltip::new_text("media-suspicion-tooltip"),
-                                children![
-                                    (
-                                        Text::new('📺'),
-                                        TextColor::from(TEXT),
-                                        TextFont::from_font_size(TINY)
-                                            .with_font(emoji_font_handle.clone()),
-                                    ),
-                                    (
-                                        TextFont::from_font_size(SMALL)
-                                            .with_font(mono_font_handle.clone()),
-                                        MeterDisplay::<u32> {
-                                            value: 0,
-                                            low_threshold: 334,
-                                            high_threshold: 667,
-                                        },
-                                        MediaSuspicionUi,
-                                        ViewOf(entity)
-                                    ),
-                                ]
-                            )
-                        ],
-                    ))
-                    .observe(|mut click: On<Pointer<Press>>| {
-                        click.propagate(false);
-                    })
-                    .observe(|mut click: On<Pointer<Click>>| {
-                        click.propagate(false);
-                    })
-                    .observe(|mut over: On<Pointer<Over>>| {
-                        over.propagate(false);
-                    })
-                    .observe(|mut out: On<Pointer<Out>>| {
-                        out.propagate(false);
-                    });
+                parent.spawn((
+                    ViewOf(entity),
+                    RegionSuspicionUi,
+                    Node {
+                        top: percent(100),
+                        position_type: PositionType::Absolute,
+                        flex_direction: FlexDirection::Row,
+                        justify_content: JustifyContent::Center,
+                        display: Display::None,
+                        margin: UiRect::top(px(4)),
+                        column_gap: px(5),
+                        border: UiRect::bottom(px(1)),
+                        ..default()
+                    },
+                    BorderColor::all(BORDER),
+                    BackgroundColor::from(DARK_OVERLAY),
+                    children![
+                        (
+                            Node {
+                                min_width: px(38),
+                                justify_content: JustifyContent::SpaceBetween,
+                                ..default()
+                            },
+                            Tooltip::new_text("police-suspicion-tooltip"),
+                            children![
+                                (
+                                    Text::new('🚨'),
+                                    TextColor::from(TEXT),
+                                    TextFont::from_font_size(TINY)
+                                        .with_font(emoji_font_handle.clone()),
+                                ),
+                                (
+                                    TextFont::from_font_size(SMALL)
+                                        .with_font(mono_font_handle.clone()),
+                                    MeterDisplay::<u32> {
+                                        value: 0,
+                                        low_threshold: 334,
+                                        high_threshold: 667,
+                                    },
+                                    PoliceSuspicionUi,
+                                    ViewOf(entity),
+                                )
+                            ]
+                        ),
+                        (
+                            Node {
+                                min_width: px(38),
+                                justify_content: JustifyContent::SpaceBetween,
+                                ..default()
+                            },
+                            Tooltip::new_text("media-suspicion-tooltip"),
+                            children![
+                                (
+                                    Text::new('📺'),
+                                    TextColor::from(TEXT),
+                                    TextFont::from_font_size(TINY)
+                                        .with_font(emoji_font_handle.clone()),
+                                ),
+                                (
+                                    TextFont::from_font_size(SMALL)
+                                        .with_font(mono_font_handle.clone()),
+                                    MeterDisplay::<u32> {
+                                        value: 0,
+                                        low_threshold: 334,
+                                        high_threshold: 667,
+                                    },
+                                    MediaSuspicionUi,
+                                    ViewOf(entity)
+                                ),
+                            ]
+                        )
+                    ],
+                ));
             });
         if let Some(discovery) = settings.requires_discovery.as_ref()
             && !discovered.0.contains_key(discovery)

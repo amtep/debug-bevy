@@ -1,7 +1,7 @@
 use bevy::{prelude::*, ui::InteractionDisabled};
 
 use crate::{
-    bases::{Base, BasetypesAsset, BasetypesHandle},
+    bases::{Base, BasetypesAsset, BasetypesHandle, transfer_followers},
     constants::{
         files::TEXTURE_EARTH_BACKGROUND,
         ui::{colors::*, fonts::SMALL},
@@ -33,7 +33,7 @@ pub struct FollowerListUi;
 pub struct FollowerListBoxUi;
 
 #[derive(Component)]
-struct FollowerTransferBaseSelectorUi(Entity);
+struct FollowerTransferBaseSelectorUi(Entity, usize);
 
 pub fn on_spawn_base(
     event: On<Insert, Base>,
@@ -243,7 +243,7 @@ fn on_base_click(
                             })
                             .unwrap();
                         commands.run_system_cached_with(
-                            transfer_follower_dialog,
+                            transfer_followers_dialog,
                             (
                                 base_entity,
                                 follower_entity,
@@ -257,7 +257,7 @@ fn on_base_click(
         );
 }
 
-fn transfer_follower_dialog(
+fn transfer_followers_dialog(
     In((base_entity, follower_entity, follower, follower_count)): In<(
         Entity,
         Entity,
@@ -305,6 +305,46 @@ fn transfer_follower_dialog(
                     .filter_map(|c| follower_counts.get(c).ok().map(|c| c.0))
                     .sum::<usize>();
 
+                let tooltip = if base_e == base_entity {
+                    Tooltip::new_text_colors([
+                        (
+                            TextKey::new("follower-transfer-source-base"),
+                            TEXT_HIGHLIGHT,
+                        ),
+                        (
+                            TextKey::new("follower-transfer-current-follower-count")
+                                .add_arg("count", current_follower_count as f64),
+                            TEXT,
+                        ),
+                        (
+                            TextKey::new("follower-transfer-maximum-follower-count")
+                                .add_arg("count", max_follower_count as f64),
+                            TEXT,
+                        ),
+                    ])
+                } else if current_follower_count == max_follower_count {
+                    Tooltip::new_text_colors([
+                        (TextKey::new("follower-transfer-full-base"), TEXT_NEGATIVE),
+                        (
+                            TextKey::new("follower-transfer-current-follower-count")
+                                .add_arg("count", current_follower_count as f64),
+                            TEXT,
+                        ),
+                        (
+                            TextKey::new("follower-transfer-maximum-follower-count")
+                                .add_arg("count", max_follower_count as f64),
+                            TEXT,
+                        ),
+                    ])
+                } else {
+                    Tooltip::new_texts([
+                        TextKey::new("follower-transfer-current-follower-count")
+                            .add_arg("count", current_follower_count as f64),
+                        TextKey::new("follower-transfer-maximum-follower-count")
+                            .add_arg("count", max_follower_count as f64),
+                    ])
+                };
+
                 let mut entity_commands = parent.spawn((
                     Node {
                         position_type: PositionType::Absolute,
@@ -325,16 +365,14 @@ fn transfer_follower_dialog(
                     Button,
                     BorderColor::all(BORDER),
                     BackgroundColor::from(BUTTON_BACKGROUND),
-                    FollowerTransferBaseSelectorUi(base_e),
-                    Tooltip::new_texts([
-                        TextKey::new("follower-transfer-current-follower-count")
-                            .add_arg("count", current_follower_count as f64),
-                        TextKey::new("follower-transfer-maximum-follower-count")
-                            .add_arg("count", max_follower_count as f64),
-                    ]),
+                    FollowerTransferBaseSelectorUi(
+                        base_e,
+                        max_follower_count - current_follower_count,
+                    ),
+                    tooltip,
                 ));
 
-                if base_e == base_entity {
+                if base_e == base_entity || current_follower_count == max_follower_count {
                     entity_commands.insert(InteractionDisabled);
                 }
 
@@ -348,7 +386,14 @@ fn transfer_follower_dialog(
                         ImageNode {
                             image: asset_server.load(format!("textures/{}.png", base.0)),
                             image_mode: NodeImageMode::Stretch,
-                            color: (if base_e == base_entity { RED } else { WHITE }).into(),
+                            color: (if base_e == base_entity {
+                                RED
+                            } else if current_follower_count == max_follower_count {
+                                GREY
+                            } else {
+                                WHITE
+                            })
+                            .into(),
                             ..default()
                         },
                     ))
@@ -393,24 +438,39 @@ fn transfer_follower_dialog(
         });
 
     // TODO: slider with the max value being the minimum of the follower count and the remaining capacity of the destination base.
+    let count = follower_count.0;
 
-    commands.spawn(
-        Dialog::new()
-            .with_title(
-                TextKey::new("follower-transfer-title")
-                    .add_arg("follower-type", follower.as_str())
-                    .add_arg("count", follower_count.0 as f64),
-            )
-            .with_entity_body(entity)
-            .with_cancel()
-            .with_max_height(percent(80))
-            .with_max_width(percent(80))
-            .with_confirm_disabled("follower-transfer-confirm-tooltip")
-            .with_confirm_label("follower-transfer-confirm")
-            .with_pause(),
-    );
-
-    // TODO: transfer logic
+    commands
+        .spawn(
+            Dialog::new()
+                .with_title(
+                    TextKey::new("follower-transfer-title")
+                        .add_arg("follower-type", follower.as_str())
+                        .add_arg("count", follower_count.0 as f64),
+                )
+                .with_entity_body(entity)
+                .with_cancel()
+                .with_max_height(percent(80))
+                .with_max_width(percent(80))
+                .with_confirm_disabled("follower-transfer-confirm-tooltip")
+                .with_confirm_label("follower-transfer-confirm")
+                .with_pause(),
+        )
+        .observe(
+            move |_: On<Add, DialogConfirmed>,
+                  mut commands: Commands,
+                  selected: Single<&FollowerTransferBaseSelectorUi, With<Selected>>| {
+                commands.run_system_cached_with(
+                    transfer_followers,
+                    (
+                        selected.0,
+                        follower_entity,
+                        follower.clone(),
+                        count.min(selected.1),
+                    ),
+                );
+            },
+        );
 }
 
 pub fn on_follower_count_insert(

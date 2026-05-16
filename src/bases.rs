@@ -176,3 +176,29 @@ pub fn spawn_base(
 
     commands.run_system_cached_with(spawn_base_inner, (*base_plot, base_type, false));
 }
+
+pub fn transfer_followers(
+    In((dst_entity, src_follower_entity, follower, count)): In<(Entity, Entity, String, usize)>,
+    mut commands: Commands,
+    bases: Query<&Children, With<Base>>,
+    followers: Query<(&Follower, &FollowerCount)>,
+) {
+    let mut follower_count = *followers.get(src_follower_entity).unwrap().1;
+    follower_count.0 -= count;
+    commands.entity(src_follower_entity).insert(follower_count);
+
+    let children = bases.get(dst_entity).unwrap();
+    let (mut dst_follower_count, dst_follower_entity) = children
+        .iter()
+        .find_map(|child| {
+            followers
+                .get(child)
+                .ok()
+                .and_then(|(f, c)| (f.0 == follower).then_some((*c, child)))
+        })
+        .unwrap();
+    dst_follower_count.0 += count;
+    commands
+        .entity(dst_follower_entity)
+        .insert(dst_follower_count);
+}
