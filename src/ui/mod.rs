@@ -39,6 +39,7 @@ mod menu;
 mod regions;
 pub mod save_load;
 mod scroll;
+mod sliders;
 pub mod toasts;
 mod tooltip;
 
@@ -50,6 +51,7 @@ pub fn plugin(app: &mut App) {
         tooltip::plugin,
         menu::plugin,
         toasts::plugin,
+        sliders::plugin,
     ))
     .init_resource::<UiScale>()
     .init_resource::<InputFocus>()

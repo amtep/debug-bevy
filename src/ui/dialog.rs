@@ -94,7 +94,7 @@ impl Dialog {
 
     pub fn with_max_height(self, max_height: Val) -> Self {
         Self {
-            max_width: Some(max_height),
+            max_height: Some(max_height),
             ..self
         }
     }

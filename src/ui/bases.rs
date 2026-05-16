@@ -4,7 +4,10 @@ use crate::{
     bases::{Base, BasetypesAsset, BasetypesHandle, transfer_followers},
     constants::{
         files::TEXTURE_EARTH_BACKGROUND,
-        ui::{colors::*, fonts::SMALL},
+        ui::{
+            colors::*,
+            fonts::{NORMAL, SMALL},
+        },
     },
     followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
     regions::{BasePlot, Location, Region},
@@ -12,9 +15,10 @@ use crate::{
     tasks::{Task, TasksAsset, TasksHandle},
     text::TextKey,
     ui::{
-        BasePlotUi, RegionSuspicionUi, Selected, UnicodeFontHandle,
+        BasePlotUi, FontHandle, MonoFontHandle, RegionSuspicionUi, Selected, UnicodeFontHandle,
         dialog::{Dialog, DialogConfirm, DialogConfirmed},
         menu::{Menu, MenuClicked, MenuEntry, MenuItem},
+        sliders::{Slider, SliderText, SliderValue},
         tooltip::Tooltip,
     },
 };
@@ -31,6 +35,9 @@ pub struct FollowerListUi;
 
 #[derive(Component)]
 pub struct FollowerListBoxUi;
+
+#[derive(Component)]
+struct FollowerSliderUi;
 
 #[derive(Component)]
 struct FollowerTransferBaseSelectorUi(Entity, usize);
@@ -271,10 +278,14 @@ fn transfer_followers_dialog(
     base_plots: Query<&Location, With<BasePlot>>,
     base_types_handle: Res<BasetypesHandle>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
+    font_handle: Res<FontHandle>,
+    mono_font_handle: Res<MonoFontHandle>,
 ) {
     let entity = commands
         .spawn(Node {
             flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            margin: px(10).vertical(),
             ..default()
         })
         .id();
@@ -285,7 +296,6 @@ fn transfer_followers_dialog(
             Node {
                 width: px(720),
                 height: px(400),
-                margin: px(10).vertical(),
                 ..default()
             },
             ImageNode {
@@ -437,8 +447,48 @@ fn transfer_followers_dialog(
             }
         });
 
-    // TODO: slider with the max value being the minimum of the follower count and the remaining capacity of the destination base.
-    let count = follower_count.0;
+    commands
+        .spawn((
+            ChildOf(entity),
+            Node {
+                flex_direction: FlexDirection::Row,
+                align_items: AlignItems::Center,
+                column_gap: px(20),
+                margin: px(5).top(),
+                ..default()
+            },
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                TextKey::new("follower-transfer-number"),
+                TextColor::from(WHITE),
+                TextFont::from_font_size(NORMAL).with_font(font_handle.clone()),
+            ));
+
+            // TODO: use background to show available capacity
+            let slider = parent
+                .spawn((
+                    FollowerSliderUi,
+                    Slider::new(false)
+                        .with_major_axis_size(px(150))
+                        .with_initial_value(0 as f32)
+                        .with_range((0.0..=follower_count.0 as f32).into()),
+                ))
+                .id();
+
+            let slider_text = parent
+                .spawn((
+                    TextKey::new("follower-transfer-slider").add_arg("value", 0.0),
+                    TextColor::from(WHITE),
+                    TextFont::from_font_size(NORMAL).with_font(mono_font_handle.clone()),
+                ))
+                .id();
+
+            parent
+                .commands()
+                .entity(slider)
+                .insert(SliderText::TextKey(slider_text));
+        });
 
     commands
         .spawn(
@@ -457,16 +507,22 @@ fn transfer_followers_dialog(
                 .with_pause(),
         )
         .observe(
+            #[allow(clippy::cast_sign_loss)]
+            #[allow(clippy::cast_possible_truncation)]
             move |_: On<Add, DialogConfirmed>,
                   mut commands: Commands,
+                  slider_value: Single<&SliderValue, With<FollowerSliderUi>>,
                   selected: Single<&FollowerTransferBaseSelectorUi, With<Selected>>| {
+                if slider_value.0 == 0.0 {
+                    return;
+                }
                 commands.run_system_cached_with(
                     transfer_followers,
                     (
                         selected.0,
                         follower_entity,
                         follower.clone(),
-                        count.min(selected.1),
+                        (slider_value.0 as usize).min(selected.1),
                     ),
                 );
             },

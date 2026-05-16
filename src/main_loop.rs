@@ -1,4 +1,4 @@
-use bevy::{prelude::*, ui_widgets::ScrollbarPlugin, window::WindowMode};
+use bevy::{prelude::*, ui_widgets::UiWidgetsPlugins, window::WindowMode};
 use bevy_ui_text_input::TextInputPlugin;
 
 pub fn main_loop() {
@@ -20,7 +20,7 @@ pub fn main_loop() {
                     ..default()
                 }),
             TextInputPlugin,
-            ScrollbarPlugin,
+            UiWidgetsPlugins,
             (
                 #[cfg(feature = "dev")]
                 crate::dev::plugin,
