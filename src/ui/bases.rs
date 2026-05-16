@@ -420,7 +420,7 @@ fn transfer_followers_dialog(
                         >,
                               mut image_nodes: Query<&mut ImageNode>,
                               follower_slider_ui: Single<
-                            (Entity, &SliderRange, &SliderValue),
+                            (Entity, &SliderRange),
                             With<FollowerSliderUi>,
                         >| {
                             if click.button == PointerButton::Primary
@@ -454,10 +454,9 @@ fn transfer_followers_dialog(
                                 commands
                                     .entity(follower_slider_ui.0)
                                     .insert(SliderRange::from_range(0.0..=max));
-                                let value = follower_slider_ui.2.0.min(max);
                                 commands
                                     .entity(follower_slider_ui.0)
-                                    .insert(SliderValue(value));
+                                    .insert(SliderValue(max));
 
                                 commands.entity(entity).insert(DialogConfirm(true));
                             }
@@ -488,6 +487,7 @@ fn transfer_followers_dialog(
                 .spawn((
                     FollowerSliderUi,
                     Slider::new(false).with_major_axis_size(px(150)),
+                    SliderValue(follower_count.0 as f32),
                     SliderRange::new(0.0, follower_count.0 as f32),
                 ))
                 .id();
