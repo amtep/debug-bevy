@@ -4,7 +4,7 @@
 //!
 //! Invoke `commands.run_system_cached_with(add_toast, TextKey::new("something"))` to pop up a toast.
 // TODO: maybe animate the toasts moving up and down?
-use bevy::prelude::*;
+use bevy::{picking::hover::Hovered, prelude::*};
 
 use crate::{
     constants::ui::{
@@ -44,6 +44,7 @@ pub(super) fn setup(mut commands: Commands, mapui: Single<Entity, With<MapUi>>) 
     commands.spawn((
         ToastContainer,
         ChildOf(*mapui),
+        Hovered::default(),
         Node {
             position_type: PositionType::Absolute,
             flex_direction: FlexDirection::Column,
@@ -98,9 +99,15 @@ pub fn add_toast(
 fn toast_timer(
     mut commands: Commands,
     mut progress: Query<(&ChildOf, &mut Node, &mut ToastTimer)>,
+    hovered: Single<&Hovered, With<ToastContainer>>,
     mut waiting: ResMut<WaitingToasts>,
     time: Res<Time<Virtual>>,
 ) {
+    // Don't advance timers while the user is hovering over the toast container
+    if hovered.0 {
+        return;
+    }
+
     for (ChildOf(parent), mut node, mut timer) in &mut progress {
         timer.0.tick(time.delta());
         node.width = percent(timer.0.fraction_remaining() * 100.0);
