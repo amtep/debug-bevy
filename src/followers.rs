@@ -12,7 +12,10 @@ use crate::{
     funds::{Expense, FundsAmount},
     modifiers::{Modifier, RecruitmentBy, RecruitmentByOf, RecruitmentOf},
     new_game::NewGame,
+    regions::Region,
     state::{GameState, MainSetupSet},
+    text::TextKey,
+    ui::toasts::add_toast,
 };
 
 const FOLLOWERS_ASSET_PATH: &str = "data/define.followers.toml";
@@ -115,6 +118,8 @@ fn recruit(
     base_types_handle: Res<BasetypesHandle>,
     followers_asset: Res<Assets<FollowersAsset>>,
     followers_handle: Res<FollowersHandle>,
+    childof: Query<&ChildOf>,
+    regions: Query<&Region>,
 ) {
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
     let followers_types = &followers_asset.get(followers_handle.0.id()).unwrap().0;
@@ -156,6 +161,18 @@ fn recruit(
                 .unwrap();
             follower_count.0 += additional_followers;
             commands.entity(follower_entity).insert(follower_count);
+
+            for entity in childof.iter_ancestors(*base_entity) {
+                if let Ok(region) = regions.get(entity) {
+                    let toast = TextKey::new("new-follower-toast")
+                        .add_arg("count", additional_followers as f64)
+                        .add_arg("follower-type", recruit.0.clone())
+                        .add_arg("region", region.name.clone());
+                    commands.run_system_cached_with(add_toast, (toast, false));
+                    break;
+                }
+            }
+
             if let Some(achievement) = followers_types
                 .get(&recruit.0)
                 .and_then(|f| f.first_recruit_achievement.as_ref())

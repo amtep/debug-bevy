@@ -512,7 +512,7 @@ fn setup_region_selection_dialog(
                     Button,
                     BorderColor::all(BORDER),
                     BackgroundColor::from(BUTTON_BACKGROUND),
-                    Tooltip::new_text(TextKey::new(format!("region-{name}"))),
+                    Tooltip::new_text(TextKey::new("region-name").add_arg("region", name.clone())),
                     RegionSelectorUi(name.clone()),
                 ))
                 .with_child((

@@ -13,3 +13,5 @@ switch-task-petty-crime-tooltip = engage in theft, larceny and more unspeakable 
 switch-task-priest-recruit-minions-tooltip = seek the right person for the cause
 switch-task-minion-recruit-minions-tooltip = hand out pamphlets at the mall
 switch-task-research-tooltip = find the truth in other ways
+
+new-follower-toast = Recruited { $count } { follower-type-name } in { region-name }

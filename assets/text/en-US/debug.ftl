@@ -4,3 +4,5 @@ debug-lorem =
  Praesent dictum hendrerit urna nec blandit. Quisque lacinia eros non consequat laoreet. Maecenas nibh ipsum, volutpat non neque sit amet, sollicitudin euismod felis. Fusce posuere libero eu tempor tempus. Pellentesque eu interdum dolor. Quisque in odio vitae velit convallis malesuada. Nunc sagittis nisi vitae lacus molestie, vel auctor urna dapibus. Nam sagittis a velit ac rhoncus. Nam vestibulum faucibus nibh, vel sollicitudin libero accumsan ac. Mauris in sagittis tortor. Suspendisse vulputate lorem leo, eu ultricies justo accumsan sed. Duis egestas, lorem vitae imperdiet porta, nisi felis varius neque, et facilisis orci ligula non nunc. Nulla malesuada molestie auctor. Etiam eu feugiat nunc. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Fusce commodo volutpat ornare.
 
 debug-tooltip = TOOLTIP
+
+debug-toast = Toast toast toast toast toast
