@@ -29,7 +29,7 @@ pub struct Slider {
 #[derive(Component)]
 pub enum SliderText {
     Static(Entity),
-    TextKey(Entity),
+    TextKey(Entity, &'static str),
 }
 
 impl Slider {
@@ -214,10 +214,10 @@ fn update_slider_texts(
             && let Ok(mut text) = texts.get_mut(*entity)
         {
             **text = format!("{value:.0$}", slider.precision.max(0) as usize);
-        } else if let SliderText::TextKey(entity) = slider_text
+        } else if let SliderText::TextKey(entity, variable) = slider_text
             && let Ok(mut text_key) = text_keys.get_mut(*entity)
         {
-            text_key.replace_arg("value", value as f64);
+            text_key.replace_arg(variable, value as f64);
         }
     }
 }

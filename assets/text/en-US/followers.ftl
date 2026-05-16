@@ -28,8 +28,7 @@ follower-transfer-current-follower-count = Current follower count: { follower-co
 follower-transfer-maximum-follower-count = Maximum follower count: { follower-count }
 follower-transfer-source-base = Source hideout
 follower-transfer-full-base = Full hideout
-follower-transfer-number = Followers to transfer:
-follower-transfer-slider = { BIGNUM($value, lower-limit: 1000) }
+follower-transfer-number = { follower-type-name } to transfer:
 
 follower-transfer-title = Transfer { follower-type-name }
 follower-transfer-confirm = Go

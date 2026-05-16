@@ -478,7 +478,9 @@ fn transfer_followers_dialog(
         ))
         .with_children(|parent| {
             parent.spawn((
-                TextKey::new("follower-transfer-number"),
+                TextKey::new("follower-transfer-number")
+                    .add_arg("follower-type", follower.as_str())
+                    .add_arg("count", follower_count.0 as f64),
                 TextColor::from(WHITE),
                 TextFont::from_font_size(NORMAL).with_font(font_handle.clone()),
             ));
@@ -494,7 +496,7 @@ fn transfer_followers_dialog(
 
             let slider_text = parent
                 .spawn((
-                    TextKey::new("follower-transfer-slider").add_arg("value", 0.0),
+                    TextKey::new("follower-count").add_arg("count", 0.0),
                     TextColor::from(WHITE),
                     TextFont::from_font_size(NORMAL).with_font(mono_font_handle.clone()),
                 ))
@@ -503,7 +505,7 @@ fn transfer_followers_dialog(
             parent
                 .commands()
                 .entity(slider)
-                .insert(SliderText::TextKey(slider_text));
+                .insert(SliderText::TextKey(slider_text, "count"));
         });
 
     commands
