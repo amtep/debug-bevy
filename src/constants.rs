@@ -115,6 +115,8 @@ pub mod ui {
     pub const ZINDEX_DIALOG: i32 = 100;
     pub const ZINDEX_TOOLTIP: i32 = 200;
     pub const ZINDEX_ESC_MENU: i32 = 1000;
+
+    pub const TOAST_TIMER_DAYS: f32 = 10.0;
 }
 
 pub mod achievements {

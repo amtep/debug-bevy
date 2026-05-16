@@ -8,6 +8,7 @@ use bevy::prelude::*;
 
 use crate::{
     constants::ui::{
+        TOAST_TIMER_DAYS,
         colors::{BORDER, TEXT, THEME_DARK_PURPLE},
         fonts::SMALL,
     },
@@ -90,7 +91,7 @@ pub fn add_toast(
             ..default()
         },
         BackgroundColor::from(BORDER),
-        ToastTimer(Timer::from_seconds(3.0, TimerMode::Once)),
+        ToastTimer(Timer::from_seconds(TOAST_TIMER_DAYS, TimerMode::Once)),
     ));
 }
 
@@ -98,7 +99,7 @@ fn toast_timer(
     mut commands: Commands,
     mut progress: Query<(&ChildOf, &mut Node, &mut ToastTimer)>,
     mut waiting: ResMut<WaitingToasts>,
-    time: Res<Time<Real>>,
+    time: Res<Time<Virtual>>,
 ) {
     for (ChildOf(parent), mut node, mut timer) in &mut progress {
         timer.0.tick(time.delta());
