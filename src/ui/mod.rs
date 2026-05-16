@@ -60,7 +60,7 @@ pub fn plugin(app: &mut App) {
     .add_systems(OnEnter(GameState::MainMenu), setup_main_menu)
     .add_systems(
         OnEnter(GameState::Main),
-        (setup_ui, regions::setup, toasts::setup, setup_intro)
+        (setup_ui, regions::setup, setup_intro)
             .chain()
             .in_set(MainSetupSet::Ui),
     )

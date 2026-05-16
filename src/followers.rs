@@ -15,7 +15,7 @@ use crate::{
     regions::Region,
     state::{GameState, MainSetupSet},
     text::TextKey,
-    ui::toasts::add_toast,
+    ui::toasts::WaitingToasts,
 };
 
 const FOLLOWERS_ASSET_PATH: &str = "data/define.followers.toml";
@@ -120,6 +120,7 @@ fn recruit(
     followers_handle: Res<FollowersHandle>,
     childof: Query<&ChildOf>,
     regions: Query<&Region>,
+    mut toasts: ResMut<WaitingToasts>,
 ) {
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
     let followers_types = &followers_asset.get(followers_handle.0.id()).unwrap().0;
@@ -168,7 +169,7 @@ fn recruit(
                         .add_arg("count", additional_followers as f64)
                         .add_arg("follower-type", recruit.0.clone())
                         .add_arg("region", region.name.clone());
-                    commands.run_system_cached_with(add_toast, (toast, false));
+                    toasts.0.push(toast);
                     break;
                 }
             }

@@ -8,7 +8,7 @@ use crate::{
     regions::Region,
     state::GameState,
     text::TextKey,
-    ui::toasts::add_toast,
+    ui::toasts::WaitingToasts,
 };
 
 pub fn plugin(app: &mut App) {
@@ -22,10 +22,10 @@ pub fn plugin(app: &mut App) {
 }
 
 fn listen_dev_keys(
-    mut commands: Commands,
     keys: Res<ButtonInput<KeyCode>>,
     mut funds: ResMut<Funds>,
     mut research_points: ResMut<ResearchPoints>,
+    mut toasts: ResMut<WaitingToasts>,
 ) {
     if keys.just_pressed(KeyCode::KeyF) {
         if keys.pressed(KeyCode::AltLeft) {
@@ -41,7 +41,7 @@ fn listen_dev_keys(
         research_points.0 += 1_000;
     }
     if keys.just_pressed(KeyCode::KeyT) && keys.pressed(KeyCode::ControlLeft) {
-        commands.run_system_cached_with(add_toast, (TextKey::new("debug-toast"), false));
+        toasts.0.push(TextKey::new("debug-toast"));
     }
 }
 
