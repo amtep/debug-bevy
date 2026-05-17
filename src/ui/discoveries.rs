@@ -231,7 +231,7 @@ pub fn open_discoveries_menu(
                     if click.button == PointerButton::Primary && !has_interaction_disabled {
                         commands.trigger(DiscoveryChanged(discovery_ui.0.clone()));
                         commands.insert_resource(DiscoverySelected(discovery_ui.0.clone(), funds_cost, research_cost));
-                        commands.entity(discoveries_root).insert(DialogConfirm(true));
+                        commands.entity(discoveries_root).insert(DialogConfirm::Enable);
                     }
                 },
             );

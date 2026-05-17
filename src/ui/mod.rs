@@ -17,7 +17,7 @@ use crate::{
     modifiers::{ExpenseModifier, IncomeModifier, Modifier},
     new_game::NewGame,
     state::{GameState, MainSetupSet},
-    suspicion::{IntelligenceSuspicion, ScientificSuspicion},
+    suspicion::{IntelligenceSuspicion, ScientificSuspicion, SuspicionType},
     text::TextKey,
     time::{CurrentGameSpeed, GameDate, GameSpeed, GameSpeedAction, GameSpeedChangedEvent},
     ui::{
@@ -187,6 +187,23 @@ fn read_window_resized_messages(
     if let Some(WindowResized { height, .. }) = reader.read().last() {
         info!("window resized; height: {height}");
         ui_scale.0 = height / 720.0;
+    }
+}
+
+fn suspicion_type_icon(suspicion_type: SuspicionType) -> char {
+    match suspicion_type {
+        SuspicionType::Intelligence => '📡',
+        SuspicionType::Scientific => '🔬',
+        SuspicionType::Police => '🚨',
+        SuspicionType::Media => '📺',
+    }
+}
+
+fn suspicion_type_color(suspicion_type: SuspicionType) -> Srgba {
+    match suspicion_type {
+        SuspicionType::Intelligence => THEME_LIGHT_PINK,
+        SuspicionType::Scientific => THEME_CYAN,
+        SuspicionType::Police | SuspicionType::Media => WHITE,
     }
 }
 
@@ -503,8 +520,8 @@ fn setup_ui(
                     parent.spawn(secondary_bundle(
                         px(45),
                         TextKey::new("intelligence-suspicion-tooltip"),
-                        '📡',
-                        THEME_LIGHT_PINK,
+                        suspicion_type_icon(SuspicionType::Intelligence),
+                        suspicion_type_color(SuspicionType::Intelligence),
                         (IntelligenceSuspicionUi, meter.clone()),
                         emoji_font_handle.clone(),
                         mono_font_handle.clone(),
@@ -512,8 +529,8 @@ fn setup_ui(
                     parent.spawn(secondary_bundle(
                         px(45),
                         TextKey::new("scientific-suspicion-tooltip"),
-                        '🔬',
-                        THEME_CYAN,
+                        suspicion_type_icon(SuspicionType::Scientific),
+                        suspicion_type_color(SuspicionType::Scientific),
                         (ScientificSuspicionUi, meter),
                         emoji_font_handle.clone(),
                         mono_font_handle.clone(),

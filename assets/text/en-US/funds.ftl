@@ -1,6 +1,6 @@
 funds-display = { FUNDS($funds) }
 funds = { FUNDS($funds) }
-funds-change-display = { FUNDS($funds, max-dp: 1, lower-limit: 10, sign: "true") }
+funds-change-display = { FUNDS($funds, max-dp: 1, lower-limit: 10, sign: "blank") }
 
 income-tooltip-header = Income
 expense-tooltip-header = Expenses

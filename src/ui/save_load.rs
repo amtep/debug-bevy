@@ -209,7 +209,7 @@ pub fn open_load_game_popup(
                         node.border = UiRect::all(px(4));
                         node.padding = px(4).all();
                         commands.entity(click.entity).insert(Selected);
-                        commands.entity(container).insert(DialogConfirm(true));
+                        commands.entity(container).insert(DialogConfirm::Enable);
                     }
                 },
             );

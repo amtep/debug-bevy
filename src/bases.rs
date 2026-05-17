@@ -12,7 +12,7 @@ use crate::{
     regions::{BasePlot, Region},
     rng::RandomSource,
     state::{GameState, MainSetupSet},
-    suspicion::{SuspicionType, add_suspicions},
+    suspicion::{SuspicionType, add_suspicion_changes},
     tasks::{Task, TasksAsset, TasksHandle},
 };
 
@@ -111,7 +111,7 @@ fn spawn_base_inner(
             ChildOf(base_plot),
         ))
         .id();
-    add_suspicions(
+    add_suspicion_changes(
         commands.reborrow(),
         base_entity,
         1,
@@ -176,6 +176,33 @@ pub fn spawn_base(
     }
 
     commands.run_system_cached_with(spawn_base_inner, (*base_plot, base_type, false));
+}
+
+#[allow(clippy::cast_possible_truncation)]
+pub fn transfer_follower_costs(
+    src_entity: Entity,
+    dst_entity: Entity,
+    _follower: String,
+    count: usize,
+    parents: Query<&ChildOf>,
+) -> (FundsAmount, u32) {
+    const INTRA_REGION_FUNDS_COST: FundsAmount = -1000;
+    const INTER_REGION_FUNDS_COST: FundsAmount = -5000;
+    // TODO: custom costs based on follower
+    const INTEL_SUSPICION_COST: u32 = 5;
+
+    // same region entity
+    if parents.root_ancestor(src_entity) == parents.root_ancestor(dst_entity) {
+        (
+            INTRA_REGION_FUNDS_COST * count as FundsAmount,
+            INTEL_SUSPICION_COST * count as u32,
+        )
+    } else {
+        (
+            INTER_REGION_FUNDS_COST * count as FundsAmount,
+            INTEL_SUSPICION_COST * count as u32,
+        )
+    }
 }
 
 pub fn transfer_followers(

@@ -124,7 +124,7 @@ fn update_suspicion(
     }
 }
 
-pub fn add_suspicions(
+pub fn add_suspicion_changes(
     mut commands: Commands,
     entity: Entity,
     count: usize,
@@ -145,5 +145,27 @@ pub fn add_suspicions(
                 .insert(PoliceSuspicionChange(amount)),
             SuspicionType::Media => commands.entity(entity).insert(MediaSuspicionChange(amount)),
         };
+    }
+}
+
+pub fn add_suspicions(
+    In((region_entity, count, suspicions)): In<(
+        Entity,
+        usize,
+        impl IntoIterator<Item = (SuspicionType, u32)>,
+    )>,
+    mut intel_suspicion: ResMut<IntelligenceSuspicion>,
+    mut scien_suspicion: ResMut<ScientificSuspicion>,
+    mut regions: Query<(&mut PoliceSuspicion, &mut MediaSuspicion), With<Region>>,
+) {
+    for (suspicion, amount) in suspicions {
+        #[allow(clippy::cast_possible_truncation)]
+        let amount = count as u32 * amount;
+        match suspicion {
+            SuspicionType::Intelligence => intel_suspicion.0 += amount,
+            SuspicionType::Scientific => scien_suspicion.0 += amount,
+            SuspicionType::Police => regions.get_mut(region_entity).unwrap().0.0 += amount,
+            SuspicionType::Media => regions.get_mut(region_entity).unwrap().1.0 += amount,
+        }
     }
 }

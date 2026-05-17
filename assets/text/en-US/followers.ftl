@@ -33,3 +33,4 @@ follower-transfer-number = { follower-type-name } to transfer:
 follower-transfer-title = Transfer { follower-type-name }
 follower-transfer-confirm = Go
 follower-transfer-confirm-tooltip = select a destination hideout first!
+follower-transfer-confirm-funds-tooltip = not enough funds, { FUNDS($funds) } required!

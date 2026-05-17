@@ -5,7 +5,7 @@ use bevy::{
 };
 
 use crate::{
-    bases::{Base, BasetypesAsset, BasetypesHandle, transfer_followers},
+    bases::{Base, BasetypesAsset, BasetypesHandle, transfer_follower_costs, transfer_followers},
     constants::{
         files::TEXTURE_EARTH_BACKGROUND,
         ui::{
@@ -14,15 +14,19 @@ use crate::{
         },
     },
     followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
+    funds::Funds,
     regions::{BasePlot, Location, Region},
     state::GameState,
+    suspicion::{IntelligenceSuspicion, SuspicionType},
     tasks::{Task, TasksAsset, TasksHandle},
     text::TextKey,
     ui::{
-        BasePlotUi, FontHandle, MonoFontHandle, RegionSuspicionUi, Selected, UnicodeFontHandle,
+        BasePlotUi, EmojiFontHandle, FontHandle, MonoFontHandle, RegionSuspicionUi, Selected,
+        UnicodeFontHandle,
         dialog::{Dialog, DialogConfirm, DialogConfirmed},
         menu::{Menu, MenuClicked, MenuEntry, MenuItem},
         sliders::{Slider, SliderText},
+        suspicion_type_color, suspicion_type_icon,
         tooltip::Tooltip,
     },
 };
@@ -44,7 +48,13 @@ pub struct FollowerListBoxUi;
 struct FollowerSliderUi;
 
 #[derive(Component)]
-struct FollowerTransferBaseSelectorUi(Entity, usize);
+struct FollowerTransferBaseSelectorUi(Entity);
+
+#[derive(Component)]
+struct FollowerTransferCostFunds;
+
+#[derive(Component)]
+struct FollowerTransferCostSuspicion;
 
 pub fn on_spawn_base(
     event: On<Insert, Base>,
@@ -284,6 +294,7 @@ fn transfer_followers_dialog(
     base_types_asset: Res<Assets<BasetypesAsset>>,
     font_handle: Res<FontHandle>,
     mono_font_handle: Res<MonoFontHandle>,
+    emoji_font_handle: Res<EmojiFontHandle>,
 ) {
     let entity = commands
         .spawn(Node {
@@ -359,6 +370,8 @@ fn transfer_followers_dialog(
                     ])
                 };
 
+                let remaining_capacity = max_follower_count - current_follower_count;
+
                 let mut entity_commands = parent.spawn((
                     Node {
                         position_type: PositionType::Absolute,
@@ -379,14 +392,11 @@ fn transfer_followers_dialog(
                     Button,
                     BorderColor::all(BORDER),
                     BackgroundColor::from(BUTTON_BACKGROUND),
-                    FollowerTransferBaseSelectorUi(
-                        base_e,
-                        max_follower_count - current_follower_count,
-                    ),
+                    FollowerTransferBaseSelectorUi(base_e),
                     tooltip,
                 ));
 
-                if base_e == base_entity || current_follower_count == max_follower_count {
+                if base_e == base_entity || remaining_capacity == 0 {
                     entity_commands.insert(InteractionDisabled);
                 }
 
@@ -402,7 +412,7 @@ fn transfer_followers_dialog(
                             image_mode: NodeImageMode::Stretch,
                             color: (if base_e == base_entity {
                                 RED
-                            } else if current_follower_count == max_follower_count {
+                            } else if remaining_capacity == 0 {
                                 GREY
                             } else {
                                 WHITE
@@ -448,17 +458,14 @@ fn transfer_followers_dialog(
                                     .unwrap();
                                 image_nodes.get_mut(*child).unwrap().color = GREEN.into();
                                 commands.entity(click.entity).insert(Selected);
-                                let max = (follower_count.0)
-                                    .min(max_follower_count - current_follower_count)
-                                    as f32;
+                                let max = (follower_count.0).min(remaining_capacity) as f32;
+                                commands.entity(entity).insert(DialogConfirm::Enable);
                                 commands
                                     .entity(follower_slider_ui.0)
                                     .insert(SliderRange::from_range(0.0..=max));
                                 commands
                                     .entity(follower_slider_ui.0)
                                     .insert(SliderValue(max));
-
-                                commands.entity(entity).insert(DialogConfirm(true));
                             }
                         },
                     );
@@ -471,8 +478,8 @@ fn transfer_followers_dialog(
             Node {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
-                column_gap: px(20),
                 margin: px(5).top(),
+                column_gap: px(20),
                 ..default()
             },
         ))
@@ -485,6 +492,8 @@ fn transfer_followers_dialog(
                 TextFont::from_font_size(NORMAL).with_font(font_handle.clone()),
             ));
 
+            let follower = follower.clone();
+
             let slider = parent
                 .spawn((
                     FollowerSliderUi,
@@ -492,15 +501,102 @@ fn transfer_followers_dialog(
                     SliderValue(follower_count.0 as f32),
                     SliderRange::new(0.0, follower_count.0 as f32),
                 ))
+                .observe(
+                    move |insert: On<Insert, SliderValue>,
+                          slider_values: Query<&SliderValue>,
+                          mut commands: Commands,
+                          funds: Res<Funds>,
+                          parents: Query<&ChildOf>,
+                          follower_transfer_base_selector_ui: Option<
+                        Single<&FollowerTransferBaseSelectorUi, With<Selected>>,
+                    >,
+                          mut funds_text_key: Single<
+                        &mut TextKey,
+                        (
+                            With<FollowerTransferCostFunds>,
+                            Without<FollowerTransferCostSuspicion>,
+                        ),
+                    >,
+                          mut suspicion_text_key: Single<
+                        &mut TextKey,
+                        (
+                            With<FollowerTransferCostSuspicion>,
+                            Without<FollowerTransferCostFunds>,
+                        ),
+                    >| {
+                        #[allow(clippy::cast_sign_loss)]
+                        #[allow(clippy::cast_possible_truncation)]
+                        if let Some(selector_ui) = follower_transfer_base_selector_ui {
+                            let value = slider_values.get(insert.entity).unwrap();
+                            let (funds_change, intel) = transfer_follower_costs(
+                                base_entity,
+                                selector_ui.0,
+                                follower.clone(),
+                                value.0 as usize,
+                                parents,
+                            );
+                            if funds.0 + funds_change < 0 {
+                                let text_key =
+                                    TextKey::new("follower-transfer-confirm-funds-tooltip")
+                                        .add_arg("funds", -funds_change as f64);
+                                commands
+                                    .entity(entity)
+                                    .insert(DialogConfirm::Disable(Some(text_key)));
+                            }
+                            funds_text_key.replace_arg("funds", funds_change as f64);
+                            suspicion_text_key.replace_arg("amount", intel as f64);
+                        }
+                    },
+                )
                 .id();
 
             let slider_text = parent
                 .spawn((
+                    Node {
+                        min_width: px(50),
+                        margin: px(2).top(),
+                        ..default()
+                    },
                     TextKey::new("follower-count").add_arg("count", 0.0),
-                    TextColor::from(WHITE),
+                    TextColor::from(TEXT),
                     TextFont::from_font_size(NORMAL).with_font(mono_font_handle.clone()),
                 ))
                 .id();
+
+            parent.spawn((
+                Node {
+                    min_width: px(60),
+                    margin: px(2).top(),
+                    ..default()
+                },
+                FollowerTransferCostFunds,
+                TextKey::new("funds-change-display").add_arg("funds", 0.0),
+                TextColor::from(TEXT_FUNDS),
+                TextFont::from_font_size(NORMAL).with_font(mono_font_handle.clone()),
+            ));
+
+            parent
+                .spawn(Node {
+                    margin: px(2).top(),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new(suspicion_type_icon(SuspicionType::Intelligence)),
+                        TextColor::from(suspicion_type_color(SuspicionType::Intelligence)),
+                        TextFont::from_font_size(SMALL).with_font(emoji_font_handle.clone()),
+                    ));
+                    parent.spawn((
+                        Node {
+                            min_width: px(50),
+                            ..default()
+                        },
+                        FollowerTransferCostSuspicion,
+                        TextKey::new("suspicion-change").add_arg("amount", 0.0),
+                        TextColor::from(TEXT),
+                        TextFont::from_font_size(NORMAL).with_font(mono_font_handle.clone()),
+                    ));
+                });
 
             parent
                 .commands()
@@ -529,18 +625,33 @@ fn transfer_followers_dialog(
             #[allow(clippy::cast_possible_truncation)]
             move |_: On<Add, DialogConfirmed>,
                   mut commands: Commands,
+                  parents: Query<&ChildOf>,
+                  mut funds: ResMut<Funds>,
+                  mut intel_suspicion: ResMut<IntelligenceSuspicion>,
                   slider_value: Single<&SliderValue, With<FollowerSliderUi>>,
                   selected: Single<&FollowerTransferBaseSelectorUi, With<Selected>>| {
                 if slider_value.0 == 0.0 {
                     return;
                 }
+
+                let (funds_change, intel) = transfer_follower_costs(
+                    base_entity,
+                    selected.0,
+                    follower.clone(),
+                    slider_value.0 as usize,
+                    parents,
+                );
+
+                funds.0 += funds_change;
+                intel_suspicion.0 += intel;
+
                 commands.run_system_cached_with(
                     transfer_followers,
                     (
                         selected.0,
                         follower_entity,
                         follower.clone(),
-                        (slider_value.0 as usize).min(selected.1),
+                        slider_value.0 as usize,
                     ),
                 );
             },

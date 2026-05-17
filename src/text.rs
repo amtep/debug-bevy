@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::sync::Arc;
 use std::{borrow::Cow, string::FromUtf8Error};
 
@@ -15,6 +16,7 @@ use icu::{
     time::{DateTime, Hour, Minute, Nanosecond, Second, Time},
 };
 use line_numbers::LinePositions;
+use strum::EnumString;
 use thiserror::Error;
 use unic_langid::langid;
 
@@ -295,19 +297,29 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(FluentFolder(asset_server.load_folder("text/en-US")));
 }
 
+#[derive(PartialEq, Eq, EnumString)]
+#[strum(serialize_all = "kebab-case")]
+enum Sign {
+    Negative,
+    Positive,
+    Blank,
+}
+
 // TODO: localize decimal sign
 fn format_bignum(
     mut f: f64,
     symbol: Option<char>,
-    sign: bool,
+    sign: Sign,
     max_dp: usize,
     lower_limit: f64,
 ) -> String {
     let sign = if f < 0.0 {
         f = -f;
         "-"
-    } else if sign && f != 0.0 {
+    } else if sign != Sign::Negative && f != 0.0 {
         "+"
+    } else if sign == Sign::Blank && f == 0.0 {
+        " "
     } else {
         ""
     };
@@ -358,11 +370,17 @@ fn fluent_funds<'a>(positional: &[FluentValue<'a>], named: &FluentArgs) -> Fluen
 
     let sign = if let Some(sign) = named.get("sign") {
         match sign {
-            FluentValue::String(cow) => cow == "true",
+            FluentValue::String(cow) => {
+                if let Ok(sign) = Sign::from_str(cow) {
+                    sign
+                } else {
+                    return FluentValue::Error;
+                }
+            }
             _ => return FluentValue::Error,
         }
     } else {
-        false
+        Sign::Negative
     };
 
     match positional.first() {
@@ -409,11 +427,17 @@ fn fluent_bignum<'a>(positional: &[FluentValue<'a>], named: &FluentArgs) -> Flue
 
     let sign = if let Some(sign) = named.get("sign") {
         match sign {
-            FluentValue::String(cow) => cow == "true",
+            FluentValue::String(cow) => {
+                if let Ok(sign) = Sign::from_str(cow) {
+                    sign
+                } else {
+                    return FluentValue::Error;
+                }
+            }
             _ => return FluentValue::Error,
         }
     } else {
-        false
+        Sign::Negative
     };
 
     match positional.first() {
@@ -566,7 +590,7 @@ mod test {
     use super::*;
 
     fn format_funds(funds: f64) -> String {
-        format_bignum(funds, Some('€'), false, 2, 100_000.0)
+        format_bignum(funds, Some('€'), Sign::Negative, 2, 100_000.0)
     }
 
     #[test]

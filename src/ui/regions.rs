@@ -6,13 +6,14 @@ use crate::{
     discoveries::DiscoveriesResearched,
     funds::Funds,
     regions::{BasePlot, Location, Region, RegionsAsset, RegionsHandle},
-    suspicion::{MediaSuspicion, PoliceSuspicion},
+    suspicion::{MediaSuspicion, PoliceSuspicion, SuspicionType},
     text::TextKey,
     ui::{
         BasePlotUi, EmojiFontHandle, MonoFontHandle, RegionSuspicionUi,
         bases::{on_follower_count_insert, on_spawn_base},
         dialog::{Dialog, DialogConfirmed},
         menu::{Menu, MenuClicked, MenuEntry, MenuItem},
+        suspicion_type_icon,
         tooltip::Tooltip,
     },
 };
@@ -109,7 +110,7 @@ pub fn setup(
                             Tooltip::new_text("police-suspicion-tooltip"),
                             children![
                                 (
-                                    Text::new('🚨'),
+                                    Text::new(suspicion_type_icon(SuspicionType::Police)),
                                     TextColor::from(TEXT),
                                     TextFont::from_font_size(TINY)
                                         .with_font(emoji_font_handle.clone()),
@@ -136,7 +137,7 @@ pub fn setup(
                             Tooltip::new_text("media-suspicion-tooltip"),
                             children![
                                 (
-                                    Text::new('📺'),
+                                    Text::new(suspicion_type_icon(SuspicionType::Media)),
                                     TextColor::from(TEXT),
                                     TextFont::from_font_size(TINY)
                                         .with_font(emoji_font_handle.clone()),

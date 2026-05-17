@@ -215,7 +215,7 @@ pub fn setup_main_menu(
                                                 if click.button == PointerButton::Primary {
                                                     commands.insert_resource(CultSymbol(symbol_nr));
                                                     commands.trigger(CultSymbolChanged(symbol_nr));
-                                                    commands.entity(entity).insert(DialogConfirm(true));
+                                                    commands.entity(entity).insert(DialogConfirm::Enable);
                                                 }
                                             });
                                         }
@@ -542,7 +542,7 @@ fn setup_region_selection_dialog(
                                 .unwrap();
                             text_colors.get_mut(*child).unwrap().0 = TEXT_NEUTRAL.into();
                             commands.entity(click.entity).insert(Selected);
-                            commands.entity(entity).insert(DialogConfirm(true));
+                            commands.entity(entity).insert(DialogConfirm::Enable);
                         }
                     },
                 );

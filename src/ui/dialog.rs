@@ -48,7 +48,10 @@ pub struct DialogConfirmed;
 pub struct DialogCancelled;
 
 #[derive(Component)]
-pub struct DialogConfirm(pub bool);
+pub enum DialogConfirm {
+    Enable,
+    Disable(Option<TextKey>),
+}
 
 #[derive(Component)]
 struct ConfirmButton(Entity);
@@ -309,18 +312,29 @@ fn on_dialog_add(
                           confirm_buttons: Query<&ConfirmButton>| {
                         if let Ok(confirm_button) = confirm_buttons.get(dialog_root) {
                             let dialog_confirm = dialog_confirms.get(confirm.entity).unwrap();
-                            if dialog_confirm.0 {
-                                commands
-                                    .entity(confirm_button.0)
-                                    .try_remove::<(InteractionDisabled, Tooltip)>();
-                            } else {
-                                commands
-                                    .entity(confirm_button.0)
-                                    .insert(InteractionDisabled);
-                                if let Some(confirm_disabled) = confirm_disabled.clone() {
-                                    commands.entity(confirm_button.0).insert(
-                                        Tooltip::new_text_color(confirm_disabled, TEXT_NEGATIVE),
-                                    );
+                            match &dialog_confirm {
+                                DialogConfirm::Enable => {
+                                    commands
+                                        .entity(confirm_button.0)
+                                        .try_remove::<(InteractionDisabled, Tooltip)>();
+                                }
+                                DialogConfirm::Disable(tooltip) => {
+                                    commands
+                                        .entity(confirm_button.0)
+                                        .insert(InteractionDisabled);
+                                    if let Some(tooltip) = tooltip.clone() {
+                                        commands.entity(confirm_button.0).insert(
+                                            Tooltip::new_text_color(tooltip, TEXT_NEGATIVE),
+                                        );
+                                    } else if let Some(confirm_disabled) = confirm_disabled.clone()
+                                    {
+                                        commands.entity(confirm_button.0).insert(
+                                            Tooltip::new_text_color(
+                                                confirm_disabled,
+                                                TEXT_NEGATIVE,
+                                            ),
+                                        );
+                                    }
                                 }
                             }
                         }
