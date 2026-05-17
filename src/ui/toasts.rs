@@ -58,11 +58,14 @@ fn animate_toasts(
     mut waiting: ResMut<WaitingToasts>,
     mut toasts: Query<(&mut Node, &ComputedNode)>,
     mapui: Single<(Entity, &ComputedNode), With<MapUi>>,
+    time: Res<Time<Real>>,
     font_handle: Res<FontHandle>,
 ) {
     let (mapui_e, mapui_cnode) = *mapui;
     let y_bottom = mapui_cnode.size.y * mapui_cnode.inverse_scale_factor;
     let mut y = y_bottom - ROW_GAP;
+
+    let speed = 180.0 * time.delta_secs();
 
     for &e in active.0.iter().rev() {
         if let Ok((mut node, cnode)) = toasts.get_mut(e) {
@@ -71,9 +74,9 @@ fn animate_toasts(
             // and we move the node slightly toward that position.
             if let Val::Px(node_y) = node.top {
                 if node_y < y {
-                    node.top = px(node_y + 1.0f32.min(y - node_y));
+                    node.top = px(node_y + speed.min(y - node_y));
                 } else if node_y > y {
-                    node.top = px(node_y - 1.0f32.min(node_y - y));
+                    node.top = px(node_y - speed.min(node_y - y));
                 }
             }
             y -= ROW_GAP;
