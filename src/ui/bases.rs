@@ -13,6 +13,7 @@ use crate::{
             fonts::{NORMAL, SMALL},
         },
     },
+    discoveries::DiscoveriesResearched,
     followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
     funds::Funds,
     regions::{BasePlot, Location, Region},
@@ -171,6 +172,7 @@ fn on_base_click(
     bases: Query<(&Children, &Base)>,
     followers: Query<(&Follower, &FollowerCount, &Children)>,
     tasks: Query<&Task>,
+    discoveries_researched: Res<DiscoveriesResearched>,
     task_handle: Res<TasksHandle>,
     task_assets: Res<Assets<TasksAsset>>,
 ) {
@@ -190,7 +192,12 @@ fn on_base_click(
             let current_task = children.iter().find_map(|c| tasks.get(c).ok()).unwrap();
             let task_iter = task_settings
                 .iter()
-                .filter(|(_, v)| v.follower_types.contains(f))
+                .filter(|(_, v)| {
+                    v.follower_types.contains(f)
+                        && v.requires_discovery
+                            .as_ref()
+                            .is_none_or(|d| discoveries_researched.contains_key(d))
+                })
                 .map(|(k, _)| {
                     let enabled = &current_task.0 != k;
                     let tooltip = if enabled {

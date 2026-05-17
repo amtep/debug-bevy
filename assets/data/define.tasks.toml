@@ -9,7 +9,7 @@ follower-types = ["goon"]
 security = 1
 
 [petty-crime]
-follower-types = ["minion"]
+follower-types = ["minion", "goon"]
 income-per-day = [100, "crime"]
 suspicions = { police = 0.5 }
 
@@ -22,6 +22,11 @@ achievement = "started-recruiting"
 follower-types = ["minion"]
 requires-discovery = "minions-can-recruit"
 recruit-progress = ["minion", 0.5]
+
+[priest-recruit-goons]
+follower-types = ["priest"]
+requires-discovery = "recruit-goons"
+recruit-progress = ["goon", 1.0]
 
 [research]
 follower-types = ["priest"]

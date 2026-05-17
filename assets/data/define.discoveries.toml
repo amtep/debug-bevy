@@ -7,7 +7,6 @@ modifiers = {
 
 [recruit-goons]
 research-cost = 50
-# not implemented yet
 
 [minions-can-recruit]
 research-cost = 50

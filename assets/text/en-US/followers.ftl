@@ -34,3 +34,5 @@ follower-transfer-title = Transfer { follower-type-name }
 follower-transfer-confirm = Go
 follower-transfer-confirm-tooltip = select a destination hideout first!
 follower-transfer-confirm-funds-tooltip = not enough funds, { FUNDS($funds) } required!
+
+new-follower-toast = Recruited { $count } { follower-type-name } in { region-name }
