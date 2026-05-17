@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use rand::RngExt;
 use rand_distr::Poisson;
 use serde::Deserialize;
+use strum::Display;
 
 use crate::{
     regions::Region,
@@ -22,7 +23,8 @@ pub fn plugin(app: &mut App) {
     );
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Deserialize, Display)]
+#[strum(serialize_all = "kebab-case")]
 #[serde(rename_all = "kebab-case")]
 pub enum SuspicionType {
     Intelligence,
@@ -119,5 +121,29 @@ fn update_suspicion(
         if media > 0.0 {
             media_suspicion.0 += random.0.sample(Poisson::new(media).unwrap()) as u32;
         }
+    }
+}
+
+pub fn add_suspicions(
+    mut commands: Commands,
+    entity: Entity,
+    count: usize,
+    suspicions: impl IntoIterator<Item = (SuspicionType, f32)>,
+) {
+    for (suspicion, amount) in suspicions {
+        #[allow(clippy::cast_possible_truncation)]
+        let amount = count as f32 * amount;
+        match suspicion {
+            SuspicionType::Intelligence => commands
+                .entity(entity)
+                .insert(IntelligenceSuspicionChange(amount)),
+            SuspicionType::Scientific => commands
+                .entity(entity)
+                .insert(ScientificSuspicionChange(amount)),
+            SuspicionType::Police => commands
+                .entity(entity)
+                .insert(PoliceSuspicionChange(amount)),
+            SuspicionType::Media => commands.entity(entity).insert(MediaSuspicionChange(amount)),
+        };
     }
 }

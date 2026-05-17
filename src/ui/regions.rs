@@ -287,30 +287,29 @@ fn on_region_click(
                                     };
 
                                     parent.spawn(line(
-                                        "acquire-basetype-dialog-max-pop",
+                                        "acquire-basetype-dialog-max-pop".into(),
                                         "count",
                                         settings.max_follower_count as f64,
                                     ));
                                     parent.spawn(line(
-                                        "acquire-basetype-dialog-initial-cost",
+                                        "acquire-basetype-dialog-initial-cost".into(),
                                         "funds",
                                         settings.initial_cost as f64,
                                     ));
                                     parent.spawn(line(
-                                        "acquire-basetype-dialog-cost-per-day",
+                                        "acquire-basetype-dialog-cost-per-day".into(),
                                         "funds",
                                         settings.cost_per_day as f64,
                                     ));
-                                    parent.spawn(line(
-                                        "acquire-basetype-dialog-police-suspicion",
-                                        "suspicion",
-                                        settings.police_suspicion as f64,
-                                    ));
-                                    parent.spawn(line(
-                                        "acquire-basetype-dialog-media-suspicion",
-                                        "suspicion",
-                                        settings.media_suspicion as f64,
-                                    ));
+                                    for (suspicion, amount) in &settings.suspicions {
+                                        parent.spawn(line(
+                                            format!(
+                                                "acquire-basetype-dialog-{suspicion}-suspicion"
+                                            ),
+                                            "suspicion",
+                                            *amount as f64,
+                                        ));
+                                    }
                                 })
                                 .id();
 

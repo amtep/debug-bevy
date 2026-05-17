@@ -13,7 +13,7 @@ use crate::{
     state::GameState,
     suspicion::{
         IntelligenceSuspicionChange, MediaSuspicionChange, PoliceSuspicionChange,
-        ScientificSuspicionChange, SuspicionType,
+        ScientificSuspicionChange, SuspicionType, add_suspicions,
     },
 };
 
@@ -129,26 +129,12 @@ fn on_task_changed<C: Component>(
         MediaSuspicionChange,
     )>();
 
-    if !settings.suspicions.is_empty() {
-        for (suspicion, amount) in &settings.suspicions {
-            #[allow(clippy::cast_possible_truncation)]
-            let amount = count.0 as f32 * *amount;
-            match *suspicion {
-                SuspicionType::Intelligence => commands
-                    .entity(task_entity)
-                    .insert(IntelligenceSuspicionChange(amount)),
-                SuspicionType::Scientific => commands
-                    .entity(task_entity)
-                    .insert(ScientificSuspicionChange(amount)),
-                SuspicionType::Police => commands
-                    .entity(task_entity)
-                    .insert(PoliceSuspicionChange(amount)),
-                SuspicionType::Media => commands
-                    .entity(task_entity)
-                    .insert(MediaSuspicionChange(amount)),
-            };
-        }
-    }
+    add_suspicions(
+        commands.reborrow(),
+        task_entity,
+        count.0,
+        settings.suspicions.iter().map(|(t, a)| (*t, *a)),
+    );
 
     if settings.research != 0 {
         commands
