@@ -41,7 +41,7 @@ fn listen_dev_keys(
         research_points.0 += 1_000;
     }
     if keys.just_pressed(KeyCode::KeyT) && keys.pressed(KeyCode::ControlLeft) {
-        toasts.0.push(TextKey::new("debug-toast"));
+        toasts.push(TextKey::new("debug-toast"));
     }
 }
 
