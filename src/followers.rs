@@ -169,7 +169,7 @@ fn recruit(
                         .add_arg("count", additional_followers as f64)
                         .add_arg("follower-type", recruit.0.clone())
                         .add_arg("region", region.name.clone());
-                    toasts.0.push(toast);
+                    toasts.push(toast);
                     break;
                 }
             }

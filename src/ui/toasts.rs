@@ -43,7 +43,13 @@ struct ToastTimer(Timer);
 /// They will pop up on the screen in order, when there is room.
 /// Add a new toast by pushing to this vector.
 #[derive(Resource, Default)]
-pub struct WaitingToasts(pub Vec<TextKey>);
+pub struct WaitingToasts(Vec<TextKey>);
+
+impl WaitingToasts {
+    pub fn push(&mut self, text_key: impl Into<TextKey>) {
+        self.0.push(text_key.into());
+    }
+}
 
 fn setup(mut commands: Commands) {
     commands.init_resource::<ActiveToasts>();
