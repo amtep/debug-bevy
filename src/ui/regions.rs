@@ -155,13 +155,16 @@ pub fn setup(
             region_commands.insert((
                 InteractionDisabled,
                 Tooltip::new_text_color("region-needs-unlock-tooltip", TEXT_NEGATIVE),
+            ));
+
+            commands.spawn(
                 Observer::new(move |_: On<Add, Unlocked>, mut commands: Commands| {
                     commands
                         .entity(region_entity)
                         .remove::<(InteractionDisabled, Tooltip)>();
                 })
                 .with_entity(entity),
-            ));
+            );
         }
 
         for child in children {
