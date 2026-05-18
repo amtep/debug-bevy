@@ -6,7 +6,8 @@ use moonshine_save::save::Save;
 use serde::Deserialize;
 
 use crate::{
-    discoveries::{DiscoveriesResearched, DiscoveryVisibility},
+    common::Unlocked,
+    discoveries::{DiscoveriesResearched, DiscoveryLearned, DiscoveryVisibility},
     new_game::NewGame,
     state::{GameState, MainSetupSet},
     suspicion::{MediaSuspicion, PoliceSuspicion},
@@ -21,7 +22,7 @@ pub fn plugin(app: &mut App) {
         .add_systems(OnExit(GameState::Load), cleanup_load)
         .add_systems(
             OnEnter(GameState::Main),
-            new_game.in_set(MainSetupSet::Regions),
+            (new_game, setup_main).chain().in_set(MainSetupSet::Regions),
         )
         .add_systems(FixedUpdate, reload.run_if(not(in_state(GameState::Load))));
 }
@@ -96,9 +97,11 @@ fn new_game(
         .and_then(|r| r.requires_discovery.as_ref())
     {
         info!("Automatically unlocking starting region");
-        discoveries
-            .0
-            .insert(discovery.clone(), DiscoveryVisibility::Hidden);
+        discoveries.research(
+            commands.reborrow(),
+            discovery.clone(),
+            DiscoveryVisibility::Hidden,
+        );
     }
 
     for (name, settings) in regions {
@@ -110,6 +113,9 @@ fn new_game(
                     PoliceSuspicion(0),
                     MediaSuspicion(0),
                 ))
+                .insert_if(Unlocked, || {
+                    *name == new_game.region.name || settings.requires_discovery.is_none()
+                })
                 .with_children(|parent| {
                     for (name, location) in &settings.base_plots {
                         parent.spawn((BasePlot { name: name.clone() }, *location));
@@ -117,6 +123,32 @@ fn new_game(
                 });
         }
     }
+}
+
+fn setup_main(mut commands: Commands) {
+    commands.add_observer(
+        |discovery: On<DiscoveryLearned>,
+         mut commands: Commands,
+         regions: Query<(Entity, &Region, Has<Unlocked>)>,
+         regions_handle: Res<RegionsHandle>,
+         regions_asset: Res<Assets<RegionsAsset>>| {
+            let region_settings = &regions_asset.get(regions_handle.0.id()).unwrap().0;
+
+            for (region_entity, region, unlocked) in regions {
+                if !unlocked
+                    && region_settings
+                        .get(&region.name)
+                        .unwrap()
+                        .requires_discovery
+                        .as_ref()
+                        .unwrap()
+                        == &discovery.0
+                {
+                    commands.entity(region_entity).insert(Unlocked);
+                }
+            }
+        },
+    );
 }
 
 /// Adjust location settings in the game state entities if the regions asset file has changed.

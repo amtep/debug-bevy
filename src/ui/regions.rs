@@ -2,10 +2,11 @@ use bevy::{prelude::*, ui::InteractionDisabled};
 
 use crate::{
     bases::{BasetypesAsset, BasetypesHandle, spawn_base},
+    common::Unlocked,
     constants::ui::{colors::*, fonts::*},
     discoveries::DiscoveriesResearched,
     funds::Funds,
-    regions::{BasePlot, Location, Region, RegionsAsset, RegionsHandle},
+    regions::{BasePlot, Location, Region},
     suspicion::{MediaSuspicion, PoliceSuspicion, SuspicionType},
     text::TextKey,
     ui::{
@@ -38,22 +39,13 @@ struct RegionUi;
 pub fn setup(
     mut commands: Commands,
     map_ui: Single<Entity, With<MapUi>>,
-    regions: Query<(Entity, &Region, &Location, &Children)>,
+    regions: Query<(Entity, &Region, &Location, &Children, Has<Unlocked>)>,
     base_plots: Query<&Location, With<BasePlot>>,
     display_font_handle: Res<DisplayFontHandle>,
     mono_font_handle: Res<MonoFontHandle>,
     emoji_font_handle: Res<EmojiFontHandle>,
-    regions_handle: Res<RegionsHandle>,
-    regions_assets: Res<Assets<RegionsAsset>>,
-    discovered: Res<DiscoveriesResearched>,
 ) {
-    let region_settings = &regions_assets.get(regions_handle.0.id()).unwrap().0;
-
-    for (entity, region, location, children) in regions.iter() {
-        let Some(settings) = region_settings.get(&region.name) else {
-            error!("Unknown region {}", &region.name);
-            continue;
-        };
+    for (entity, region, location, children, unlocked) in regions.iter() {
         let mut region_commands = commands.spawn((
             ChildOf(*map_ui),
             ViewOf(entity),
@@ -77,6 +69,7 @@ pub fn setup(
             BorderColor::all(BORDER),
             BackgroundColor::from(BUTTON_BACKGROUND.with_alpha(OVERLAY_ALPHA)),
         ));
+        let region_entity = region_commands.id();
         region_commands
             .observe(on_region_click)
             .with_children(|parent| {
@@ -158,12 +151,16 @@ pub fn setup(
                     ],
                 ));
             });
-        if let Some(discovery) = settings.requires_discovery.as_ref()
-            && !discovered.0.contains_key(discovery)
-        {
+        if !unlocked {
             region_commands.insert((
                 InteractionDisabled,
                 Tooltip::new_text_color("region-needs-unlock-tooltip", TEXT_NEGATIVE),
+                Observer::new(move |_: On<Add, Unlocked>, mut commands: Commands| {
+                    commands
+                        .entity(region_entity)
+                        .remove::<(InteractionDisabled, Tooltip)>();
+                })
+                .with_entity(entity),
             ));
         }
 

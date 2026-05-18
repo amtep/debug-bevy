@@ -15,43 +15,43 @@ research-cost = 50
 [shadowy-contacts]
 research-cost = 50
 
-[unlock-north-america]
+[unlock-region-north-america]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 # not implemented yet
 
-[unlock-south-america]
+[unlock-region-south-america]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 # not implemented yet
 
-[unlock-europe]
+[unlock-region-europe]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 # not implemented yet
 
-[unlock-africa]
+[unlock-region-africa]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 # not implemented yet
 
-[unlock-western-asia]
+[unlock-region-western-asia]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 # not implemented yet
 
-[unlock-eastern-asia]
+[unlock-region-eastern-asia]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 # not implemented yet
 
-[unlock-oceania]
+[unlock-region-oceania]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]

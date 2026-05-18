@@ -14,3 +14,6 @@ pub struct Difficulty(pub String);
 
 #[derive(Resource, Default)]
 pub struct Dev;
+
+#[derive(Component)]
+pub struct Unlocked;

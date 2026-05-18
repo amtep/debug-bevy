@@ -40,7 +40,21 @@ pub enum DiscoveryVisibility {
 /// The discoveries that have been discovered by the player, ordered by when they were discovered.
 #[derive(Resource, Default, Reflect, Deref)]
 #[reflect(Resource)]
-pub struct DiscoveriesResearched(pub IndexMap<String, DiscoveryVisibility>);
+pub struct DiscoveriesResearched(IndexMap<String, DiscoveryVisibility>);
+
+impl DiscoveriesResearched {
+    pub fn research(
+        &mut self,
+        mut commands: Commands,
+        discovery: String,
+        visibility: DiscoveryVisibility,
+    ) {
+        if self.0.insert(discovery.clone(), visibility).is_some() {
+            warn!("discovery already researched");
+        }
+        commands.trigger(DiscoveryLearned(discovery));
+    }
+}
 
 #[derive(Resource, Default, Reflect)]
 #[reflect(Resource)]
@@ -62,6 +76,9 @@ pub struct DiscoverySettings {
     #[serde(default)]
     pub modifiers: IndexMap<String, f64>,
 }
+
+#[derive(Event)]
+pub struct DiscoveryLearned(pub String);
 
 #[derive(Resource)]
 pub struct DiscoverySelected(pub String, pub FundsAmount, pub u32);
@@ -101,9 +118,11 @@ pub fn learn_new_discovery(
         );
     }
 
-    discoveries_researched
-        .0
-        .insert(discovery_selected.0.clone(), DiscoveryVisibility::Shown);
+    discoveries_researched.research(
+        commands.reborrow(),
+        discovery_selected.0.clone(),
+        DiscoveryVisibility::Shown,
+    );
 }
 
 fn research(researches: Query<&Research>, mut points: ResMut<ResearchPoints>) {
