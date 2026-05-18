@@ -126,29 +126,31 @@ fn new_game(
 }
 
 fn setup_main(mut commands: Commands) {
-    commands.add_observer(
-        |discovery: On<DiscoveryLearned>,
-         mut commands: Commands,
-         regions: Query<(Entity, &Region, Has<Unlocked>)>,
-         regions_handle: Res<RegionsHandle>,
-         regions_asset: Res<Assets<RegionsAsset>>| {
-            let region_settings = &regions_asset.get(regions_handle.0.id()).unwrap().0;
+    commands
+        .add_observer(
+            |discovery: On<DiscoveryLearned>,
+             mut commands: Commands,
+             regions: Query<(Entity, &Region, Has<Unlocked>)>,
+             regions_handle: Res<RegionsHandle>,
+             regions_asset: Res<Assets<RegionsAsset>>| {
+                let region_settings = &regions_asset.get(regions_handle.0.id()).unwrap().0;
 
-            for (region_entity, region, unlocked) in regions {
-                if !unlocked
-                    && region_settings
-                        .get(&region.name)
-                        .unwrap()
-                        .requires_discovery
-                        .as_ref()
-                        .unwrap()
-                        == &discovery.0
-                {
-                    commands.entity(region_entity).insert(Unlocked);
+                for (region_entity, region, unlocked) in regions {
+                    if !unlocked
+                        && region_settings
+                            .get(&region.name)
+                            .unwrap()
+                            .requires_discovery
+                            .as_ref()
+                            .unwrap()
+                            == &discovery.0
+                    {
+                        commands.entity(region_entity).insert(Unlocked);
+                    }
                 }
-            }
-        },
-    );
+            },
+        )
+        .insert(DespawnOnExit(GameState::Main));
 }
 
 /// Adjust location settings in the game state entities if the regions asset file has changed.
