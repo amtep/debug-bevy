@@ -2,28 +2,28 @@
 max-follower-count = 5
 cost-per-day = 20
 initial-cost = 2000
-suspicions = { police = 1.0, media = 1.0 }
+suspicions = { police = 0.5, media = 0.5 }
 color = "white"
 
 [old-farmhouse]
 max-follower-count = 20
 cost-per-day = 60
 initial-cost = 100000
-suspicions = { media = 1.0 }
+suspicions = { police = 0.5, media = 1.0 }
 color = "green"
 
 [abandoned-hospital]
 max-follower-count = 40
 cost-per-day = 100
 initial-cost = 50000
-suspicions = { police = 2.0, media = 1.0 }
+suspicions = { police = 1.5, media = 1.0 }
 color = "blue"
 
 [castle]
 max-follower-count = 50
 cost-per-day = 500
 initial-cost = 5_000_000
-suspicions = { police = 2.0, media = 3.0 }
+suspicions = { police = 2.0, media = 2.0 }
 regions = ["europe"]
 requires-discovery = "esoteric-knowledge"
 color = "red"

@@ -1,10 +1,16 @@
 use bevy::prelude::*;
+use moonshine_save::save::Save;
 use rand::RngExt;
 use rand_distr::Poisson;
 use serde::Deserialize;
 use strum::Display;
 
 use crate::{
+    modifiers::{
+        IntelligenceSuspicionModifier, MediaSuspicionModifier, Modifier, PoliceSuspicionModifier,
+        ScientificSuspicionModifier,
+    },
+    new_game::NewGame,
     regions::Region,
     rng::RandomSource,
     state::{GameState, MainSetupSet},
@@ -14,7 +20,7 @@ use crate::{
 pub fn plugin(app: &mut App) {
     app.add_systems(
         OnEnter(GameState::Main),
-        setup_main.in_set(MainSetupSet::Default),
+        (setup_main, new_game.run_if(resource_exists::<NewGame>)).in_set(MainSetupSet::Default),
     )
     .add_systems(
         FixedUpdate,
@@ -68,8 +74,17 @@ pub struct PoliceSuspicionChange(pub f32);
 pub struct MediaSuspicionChange(pub f32);
 
 fn setup_main(mut commands: Commands) {
-    commands.init_resource::<IntelligenceSuspicion>();
-    commands.init_resource::<ScientificSuspicion>();
+    commands.insert_resource(IntelligenceSuspicion::default());
+    commands.insert_resource(ScientificSuspicion::default());
+}
+
+fn new_game(mut commands: Commands) {
+    commands.spawn((
+        DespawnOnExit(GameState::Main),
+        IntelligenceSuspicionChange(1.0),
+        ScientificSuspicionChange(1.0),
+        Save,
+    ));
 }
 
 #[expect(clippy::cast_possible_truncation, reason = "it's random values anyway")]
@@ -78,15 +93,25 @@ fn update_suspicion(
     mut intel_suspicion: ResMut<IntelligenceSuspicion>,
     mut scien_suspicion: ResMut<ScientificSuspicion>,
     mut regions: Query<(Entity, &mut PoliceSuspicion, &mut MediaSuspicion), With<Region>>,
-    intel_suspicion_changes: Query<&IntelligenceSuspicionChange>,
-    scien_suspicion_changes: Query<&ScientificSuspicionChange>,
+    intel_suspicion_changes: Query<(Entity, &IntelligenceSuspicionChange)>,
+    scien_suspicion_changes: Query<(Entity, &ScientificSuspicionChange)>,
+    m_i: Modifier<IntelligenceSuspicionModifier>,
+    m_s: Modifier<ScientificSuspicionModifier>,
+    m_p: Modifier<PoliceSuspicionModifier>,
+    m_m: Modifier<MediaSuspicionModifier>,
     police_suspicion_changes: Query<&PoliceSuspicionChange>,
     media_suspicion_changes: Query<&MediaSuspicionChange>,
     children: Query<&Children>,
     mut random: ResMut<RandomSource>,
 ) {
-    let intel_suspicion_change = 1.0 + intel_suspicion_changes.iter().map(|s| s.0).sum::<f32>();
-    let scien_suspicion_change = 1.0 + scien_suspicion_changes.iter().map(|s| s.0).sum::<f32>();
+    let intel_suspicion_change = intel_suspicion_changes
+        .iter()
+        .map(|(entity, change)| m_i.calc(change.0 as f64, entity))
+        .sum::<f64>();
+    let scien_suspicion_change = scien_suspicion_changes
+        .iter()
+        .map(|(entity, change)| m_s.calc(change.0 as f64, entity))
+        .sum::<f64>();
 
     if intel_suspicion_change > 0.0 {
         intel_suspicion.0 += random
@@ -107,10 +132,10 @@ fn update_suspicion(
 
         for desc in children.iter_descendants(entity) {
             if let Ok(police_suspicion_change) = police_suspicion_changes.get(desc) {
-                police += police_suspicion_change.0;
+                police += m_p.calc(police_suspicion_change.0 as f64, desc);
             }
             if let Ok(media_suspicion_change) = media_suspicion_changes.get(desc) {
-                media += media_suspicion_change.0;
+                media += m_m.calc(media_suspicion_change.0 as f64, desc);
             }
         }
 

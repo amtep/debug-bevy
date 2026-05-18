@@ -79,8 +79,8 @@ fn new_game(mut commands: Commands, new_game: Res<NewGame>) {
 }
 
 fn setup_main(mut commands: Commands) {
-    commands.init_resource::<TotalIncome>();
-    commands.init_resource::<TotalExpense>();
+    commands.insert_resource(TotalIncome::default());
+    commands.insert_resource(TotalExpense::default());
     // do NOT trigger on load with lots of insertion.
     commands
         .add_observer(on_income_expense_updated)

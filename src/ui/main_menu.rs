@@ -353,7 +353,7 @@ fn setup_difficulties_dialog(
                                 },
                                 text_key,
                                 TextColor::from(TEXT),
-                                TextLayout::new_with_no_wrap(),
+                                TextLayout::new_with_justify(Justify::Center),
                                 TextFont::from_font_size(NORMAL).with_font(font_handle.clone()),
                             )
                         };
@@ -365,7 +365,7 @@ fn setup_difficulties_dialog(
                         ));
                         parent
                             .spawn(Node {
-                                height: px(75),
+                                height: px(70),
                                 flex_direction: FlexDirection::Column,
                                 align_items: AlignItems::Center,
                                 margin: UiRect::vertical(px(8)),
@@ -389,7 +389,7 @@ fn setup_difficulties_dialog(
                             });
                         parent
                             .spawn(Node {
-                                height: px(75),
+                                height: px(100),
                                 flex_direction: FlexDirection::Column,
                                 align_items: AlignItems::Center,
                                 margin: UiRect::vertical(px(8)),
@@ -401,7 +401,7 @@ fn setup_difficulties_dialog(
                                         TextKey::new(format!("modifier-{modifier}"))
                                             .add_arg("value", *value)
                                             .add_arg("percent", ((value - 1.0) * 100.0).round()),
-                                        2,
+                                        4,
                                     ));
                                 }
                             });

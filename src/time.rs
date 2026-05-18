@@ -64,7 +64,7 @@ fn setup(mut commands: Commands, mut time: ResMut<Time<Virtual>>) {
 }
 
 fn new_game(mut commands: Commands) {
-    commands.init_resource::<GameDate>();
+    commands.insert_resource(GameDate::default());
 }
 
 /// The "source of truth" for game speed state.

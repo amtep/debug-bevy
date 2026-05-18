@@ -519,7 +519,7 @@ fn setup_ui(
                     };
                     parent.spawn(secondary_bundle(
                         px(45),
-                        TextKey::new("intelligence-suspicion-tooltip"),
+                        TextKey::new("intelligence-suspicion"),
                         suspicion_type_icon(SuspicionType::Intelligence),
                         suspicion_type_color(SuspicionType::Intelligence),
                         (IntelligenceSuspicionUi, meter.clone()),
@@ -528,7 +528,7 @@ fn setup_ui(
                     ));
                     parent.spawn(secondary_bundle(
                         px(45),
-                        TextKey::new("scientific-suspicion-tooltip"),
+                        TextKey::new("scientific-suspicion"),
                         suspicion_type_icon(SuspicionType::Scientific),
                         suspicion_type_color(SuspicionType::Scientific),
                         (ScientificSuspicionUi, meter),

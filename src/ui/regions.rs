@@ -100,7 +100,7 @@ pub fn setup(
                                 justify_content: JustifyContent::SpaceBetween,
                                 ..default()
                             },
-                            Tooltip::new_text("police-suspicion-tooltip"),
+                            Tooltip::new_text("police-suspicion"),
                             children![
                                 (
                                     Text::new(suspicion_type_icon(SuspicionType::Police)),
@@ -127,7 +127,7 @@ pub fn setup(
                                 justify_content: JustifyContent::SpaceBetween,
                                 ..default()
                             },
-                            Tooltip::new_text("media-suspicion-tooltip"),
+                            Tooltip::new_text("media-suspicion"),
                             children![
                                 (
                                     Text::new(suspicion_type_icon(SuspicionType::Media)),

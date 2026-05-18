@@ -5,7 +5,9 @@ starting-followers = {
     minion = 1
 }
 modifiers = {
-    income-mult = 1.1
+    income-mult = 1.1,
+    intelligence-suspicion-mult = 0.8,
+    scientific-suspicion-mult = 0.8
 }
 
 [normal]
@@ -21,5 +23,7 @@ starting-followers = {
     priest = 1,
 }
 modifiers = {
-    income-mult = 0.9
+    income-mult = 0.9,
+    intelligence-suspicion-mult = 1.2,
+    scientific-suspicion-mult = 1.2
 }

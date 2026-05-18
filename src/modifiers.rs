@@ -57,6 +57,22 @@ pub struct IncomeModifier;
 #[reflect(Component)]
 pub struct ExpenseModifier;
 
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct IntelligenceSuspicionModifier;
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct ScientificSuspicionModifier;
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct PoliceSuspicionModifier;
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct MediaSuspicionModifier;
+
 /// A system parameter that can be used to calculate modifiers to a base value.
 /// Use it like `m: Modifier<RecruitmentBy>`, then `m.calc_with(base, |r| r.0 == follower)`
 /// where `base` and `follower` are provided by the system that uses this parameter.
@@ -181,22 +197,40 @@ pub fn spawn_modifier(mut commands: Commands, modifier: &str, value: f64, source
     };
     let bundle = (op, Value(value), source);
 
-    if let Some(sfx) = name.strip_prefix("recruitment-by-") {
-        if let Some((follower1, follower2)) = sfx.split_once("-of-") {
-            commands.spawn((
-                RecruitmentByOf(follower1.to_string(), follower2.to_string()),
-                bundle,
-            ));
-        } else {
-            commands.spawn((RecruitmentBy(sfx.to_string()), bundle));
+    match name {
+        "income" => {
+            commands.spawn((IncomeModifier, bundle));
         }
-    } else if let Some(follower) = name.strip_prefix("recruitment-of-") {
-        commands.spawn((RecruitmentOf(follower.to_string()), bundle));
-    } else if name == "income" {
-        commands.spawn((IncomeModifier, bundle));
-    } else if name == "expense" {
-        commands.spawn((ExpenseModifier, bundle));
-    } else {
-        error!("Unknown modifier {modifier}");
+        "expense" => {
+            commands.spawn((ExpenseModifier, bundle));
+        }
+        name if let Some(sfx) = name.strip_prefix("recruitment-") => {
+            if let Some(sfx) = sfx.strip_prefix("by-") {
+                commands.spawn((RecruitmentBy(sfx.to_string()), bundle));
+            } else if let Some(sfx) = sfx.strip_prefix("of-") {
+                commands.spawn((RecruitmentOf(sfx.to_string()), bundle));
+            } else if let Some((follower1, follower2)) = sfx.split_once("-of-") {
+                commands.spawn((
+                    RecruitmentByOf(follower1.to_string(), follower2.to_string()),
+                    bundle,
+                ));
+            }
+        }
+        name if let Some(pre) = name.strip_suffix("-suspicion") => match pre {
+            "intelligence" => {
+                commands.spawn((IntelligenceSuspicionModifier, bundle));
+            }
+            "scientific" => {
+                commands.spawn((ScientificSuspicionModifier, bundle));
+            }
+            "police" => {
+                commands.spawn((PoliceSuspicionModifier, bundle));
+            }
+            "media" => {
+                commands.spawn((MediaSuspicionModifier, bundle));
+            }
+            _ => error!("Unknown suspicion modifier"),
+        },
+        _ => error!("Unknown modifier {modifier}"),
     }
 }

@@ -1,5 +1,3 @@
-use apocalyptosis::main_loop::main_loop;
-
 fn main() {
-    main_loop();
+    apocalyptosis::app();
 }

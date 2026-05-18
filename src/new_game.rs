@@ -21,7 +21,9 @@ pub fn plugin(app: &mut App) {
     .add_systems(
         OnEnter(GameState::Main),
         (
-            add_difficulty_modifiers.in_set(MainSetupSet::Default),
+            add_difficulty_modifiers
+                .run_if(resource_exists::<NewGame>)
+                .in_set(MainSetupSet::Default),
             remove_new_game.in_set(MainSetupSet::Late),
         ),
     );
@@ -59,7 +61,7 @@ pub struct NewGame {
 
 fn add_difficulty_modifiers(
     mut commands: Commands,
-    new_game: If<Res<NewGame>>,
+    new_game: Res<NewGame>,
     difficulty: Res<Difficulty>,
 ) {
     for (modifier, value) in &new_game.difficulty.modifiers {

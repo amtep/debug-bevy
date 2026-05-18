@@ -52,8 +52,8 @@ impl WaitingToasts {
 }
 
 fn setup(mut commands: Commands) {
-    commands.init_resource::<ActiveToasts>();
-    commands.init_resource::<WaitingToasts>();
+    commands.insert_resource(ActiveToasts::default());
+    commands.insert_resource(WaitingToasts::default());
 }
 
 const ROW_GAP: f32 = 10.0;
