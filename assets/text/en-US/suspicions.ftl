@@ -9,4 +9,4 @@ suspicion = { $suspicion ->
     [media] { media-suspicion }
 }
 
-suspicion-change = { BIGNUM($amount, lower-limit: 0, sign: "blank") }
+suspicion-change = { BIGNUM($amount, lower-limit: 0, max-dp: 1, sign: "blank") }

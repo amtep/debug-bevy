@@ -1,32 +1,84 @@
-[follower-killed]
+[minions-detained]
 major = false
-suspicion-types = ["police", "intelligence"]
+suspicion-types = ["police"]
 effects = [
-  {
-    follower = {
-      name = "minion",
-      count = -1,
-    }
-  },
+  { follower-busy = { name = "minion", count = -3, duration = 30 } },
 ]
 
-[secrets-drained]
+[priest-arrested]
+major = false
+suspicion-types = ["police"]
+effects = [{ follower-busy = { name = "priest", count = -1, duration = 60 } }]
+
+[secrets-analyzed]
 major = false
 suspicion-types = ["scientific"]
 effects = [
   { secrets = -100 },
 ]
 
+[cult-debunked]
+major = false
+suspicion-types = ["scientific"]
+effects = [{ expense = { amount = [250, "event", 1], duration = 60 } }]
+
 [crime-exposed]
 major = false
 suspicion-types = ["media"]
 effects = [
   {
-    expense = {
-      amount = [200, "media", 1],
+    # use income-crime-mult when available
+    modifier = {
+      name = "income-mult",
+      amount = 0.75,
       duration = 90,
     }
   },
+]
+
+[awareness-campaign]
+major = false
+suspicion-types = ["media"]
+effects = [
+  {
+    modifier = {
+      name = "recruitment-of-minion-mult",
+      amount = 0.5,
+      duration = 45,
+    }
+  },
+  {
+    modifier = {
+      name = "recruitment-of-goon-mult",
+      amount = 0.75,
+      duration = 45,
+    }
+  }
+]
+
+[minions-turned]
+major = false
+suspicion-types = ["intelligence"]
+effects = [{ follower = { name = "minion", count = -1 } }, { funds = -2500 }]
+
+[cult-briefed]
+major = false
+suspicion-types = ["intelligence"]
+effects = [
+  {
+    modifier = {
+      name = "police-suspicion-mult",
+      amount = 2.0,
+      duration = 30,
+    },
+  },
+  {
+    modifier = {
+      name = "media-suspicion-mult",
+      amount = 2.0,
+      duration = 30,
+    },
+  }
 ]
 
 [base-raided]

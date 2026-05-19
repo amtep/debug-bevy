@@ -143,7 +143,7 @@ fn update_suspicion(
         let mut spawn_event = |major| {
             let events: Vec<_> = suspicion_events
                 .iter()
-                .filter(|(_, v)| v.major == major && v.suspicion_types.contains(&suspicion_type))
+                .filter(|(_, v)| v.major == major && v.suspicion_type == suspicion_type)
                 .map(|(k, _)| k)
                 .collect();
             let event = (*events.choose(rng).unwrap()).clone();
@@ -302,7 +302,7 @@ pub struct SuspicionEventChoice {
 #[serde(rename_all = "kebab-case")]
 pub struct SuspicionEventSettings {
     pub major: bool,
-    pub suspicion_types: Vec<SuspicionType>,
+    pub suspicion_type: SuspicionType,
     pub delay: Option<u32>,
     #[serde(default)]
     pub effects: Vec<Effect>,
