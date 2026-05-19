@@ -1,11 +1,14 @@
 use bevy::prelude::*;
+use bevy_common_assets::toml::TomlAssetPlugin;
+use indexmap::IndexMap;
 use moonshine_save::save::Save;
-use rand::RngExt;
+use rand::{RngExt, rngs::StdRng, seq::IndexedRandom};
 use rand_distr::Poisson;
 use serde::Deserialize;
 use strum::Display;
 
 use crate::{
+    common::Effect,
     modifiers::{
         IntelligenceSuspicionModifier, MediaSuspicionModifier, Modifier, PoliceSuspicionModifier,
         ScientificSuspicionModifier,
@@ -17,8 +20,16 @@ use crate::{
     time::GameDate,
 };
 
+const LOWER_LIMIT: u32 = 334;
+const MIDDLE_LIMIT: u32 = 667;
+const UPPER_LIMIT: u32 = 1000;
+
 pub fn plugin(app: &mut App) {
-    app.add_systems(
+    app.add_plugins(TomlAssetPlugin::<SuspicionEventsAsset>::new(&[
+        "suspicion-events.toml",
+    ]))
+    .add_systems(OnEnter(GameState::Load), setup_load)
+    .add_systems(
         OnEnter(GameState::Main),
         (setup_main, new_game.run_if(resource_exists::<NewGame>)).in_set(MainSetupSet::Default),
     )
@@ -81,8 +92,8 @@ fn setup_main(mut commands: Commands) {
 fn new_game(mut commands: Commands) {
     commands.spawn((
         DespawnOnExit(GameState::Main),
-        IntelligenceSuspicionChange(1.0),
-        ScientificSuspicionChange(1.0),
+        IntelligenceSuspicionChange(0.5),
+        ScientificSuspicionChange(0.5),
         Save,
     ));
 }
@@ -90,6 +101,7 @@ fn new_game(mut commands: Commands) {
 #[expect(clippy::cast_possible_truncation, reason = "it's random values anyway")]
 #[expect(clippy::cast_sign_loss, reason = "it's random values anyway")]
 fn update_suspicion(
+    mut commands: Commands,
     mut intel_suspicion: ResMut<IntelligenceSuspicion>,
     mut scien_suspicion: ResMut<ScientificSuspicion>,
     mut regions: Query<(Entity, &mut PoliceSuspicion, &mut MediaSuspicion), With<Region>>,
@@ -103,7 +115,14 @@ fn update_suspicion(
     media_suspicion_changes: Query<&MediaSuspicionChange>,
     children: Query<&Children>,
     mut random: ResMut<RandomSource>,
+    suspicion_events_handle: Res<SuspicionEventsHandle>,
+    suspicion_events_asset: Res<Assets<SuspicionEventsAsset>>,
 ) {
+    let suspicion_events = &suspicion_events_asset
+        .get(suspicion_events_handle.0.id())
+        .unwrap()
+        .0;
+
     let intel_suspicion_change = intel_suspicion_changes
         .iter()
         .map(|(entity, change)| m_i.calc(change.0 as f64, entity))
@@ -114,16 +133,34 @@ fn update_suspicion(
         .sum::<f64>();
 
     if intel_suspicion_change > 0.0 {
-        intel_suspicion.0 += random
+        let change = random
             .0
-            .sample(Poisson::new(intel_suspicion_change).unwrap())
-            as u32;
+            .sample(Poisson::new(intel_suspicion_change).unwrap()) as u32;
+
+        add_suspicion(
+            commands.reborrow(),
+            None,
+            &mut intel_suspicion.0,
+            change,
+            SuspicionType::Intelligence,
+            suspicion_events,
+            &mut random.0,
+        );
     }
     if scien_suspicion_change > 0.0 {
-        scien_suspicion.0 += random
+        let change = random
             .0
-            .sample(Poisson::new(scien_suspicion_change).unwrap())
-            as u32;
+            .sample(Poisson::new(scien_suspicion_change).unwrap()) as u32;
+
+        add_suspicion(
+            commands.reborrow(),
+            None,
+            &mut scien_suspicion.0,
+            change,
+            SuspicionType::Scientific,
+            suspicion_events,
+            &mut random.0,
+        );
     }
 
     for (entity, mut police_suspicion, mut media_suspicion) in &mut regions {
@@ -140,12 +177,67 @@ fn update_suspicion(
         }
 
         if police > 0.0 {
-            police_suspicion.0 += random.0.sample(Poisson::new(police).unwrap()) as u32;
+            let change = random.0.sample(Poisson::new(police).unwrap()) as u32;
+            warn!("police");
+            add_suspicion(
+                commands.reborrow(),
+                Some(entity),
+                &mut police_suspicion.0,
+                change,
+                SuspicionType::Police,
+                suspicion_events,
+                &mut random.0,
+            );
         }
 
         if media > 0.0 {
-            media_suspicion.0 += random.0.sample(Poisson::new(media).unwrap()) as u32;
+            let change = random.0.sample(Poisson::new(media).unwrap()) as u32;
+
+            add_suspicion(
+                commands.reborrow(),
+                Some(entity),
+                &mut media_suspicion.0,
+                change,
+                SuspicionType::Media,
+                suspicion_events,
+                &mut random.0,
+            );
         }
+    }
+}
+
+fn add_suspicion(
+    mut commands: Commands,
+    entity: Option<Entity>,
+    value: &mut u32,
+    change: u32,
+    suspicion_type: SuspicionType,
+    suspicion_events: &IndexMap<String, SuspicionEventSettings>,
+    random: &mut StdRng,
+) {
+    let mut spawn_event = |major| {
+        let events: Vec<_> = suspicion_events
+            .iter()
+            .filter(|(_, v)| v.major == major && v.suspicion_types.contains(&suspicion_type))
+            .map(|(k, _)| k)
+            .collect();
+        let event = (*events.choose(random).unwrap()).clone();
+        if let Some(entity) = entity {
+            commands.entity(entity).insert(SuspicionEvent(event));
+        } else {
+            commands.spawn(SuspicionEvent(event));
+        }
+    };
+
+    let after = *value + change;
+    if *value < LOWER_LIMIT && after >= LOWER_LIMIT
+        || *value < MIDDLE_LIMIT && after >= MIDDLE_LIMIT
+    {
+        *value = after;
+        spawn_event(false);
+    } else if *value < UPPER_LIMIT && after >= UPPER_LIMIT {
+        *value = after - UPPER_LIMIT;
+        spawn_event(true);
     }
 }
 
@@ -193,4 +285,42 @@ pub fn add_suspicions(
             SuspicionType::Media => regions.get_mut(region_entity).unwrap().1.0 += amount,
         }
     }
+}
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+#[require(Save, DespawnOnExit::<GameState>(GameState::Main))]
+pub struct SuspicionEvent(pub String);
+
+#[derive(Deserialize, Asset, TypePath)]
+pub struct SuspicionEventsAsset(pub IndexMap<String, SuspicionEventSettings>);
+
+#[derive(Resource)]
+pub struct SuspicionEventsHandle(pub Handle<SuspicionEventsAsset>);
+
+#[derive(Deserialize, Clone)]
+pub struct SuspicionEventChoice {
+    name: String,
+    delay: Option<u32>,
+    effects: Vec<Effect>,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub struct SuspicionEventSettings {
+    pub major: bool,
+    pub suspicion_types: Vec<SuspicionType>,
+    pub delay: Option<u32>,
+    #[serde(default)]
+    pub effects: Vec<Effect>,
+    #[serde(default)]
+    pub choices: Vec<SuspicionEventChoice>,
+}
+
+const SUSPICION_EVENTS_ASSET_PATH: &str = "data/define.suspicion-events.toml";
+
+fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.insert_resource(SuspicionEventsHandle(
+        asset_server.load(SUSPICION_EVENTS_ASSET_PATH),
+    ));
 }

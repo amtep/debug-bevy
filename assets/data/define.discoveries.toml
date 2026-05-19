@@ -1,8 +1,6 @@
 [personal-magnetism]
 research-cost = 50
-modifiers = {
-  recruitment-by-priest-mult = 1.20
-}
+modifiers = { recruitment-by-priest-mult = 1.20 }
 # not implemented yet
 
 [recruit-goons]

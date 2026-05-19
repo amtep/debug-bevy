@@ -1,0 +1,63 @@
+[follower-killed]
+major = false
+suspicion-types = ["police", "intelligence"]
+effects = [
+  {
+    follower = {
+      name = "minion",
+      count = -1,
+    }
+  },
+]
+
+[secrets-drained]
+major = false
+suspicion-types = ["scientific"]
+effects = [
+  { secrets = -100 },
+]
+
+[crime-exposed]
+major = false
+suspicion-types = ["media"]
+effects = [
+  {
+    expense = {
+      amount = [200, "media", 1],
+      duration = 90,
+    }
+  },
+]
+
+[base-raided]
+major = true
+suspicion-types = ["police"]
+effects = []
+delay = 7
+choices = [
+  {
+    name = "destroy",
+    delay = 7,
+    effects = [
+      "destroy-base",
+    ]
+  },
+  {
+    name = "bribe",
+    effects = [
+      { funds = -20000 },
+    ]
+  },
+  {
+    name = "disrupt",
+    effects = [
+      {
+        follower-busy = {
+          name = "goon",
+          count = 2,
+          duration = 30,
+        }
+      }
+    ]
+  },
+]

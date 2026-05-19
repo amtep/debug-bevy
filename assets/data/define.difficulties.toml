@@ -1,29 +1,26 @@
 [easy]
 starting-funds = 50000
-starting-followers = {
-    priest = 1,
-    minion = 1
-}
+starting-followers = { priest = 1, minion = 1 }
 modifiers = {
-    income-mult = 1.1,
-    intelligence-suspicion-mult = 0.8,
-    scientific-suspicion-mult = 0.8
+  income-mult = 1.1,
+  intelligence-suspicion-mult = 0.8,
+  scientific-suspicion-mult = 0.8
 }
 
 [normal]
 default = true
 starting-funds = 20000
 starting-followers = {
-    priest = 1,
+  priest = 1,
 }
 
 [hard]
 starting-funds = 10000
 starting-followers = {
-    priest = 1,
+  priest = 1,
 }
 modifiers = {
-    income-mult = 0.9,
-    intelligence-suspicion-mult = 1.2,
-    scientific-suspicion-mult = 1.2
+  income-mult = 0.9,
+  intelligence-suspicion-mult = 1.2,
+  scientific-suspicion-mult = 1.2
 }

@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use moonshine_save::save::Save;
+use serde::Deserialize;
 
 use crate::{
     modifiers::{ExpenseModifier, IncomeModifier, Modifier},
@@ -57,7 +58,7 @@ pub struct Funds(pub FundsAmount);
 
 /// The third field is the number of budget entries represented by this component,
 /// to be shown in the funds tooltip.
-#[derive(Component, Reflect, Clone)]
+#[derive(Component, Reflect, Clone, Deserialize)]
 #[reflect(Component)]
 #[require(Save)]
 #[component(immutable)]
@@ -65,7 +66,7 @@ pub struct Expense(pub FundsAmount, pub String, pub usize);
 
 /// The third field is the number of budget entries represented by this component,
 /// to be shown in the funds tooltip.
-#[derive(Component, Reflect, Clone)]
+#[derive(Component, Reflect, Clone, Deserialize)]
 #[reflect(Component)]
 #[require(Save)]
 #[component(immutable)]

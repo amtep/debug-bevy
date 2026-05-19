@@ -3,12 +3,12 @@ x = 18
 y = 22
 requires-discovery = "unlock-region-north-america"
 base-plots = {
-    canada = { x = 29, y = 22 },
-    so-cal = { x = 16, y = 30 },
-    new-york-city = { x = 30, y = 29 },
-    mexico = { x = 22, y = 38 },
-    caribbean = { x = 31, y = 39 },
-    chicago = { x = 25, y = 27 },
+  canada = { x = 29, y = 22 },
+  so-cal = { x = 16, y = 30 },
+  new-york-city = { x = 30, y = 29 },
+  mexico = { x = 22, y = 38 },
+  caribbean = { x = 31, y = 39 },
+  chicago = { x = 25, y = 27 },
 }
 
 [south-america]
@@ -16,10 +16,10 @@ x = 36
 y = 55
 requires-discovery = "unlock-region-south-america"
 base-plots = {
-    guyanas = { x = 34, y = 47 },
-    brazil = { x = 36, y = 63 },
-    andean = { x = 29, y = 48 },
-    southern-cone = { x = 32, y = 70 },
+  guyanas = { x = 34, y = 47 },
+  brazil = { x = 36, y = 63 },
+  andean = { x = 29, y = 48 },
+  southern-cone = { x = 32, y = 70 },
 }
 
 [europe]
@@ -27,12 +27,12 @@ x = 45
 y = 19
 requires-discovery = "unlock-region-europe"
 base-plots = {
-    balkan = { x = 56, y = 29 },
-    iberia = { x = 49, y = 28 },
-    britain = { x = 50, y = 21 },
-    scandinavia = { x = 54, y = 15 },
-    central-europe = { x = 54, y = 22 },
-    eastern-europe = { x = 60, y = 21 },
+  balkan = { x = 56, y = 29 },
+  iberia = { x = 49, y = 28 },
+  britain = { x = 50, y = 21 },
+  scandinavia = { x = 54, y = 15 },
+  central-europe = { x = 54, y = 22 },
+  eastern-europe = { x = 60, y = 21 },
 }
 
 [africa]
@@ -40,10 +40,10 @@ x = 56
 y = 48
 requires-discovery = "unlock-region-africa"
 base-plots = {
-    north-africa = { x = 52.5, y = 32 },
-    south-africa = { x = 57, y = 64 },
-    west-africa = { x = 51, y = 43 },
-    horn-of-africa = { x = 61, y = 44 },
+  north-africa = { x = 52.5, y = 32 },
+  south-africa = { x = 57, y = 64 },
+  west-africa = { x = 51, y = 43 },
+  horn-of-africa = { x = 61, y = 44 },
 }
 
 [western-asia]
@@ -51,10 +51,10 @@ x = 69
 y = 21
 requires-discovery = "unlock-region-western-asia"
 base-plots = {
-    central = { x = 68, y = 29 },
-    arabia = { x = 64, y = 37 },
-    levant = { x = 60, y = 31 },
-    india = { x = 72, y = 37 },
+  central = { x = 68, y = 29 },
+  arabia = { x = 64, y = 37 },
+  levant = { x = 60, y = 31 },
+  india = { x = 72, y = 37 },
 }
 
 [eastern-asia]
@@ -62,10 +62,10 @@ x = 86
 y = 42
 requires-discovery = "unlock-region-eastern-asia"
 base-plots = {
-    indonesia = { x = 80, y = 52 },
-    shanghai = { x = 83, y = 33 },
-    indochina = { x = 79, y = 42 },
-    japan = { x = 88, y = 29 },
+  indonesia = { x = 80, y = 52 },
+  shanghai = { x = 83, y = 33 },
+  indochina = { x = 79, y = 42 },
+  japan = { x = 88, y = 29 },
 }
 
 [oceania]
@@ -73,15 +73,15 @@ x = 92
 y = 59
 requires-discovery = "unlock-region-oceania"
 base-plots = {
-    australia = { x = 91, y = 69 },
-    aotearoa = { x = 98, y = 73 },
-    hawaii = { x = 6, y = 38 },
+  australia = { x = 91, y = 69 },
+  aotearoa = { x = 98, y = 73 },
+  hawaii = { x = 6, y = 38 },
 }
 
 [antarctica]
 x = 60
 y = 92
 base-plots = {
-    adelie = { x = 65, y = 93 },
+  adelie = { x = 65, y = 93 },
 }
 hidden = true
