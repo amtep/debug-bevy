@@ -4,6 +4,7 @@ use serde::Deserialize;
 
 use crate::{
     funds::{Expense, FundsAmount, Income},
+    modifiers::ModifierValue,
     suspicion::SuspicionType,
 };
 
@@ -29,7 +30,7 @@ pub struct Unlocked;
 #[derive(Component, Reflect, Clone, Copy)]
 #[reflect(Component)]
 #[reflect(opaque)]
-pub struct EndDate(NaiveDate);
+pub struct EndDate(pub NaiveDate);
 
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
@@ -65,9 +66,5 @@ pub enum Effect {
         count: isize,
         duration: u32,
     },
-    Modifier {
-        name: String,
-        amount: f64,
-        duration: Option<u32>,
-    },
+    Modifier(ModifierValue),
 }

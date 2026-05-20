@@ -1,8 +1,10 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
 
+use chrono::{Days, NaiveDate};
 use moonshine_save::save::Save;
+use serde::Deserialize;
 
-use crate::state::GameState;
+use crate::{common::EndDate, state::GameState};
 
 /// The kind of modifier: `_add` or `_mult`.
 /// `Add`s are performed before `Multiply`s.
@@ -22,7 +24,7 @@ pub enum Operation {
 pub struct Value(pub f64);
 
 /// A record of where a modifier came from.
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Clone)]
 #[reflect(Component)]
 pub enum Source {
     Difficulty(String),
@@ -56,6 +58,14 @@ pub struct IncomeModifier;
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 pub struct ExpenseModifier;
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct IncomeCategoryModifier(String);
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+pub struct ExpenseCategoryModifier(String);
 
 #[derive(Component, Reflect)]
 #[reflect(Component)]
@@ -186,51 +196,120 @@ impl<C: Component> Modifier<'_, '_, C> {
     }
 }
 
-pub fn spawn_modifier(mut commands: Commands, modifier: &str, value: f64, source: Source) {
-    let (op, name) = if let Some(name) = modifier.strip_suffix("-mult") {
-        (Operation::Multiply, name)
-    } else if let Some(name) = modifier.strip_suffix("-add") {
-        (Operation::Add, name)
-    } else {
-        error!("Unknown modifier {modifier}");
-        return;
-    };
-    let bundle = (op, Value(value), source);
+#[derive(Deserialize, Clone, Debug)]
+pub struct ModifierValue {
+    #[serde(flatten)]
+    op: OperationValue,
+    #[serde(flatten)]
+    kind: ModifierKindValue,
+    duration: Option<u32>,
+}
 
-    match name {
-        "income" => {
-            commands.spawn((IncomeModifier, bundle));
-        }
-        "expense" => {
-            commands.spawn((ExpenseModifier, bundle));
-        }
-        name if let Some(sfx) = name.strip_prefix("recruitment-") => {
-            if let Some(sfx) = sfx.strip_prefix("by-") {
-                commands.spawn((RecruitmentBy(sfx.to_string()), bundle));
-            } else if let Some(sfx) = sfx.strip_prefix("of-") {
-                commands.spawn((RecruitmentOf(sfx.to_string()), bundle));
-            } else if let Some((follower1, follower2)) = sfx.split_once("-of-") {
-                commands.spawn((
-                    RecruitmentByOf(follower1.to_string(), follower2.to_string()),
-                    bundle,
-                ));
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "kebab-case")]
+enum OperationValue {
+    Add(f64),
+    Mult(f64),
+}
+
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "kebab-case")]
+enum ModifierKindValue {
+    Income {
+        category: Option<String>,
+    },
+    Expense {
+        category: Option<String>,
+    },
+    Recruit {
+        by: Option<String>,
+        of: Option<String>,
+    },
+    IntelligenceSuspicion,
+    ScientificSuspicion,
+    PoliceSuspicion,
+    MediaSuspicion,
+}
+
+pub fn spawn_modifiers<'a>(
+    mut commands: Commands,
+    entity: Option<Entity>,
+    current_date: Option<NaiveDate>,
+    modifiers: impl IntoIterator<Item = &'a ModifierValue>,
+    source: Source,
+) {
+    for modifier in modifiers {
+        let bundle = (
+            match modifier.op {
+                OperationValue::Add(value) => (Operation::Add, Value(value)),
+                OperationValue::Mult(value) => (Operation::Multiply, Value(value)),
+            },
+            source.clone(),
+        );
+
+        let mut commands = if let Some(entity) = entity {
+            commands.spawn((ChildOf(entity), bundle))
+        } else {
+            commands.spawn(bundle)
+        };
+
+        if let Some(duration) = modifier.duration {
+            if let Some(current_date) = current_date {
+                let end_date = current_date + Days::new(duration as u64);
+                commands.insert(EndDate(end_date));
+            } else {
+                error!("timed modifier without current date supplied");
             }
         }
-        name if let Some(pre) = name.strip_suffix("-suspicion") => match pre {
-            "intelligence" => {
-                commands.spawn((IntelligenceSuspicionModifier, bundle));
+
+        match modifier.kind.clone() {
+            ModifierKindValue::Income { category: None } => {
+                commands.insert(IncomeModifier);
             }
-            "scientific" => {
-                commands.spawn((ScientificSuspicionModifier, bundle));
+            ModifierKindValue::Income {
+                category: Some(category),
+            } => {
+                commands.insert(IncomeCategoryModifier(category));
             }
-            "police" => {
-                commands.spawn((PoliceSuspicionModifier, bundle));
+            ModifierKindValue::Expense { category: None } => {
+                commands.insert(ExpenseModifier);
             }
-            "media" => {
-                commands.spawn((MediaSuspicionModifier, bundle));
+            ModifierKindValue::Expense {
+                category: Some(category),
+            } => {
+                commands.insert(ExpenseCategoryModifier(category));
             }
-            _ => error!("Unknown suspicion modifier"),
-        },
-        _ => error!("Unknown modifier {modifier}"),
+            ModifierKindValue::Recruit {
+                by: None,
+                of: Some(of),
+            } => {
+                commands.insert(RecruitmentOf(of));
+            }
+            ModifierKindValue::Recruit {
+                by: Some(by),
+                of: None,
+            } => {
+                commands.insert(RecruitmentBy(by));
+            }
+            ModifierKindValue::Recruit {
+                by: Some(by),
+                of: Some(of),
+            } => {
+                commands.insert(RecruitmentByOf(by, of));
+            }
+            ModifierKindValue::IntelligenceSuspicion => {
+                commands.insert(IntelligenceSuspicionModifier);
+            }
+            ModifierKindValue::ScientificSuspicion => {
+                commands.insert(ScientificSuspicionModifier);
+            }
+            ModifierKindValue::PoliceSuspicion => {
+                commands.insert(PoliceSuspicionModifier);
+            }
+            ModifierKindValue::MediaSuspicion => {
+                commands.insert(MediaSuspicionModifier);
+            }
+            _ => error!("incorrect modifier combination"),
+        }
     }
 }

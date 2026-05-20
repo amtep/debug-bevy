@@ -396,14 +396,14 @@ fn setup_difficulties_dialog(
                                 ..default()
                             })
                             .with_children(|parent| {
-                                for (modifier, value) in &settings.modifiers {
-                                    parent.spawn(condition(
-                                        TextKey::new(format!("modifier-{modifier}"))
-                                            .add_arg("value", *value)
-                                            .add_arg("percent", ((value - 1.0) * 100.0).round()),
-                                        4,
-                                    ));
-                                }
+                                // for (modifier, value) in &settings.modifiers {
+                                //     parent.spawn(condition(
+                                //         TextKey::new(format!("modifier-{modifier}"))
+                                //             .add_arg("value", *value)
+                                //             .add_arg("percent", ((value - 1.0) * 100.0).round()),
+                                //         4,
+                                //     ));
+                                // }
                             });
                     })
                     .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {

@@ -6,7 +6,7 @@ use serde_derive::Deserialize;
 
 use crate::{
     funds::{Funds, FundsAmount},
-    modifiers::{Source, spawn_modifier},
+    modifiers::{ModifierValue, Source, spawn_modifiers},
     new_game::NewGame,
     state::{GameState, MainSetupSet},
 };
@@ -65,7 +65,7 @@ pub struct ResearchPoints(pub u32);
 #[require(Save)]
 pub struct Research(pub u32);
 
-#[derive(Deserialize, Debug, Clone, Reflect)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct DiscoverySettings {
     pub research_cost: u32,
@@ -74,7 +74,7 @@ pub struct DiscoverySettings {
     #[serde(default)]
     pub requires: Vec<String>,
     #[serde(default)]
-    pub modifiers: IndexMap<String, f64>,
+    pub modifiers: Vec<ModifierValue>,
 }
 
 #[derive(Event)]
@@ -109,14 +109,13 @@ pub fn learn_new_discovery(
     funds.0 -= discovery_selected.1;
     secrets.0 -= discovery_selected.2;
 
-    for (modifier, value) in &discovery.modifiers {
-        spawn_modifier(
-            commands.reborrow(),
-            modifier,
-            *value,
-            Source::Discovery(discovery_selected.0.clone()),
-        );
-    }
+    spawn_modifiers(
+        commands.reborrow(),
+        None,
+        None,
+        &discovery.modifiers,
+        Source::Discovery(discovery_selected.0.clone()),
+    );
 
     discoveries_researched.research(
         commands.reborrow(),

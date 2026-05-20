@@ -1,14 +1,19 @@
 [personal-magnetism]
 research-cost = 50
-modifiers = { recruitment-by-priest-mult = 1.20 }
-# not implemented yet
+modifiers = [
+  {
+    recruit = {
+      by = "priest",
+    },
+    mult = 1.2
+  },
+]
 
 [recruit-goons]
 research-cost = 50
 
 [minions-can-recruit]
 research-cost = 50
-# not implemented yet
 
 [shadowy-contacts]
 research-cost = 50
@@ -17,43 +22,36 @@ research-cost = 50
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
-# not implemented yet
 
 [unlock-region-south-america]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
-# not implemented yet
 
 [unlock-region-europe]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
-# not implemented yet
 
 [unlock-region-africa]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
-# not implemented yet
 
 [unlock-region-western-asia]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
-# not implemented yet
 
 [unlock-region-eastern-asia]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
-# not implemented yet
 
 [unlock-region-oceania]
 research-cost = 50
 funds-cost = 5000
 requires = ["shadowy-contacts"]
-# not implemented yet
 
 [esoteric-knowledge]
 research-cost = 100

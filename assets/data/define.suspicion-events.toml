@@ -1,81 +1,74 @@
 [minions-detained]
 major = false
-suspicion-types = "police"
+suspicion-type = "police"
 effects = [
   { follower-busy = { name = "minion", count = -3, duration = 30 } },
 ]
 
 [priest-arrested]
 major = false
-suspicion-types = "police"
+suspicion-type = "police"
 effects = [{ follower-busy = { name = "priest", count = -1, duration = 60 } }]
 
 [secrets-analyzed]
 major = false
-suspicion-types = "scientific"
+suspicion-type = "scientific"
 effects = [
   { secrets = -100 },
 ]
 
 [cult-debunked]
 major = false
-suspicion-types = "scientific"
+suspicion-type = "scientific"
 effects = [{ expense = { amount = [250, "event", 1], duration = 60 } }]
 
 [crime-exposed]
 major = false
-suspicion-types = "media"
+suspicion-type = "media"
 effects = [
-  {
-    # use income-crime-mult when available
-    modifier = {
-      name = "income-mult",
-      amount = 0.75,
-      duration = 90,
-    }
-  },
+  { modifier = { income = { category = "crime" }, mult = 0.75, duration = 90 } },
 ]
 
 [awareness-campaign]
 major = false
-suspicion-types = "media"
+suspicion-type = "media"
 effects = [
   {
     modifier = {
-      name = "recruitment-of-minion-mult",
-      amount = 0.5,
-      duration = 45,
+      recruit = { of = "minion" },
+      mult = 0.5,
+      duration = 60,
     }
   },
   {
     modifier = {
-      name = "recruitment-of-goon-mult",
-      amount = 0.75,
-      duration = 45,
+      recruit = { of = "goon" },
+      mult = 0.75,
+      duration = 60,
     }
   }
 ]
 
 [minions-turned]
 major = false
-suspicion-types = "intelligence"
+suspicion-type = "intelligence"
 effects = [{ follower = { name = "minion", count = -1 } }, { funds = -2500 }]
 
 [cult-briefed]
 major = false
-suspicion-types = "intelligence"
+suspicion-type = "intelligence"
 effects = [
   {
     modifier = {
-      name = "police-suspicion-mult",
-      amount = 2.0,
+      police-suspicion = {},
+      mult = 2.0,
       duration = 30,
     },
   },
   {
     modifier = {
-      name = "media-suspicion-mult",
-      amount = 2.0,
+      media-suspicion = {},
+      mult = 2.0,
       duration = 30,
     },
   }
@@ -83,7 +76,7 @@ effects = [
 
 [base-raided]
 major = true
-suspicion-types = "police"
+suspicion-type = "police"
 effects = []
 delay = 7
 choices = [

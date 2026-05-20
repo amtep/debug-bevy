@@ -6,7 +6,7 @@ use serde::Deserialize;
 use crate::{
     common::Difficulty,
     funds::FundsAmount,
-    modifiers::{Source, spawn_modifier},
+    modifiers::{ModifierValue, Source, spawn_modifiers},
     regions::Region,
     state::{GameState, MainSetupSet},
 };
@@ -50,7 +50,7 @@ pub struct DifficultySettings {
     pub starting_funds: FundsAmount,
     pub starting_followers: IndexMap<String, usize>,
     #[serde(default)]
-    pub modifiers: IndexMap<String, f64>,
+    pub modifiers: Vec<ModifierValue>,
 }
 
 #[derive(Resource, Clone)]
@@ -64,14 +64,13 @@ fn add_difficulty_modifiers(
     new_game: Res<NewGame>,
     difficulty: Res<Difficulty>,
 ) {
-    for (modifier, value) in &new_game.difficulty.modifiers {
-        spawn_modifier(
-            commands.reborrow(),
-            modifier,
-            *value,
-            Source::Difficulty(difficulty.0.clone()),
-        );
-    }
+    spawn_modifiers(
+        commands.reborrow(),
+        None,
+        None,
+        &new_game.difficulty.modifiers,
+        Source::Difficulty(difficulty.0.clone()),
+    );
 }
 
 fn remove_new_game(mut commands: Commands) {
