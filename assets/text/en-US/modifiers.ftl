@@ -1,7 +1,7 @@
 modifier = { $op ->
     *[add] { modifer-add }
     [mult] { modifier-mult }
-} { modifier-shown } { modifier-duration }
+} { $modifier } { modifier-duration }
 
 modifier-add = { SIGN($amount) ->
    *[positive] +{ $amount }
@@ -14,21 +14,6 @@ modifier-mult = { SIGN($percent) ->
     [negative] { $percent }
     [zero] \u0020{ $amount }
 }%
-
-modifier-shown = { $modifier ->
-   *[none] {""}
-    [income] { modifier-income }
-    [expense] { modifier-expense }
-    [income-category] { modifier-income-category }
-    [expense-category] { modifier-expense-category }
-    [recruit-by] { modifier-recruit-by }
-    [recruit-of] { modifier-recruit-of }
-    [recruit-by-of] { modifier-recruit-by-of }
-    [intelligence-suspicion] { modifier-intelligence-suspicion }
-    [scientific-suspicion] { modifier-scientific-suspicion }
-    [police-suspicion] { modifier-police-suspicion }
-    [media-suspicion] { modifier-media-suspicion }
-}
 
 modifier-duration = { $duration ->
    *[0] {""}

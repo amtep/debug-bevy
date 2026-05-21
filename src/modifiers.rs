@@ -306,7 +306,11 @@ impl ModifierValue {
             _ => unimplemented!(),
         };
 
-        text_key.add_arg("modifier", if shown { modifier } else { "none" });
+        if shown {
+            text_key.add_arg("modifier", TextKey::new(format!("modifier-{modifier}")));
+        } else {
+            text_key.add_arg("modifier", "");
+        }
 
         let text_color = TextColor::from(if positive ^ value_positive {
             TEXT_NEGATIVE

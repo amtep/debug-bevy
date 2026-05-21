@@ -56,11 +56,12 @@ pub enum TextArgValue {
     /// It's unfortunate, because we use `i64` internally.
     Number(f64),
     Datetime(NaiveDate),
+    TextKey(Box<TextKey>),
 }
 
 impl TextArgValue {
     #[allow(clippy::cast_possible_truncation)]
-    fn fluent(&self) -> FluentValue<'_> {
+    fn fluent(&self, bundle: &FluentBundleWrapper) -> FluentValue<'_> {
         match self {
             TextArgValue::String(s) => s.into(),
             TextArgValue::Number(n) => n.into(),
@@ -73,6 +74,7 @@ impl TextArgValue {
                 d.options.set_date_style(Some(length::Date::Long));
                 d.into()
             }
+            TextArgValue::TextKey(t) => FluentValue::String(bundle.get(&t.0, &t.1).into()),
         }
     }
 }
@@ -104,6 +106,12 @@ impl From<f64> for TextArgValue {
 impl From<FundsAmount> for TextArgValue {
     fn from(value: FundsAmount) -> Self {
         TextArgValue::Number(value as f64)
+    }
+}
+
+impl From<TextKey> for TextArgValue {
+    fn from(value: TextKey) -> Self {
+        TextArgValue::TextKey(Box::new(value))
     }
 }
 
@@ -211,7 +219,7 @@ impl FluentBundleWrapper {
         let args = if args.is_empty() {
             None
         } else {
-            Some(&args.iter().map(|(k, v)| (*k, v.fluent())).collect())
+            Some(&args.iter().map(|(k, v)| (*k, v.fluent(self))).collect())
         };
 
         let pattern = if let Some((key, attribute)) = key.split_once('.') {
