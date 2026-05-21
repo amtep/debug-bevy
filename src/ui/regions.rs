@@ -280,7 +280,7 @@ fn on_region_click(
                                 .with_children(|parent| {
                                     let line = |key, arg, value| {
                                         (
-                                            TextKey::new(key).add_arg(arg, value),
+                                            TextKey::new(key).with_arg(arg, value),
                                             TextColor::from(TEXT),
                                             TextFont::from_font_size(LARGE)
                                                 .with_font(font_handle.clone()),
@@ -325,7 +325,7 @@ fn on_region_click(
                             if settings.initial_cost > funds.0 {
                                 dialog = dialog.with_confirm_disabled(
                                     TextKey::new("acquire-basetype-dialog-confirm-tooltip")
-                                        .add_arg("funds", settings.initial_cost),
+                                        .with_arg("funds", settings.initial_cost),
                                 );
                             }
 

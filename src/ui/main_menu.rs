@@ -315,7 +315,7 @@ fn setup_difficulties_dialog(
                     .spawn((
                         Node {
                             height: px(350),
-                            width: px(200),
+                            width: px(220),
                             border: UiRect::all(px(4)),
                             border_radius: BorderRadius::all(px(16)),
                             padding: UiRect::all(px(5)),
@@ -345,22 +345,24 @@ fn setup_difficulties_dialog(
                             BackgroundColor::from(BORDER),
                         ));
 
-                        let condition = |text_key, vert| {
+                        let condition = |text, vert| {
                             (
                                 Node {
                                     margin: UiRect::vertical(px(vert)),
                                     ..default()
                                 },
-                                text_key,
-                                TextColor::from(TEXT),
+                                text,
                                 TextLayout::new_with_justify(Justify::Center),
                                 TextFont::from_font_size(NORMAL).with_font(font_handle.clone()),
                             )
                         };
 
                         parent.spawn(condition(
-                            TextKey::new("main-menu-new-game-difficulty-starting-funds")
-                                .add_arg("funds", settings.starting_funds),
+                            (
+                                TextKey::new("main-menu-new-game-difficulty-starting-funds")
+                                    .with_arg("funds", settings.starting_funds),
+                                TextColor::from(TEXT),
+                            ),
                             10,
                         ));
                         parent
@@ -373,16 +375,22 @@ fn setup_difficulties_dialog(
                             })
                             .with_children(|parent| {
                                 parent.spawn(condition(
-                                    TextKey::new(
-                                        "main-menu-new-game-difficulty-starting-followers",
+                                    (
+                                        TextKey::new(
+                                            "main-menu-new-game-difficulty-starting-followers",
+                                        ),
+                                        TextColor::from(TEXT),
                                     ),
                                     2,
                                 ));
                                 for (follower, count) in &settings.starting_followers {
                                     parent.spawn(condition(
-                                        TextKey::new("follower-list-tooltip")
-                                            .add_arg("count", *count as f64)
-                                            .add_arg("follower-type", follower.as_str()),
+                                        (
+                                            TextKey::new("follower-list-tooltip")
+                                                .with_arg("count", *count as f64)
+                                                .with_arg("follower-type", follower.as_str()),
+                                            TextColor::from(TEXT),
+                                        ),
                                         2,
                                     ));
                                 }
@@ -396,14 +404,16 @@ fn setup_difficulties_dialog(
                                 ..default()
                             })
                             .with_children(|parent| {
-                                // for (modifier, value) in &settings.modifiers {
-                                //     parent.spawn(condition(
-                                //         TextKey::new(format!("modifier-{modifier}"))
-                                //             .add_arg("value", *value)
-                                //             .add_arg("percent", ((value - 1.0) * 100.0).round()),
-                                //         4,
-                                //     ));
-                                // }
+                                parent.spawn(condition(
+                                    (
+                                        TextKey::new("main-menu-new-game-difficulty-modifiers"),
+                                        TextColor::from(TEXT),
+                                    ),
+                                    2,
+                                ));
+                                for modifier in &settings.modifiers {
+                                    parent.spawn(condition(modifier.text_bundle(None, true), 2));
+                                }
                             });
                     })
                     .observe(move |click: On<Pointer<Click>>, mut commands: Commands| {
@@ -512,7 +522,7 @@ fn setup_region_selection_dialog(
                     Button,
                     BorderColor::all(BORDER),
                     BackgroundColor::from(BUTTON_BACKGROUND),
-                    Tooltip::new_text(TextKey::new("region-name").add_arg("region", name.clone())),
+                    Tooltip::new_text(TextKey::new("region-name").with_arg("region", name.clone())),
                     RegionSelectorUi(name.clone()),
                 ))
                 .with_child((

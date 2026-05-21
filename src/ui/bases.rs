@@ -213,7 +213,7 @@ fn on_base_click(
                 });
 
             let entry = MenuEntry::new(
-                TextKey::new(format!("follower-type-{}", f.0)).add_arg("count", c.0 as f64),
+                TextKey::new(format!("follower-type-{}", f.0)).with_arg("count", c.0 as f64),
             );
             // another base exists for transfer
             if bases.count() == 1 {
@@ -345,12 +345,12 @@ fn transfer_followers_dialog(
                         ),
                         (
                             TextKey::new("follower-transfer-current-follower-count")
-                                .add_arg("count", current_follower_count as f64),
+                                .with_arg("count", current_follower_count as f64),
                             TEXT,
                         ),
                         (
                             TextKey::new("follower-transfer-maximum-follower-count")
-                                .add_arg("count", max_follower_count as f64),
+                                .with_arg("count", max_follower_count as f64),
                             TEXT,
                         ),
                     ])
@@ -359,21 +359,21 @@ fn transfer_followers_dialog(
                         (TextKey::new("follower-transfer-full-base"), TEXT_NEGATIVE),
                         (
                             TextKey::new("follower-transfer-current-follower-count")
-                                .add_arg("count", current_follower_count as f64),
+                                .with_arg("count", current_follower_count as f64),
                             TEXT,
                         ),
                         (
                             TextKey::new("follower-transfer-maximum-follower-count")
-                                .add_arg("count", max_follower_count as f64),
+                                .with_arg("count", max_follower_count as f64),
                             TEXT,
                         ),
                     ])
                 } else {
                     Tooltip::new_texts([
                         TextKey::new("follower-transfer-current-follower-count")
-                            .add_arg("count", current_follower_count as f64),
+                            .with_arg("count", current_follower_count as f64),
                         TextKey::new("follower-transfer-maximum-follower-count")
-                            .add_arg("count", max_follower_count as f64),
+                            .with_arg("count", max_follower_count as f64),
                     ])
                 };
 
@@ -493,8 +493,8 @@ fn transfer_followers_dialog(
         .with_children(|parent| {
             parent.spawn((
                 TextKey::new("follower-transfer-number")
-                    .add_arg("follower-type", follower.as_str())
-                    .add_arg("count", follower_count.0 as f64),
+                    .with_arg("follower-type", follower.as_str())
+                    .with_arg("count", follower_count.0 as f64),
                 TextColor::from(WHITE),
                 TextFont::from_font_size(NORMAL).with_font(font_handle.clone()),
             ));
@@ -545,7 +545,7 @@ fn transfer_followers_dialog(
                             if funds.0 + funds_change < 0 {
                                 let text_key =
                                     TextKey::new("follower-transfer-confirm-funds-tooltip")
-                                        .add_arg("funds", -funds_change as f64);
+                                        .with_arg("funds", -funds_change as f64);
                                 commands
                                     .entity(entity)
                                     .insert(DialogConfirm::Disable(Some(text_key)));
@@ -564,7 +564,7 @@ fn transfer_followers_dialog(
                         margin: px(2).top(),
                         ..default()
                     },
-                    TextKey::new("follower-count").add_arg("count", 0.0),
+                    TextKey::new("follower-count").with_arg("count", 0.0),
                     TextColor::from(TEXT),
                     TextFont::from_font_size(NORMAL).with_font(mono_font_handle.clone()),
                 ))
@@ -577,7 +577,7 @@ fn transfer_followers_dialog(
                     ..default()
                 },
                 FollowerTransferCostFunds,
-                TextKey::new("funds-change-display").add_arg("funds", 0.0),
+                TextKey::new("funds-change-display").with_arg("funds", 0.0),
                 TextColor::from(TEXT_FUNDS),
                 TextFont::from_font_size(NORMAL).with_font(mono_font_handle.clone()),
             ));
@@ -599,7 +599,7 @@ fn transfer_followers_dialog(
                             ..default()
                         },
                         FollowerTransferCostSuspicion,
-                        TextKey::new("suspicion-change").add_arg("amount", 0.0),
+                        TextKey::new("suspicion-change").with_arg("amount", 0.0),
                         TextColor::from(TEXT),
                         TextFont::from_font_size(NORMAL).with_font(mono_font_handle.clone()),
                     ));
@@ -616,8 +616,8 @@ fn transfer_followers_dialog(
             Dialog::new()
                 .with_title(
                     TextKey::new("follower-transfer-title")
-                        .add_arg("follower-type", follower.as_str())
-                        .add_arg("count", follower_count.0 as f64),
+                        .with_arg("follower-type", follower.as_str())
+                        .with_arg("count", follower_count.0 as f64),
                 )
                 .with_entity_body(entity)
                 .with_cancel()
@@ -723,8 +723,8 @@ pub fn on_follower_count_insert(
         .insert(Tooltip::new_texts(
             followers.iter().filter(|(_, c)| **c != 0).map(|(f, c)| {
                 TextKey::new("follower-list-tooltip")
-                    .add_arg("count", **c as f64)
-                    .add_arg("follower-type", f.to_string())
+                    .with_arg("count", **c as f64)
+                    .with_arg("follower-type", f.to_string())
             }),
         ));
 }

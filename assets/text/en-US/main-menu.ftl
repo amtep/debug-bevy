@@ -11,6 +11,7 @@ main-menu-new-game-cult-confirm-tooltip = select a cult icon first!
 main-menu-new-game-difficulty-title = Select difficulty
 main-menu-new-game-difficulty-starting-funds = Starting funds: { funds }
 main-menu-new-game-difficulty-starting-followers = Starting followers
+main-menu-new-game-difficulty-modifiers = Modifiers
 main-menu-new-game-difficulty-confirm = Next
 
 difficulty-easy = Easy

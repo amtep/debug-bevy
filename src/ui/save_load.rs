@@ -166,7 +166,7 @@ pub fn open_load_game_popup(
                         children![
                             (
                                 TextKey::new("game-date-display")
-                                    .add_arg("date", metadata.game_date),
+                                    .with_arg("date", metadata.game_date),
                                 text_font.clone(),
                                 TextColor(TEXT.into())
                             ),
@@ -175,24 +175,24 @@ pub fn open_load_game_popup(
                                 ..default()
                             },
                             (
-                                TextKey::new("funds").add_arg("funds", metadata.funds),
+                                TextKey::new("funds").with_arg("funds", metadata.funds),
                                 text_font.clone(),
                                 TextColor(TEXT.into())
                             ),
                         ]
                     ),
-                    (
-                        Node {
-                            flex_direction: FlexDirection::RowReverse,
-                            ..default()
-                        },
-                        children![(
-                            TextKey::new("saved-game-date")
-                                .add_arg("date", metadata.save_timestamp),
-                            text_font.clone(),
-                            TextColor(TEXT.into()),
-                        )]
-                    ),
+                    // (
+                    //     Node {
+                    //         flex_direction: FlexDirection::RowReverse,
+                    //         ..default()
+                    //     },
+                    //     children![(
+                    //         TextKey::new("saved-game-date")
+                    //             .with_arg("date", metadata.save_timestamp),
+                    //         text_font.clone(),
+                    //         TextColor(TEXT.into()),
+                    //     )]
+                    // ),
                 ],
             ))
             .observe(

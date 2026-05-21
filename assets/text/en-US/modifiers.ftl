@@ -1,35 +1,49 @@
-modifier-income-mult = { SIGN($percent) ->
- *[positive] { $percent }% income bonus
-  [negative] { $percent }% income penalty
-  [zero] no income bonus
+modifier = { $op ->
+    *[add] { modifer-add }
+    [mult] { modifier-mult }
+} { modifier-shown } { modifier-duration }
+
+modifier-add = { SIGN($amount) ->
+   *[positive] +{ $amount }
+    [negative]  { $amount }
+    [zero] \u0020{ $amount }
 }
 
-modifier-expense-mult = { SIGN($percent) ->
- *[positive] { $percent }% expense increase
-  [negative] { $percent }% expense reduction
-  [zero] no expense modifier
+modifier-mult = { SIGN($percent) ->
+   *[positive] +{ $percent }
+    [negative] { $percent }
+    [zero] \u0020{ $amount }
+}%
+
+modifier-shown = { $modifier ->
+   *[none] {""}
+    [income] { modifier-income }
+    [expense] { modifier-expense }
+    [income-category] { modifier-income-category }
+    [expense-category] { modifier-expense-category }
+    [recruit-by] { modifier-recruit-by }
+    [recruit-of] { modifier-recruit-of }
+    [recruit-by-of] { modifier-recruit-by-of }
+    [intelligence-suspicion] { modifier-intelligence-suspicion }
+    [scientific-suspicion] { modifier-scientific-suspicion }
+    [police-suspicion] { modifier-police-suspicion }
+    [media-suspicion] { modifier-media-suspicion }
 }
 
-modifier-intelligence-suspicion-mult = { SIGN($percent) ->
- *[positive] { $percent }% intelligence suspicion change increase
-  [negative] { $percent }% intelligence suspicion change reduction
-  [zero] no expense modifier
+modifier-duration = { $duration ->
+   *[0] {""}
+    [-1] ending on { DATETIME($date, dateStyle: "short") }
+    [other] for { $duration } days
 }
 
-modifier-scientific-suspicion-mult = { SIGN($percent) ->
- *[positive] { $percent }% scientific suspicion change increase
-  [negative] { $percent }% scientific suspicion change reduction
-  [zero] no expense modifier
-}
-
-modifier-police-suspicion-mult = { SIGN($percent) ->
- *[positive] { $percent }% police suspicion change increase
-  [negative] { $percent }% police suspicion change reduction
-  [zero] no expense modifier
-}
-
-modifier-media-suspicion-mult = { SIGN($percent) ->
- *[positive] { $percent }% media suspicion change increase
-  [negative] { $percent }% media suspicion change reduction
-  [zero] no expense modifier
-}
+modifier-income = income
+modifier-expense = expense
+modifier-income-category = income for { $cat }
+modifier-expense-category = expense for { $cat }
+modifier-recruit-by = recruitment by { $by }
+modifier-recruit-of = recruitment of { $of }
+modifier-recruit-by-of = recruitment by { $by } of { $of }
+modifier-intelligence-suspicion = intelligence suspicion
+modifier-scientific-suspicion = scientific suspicion
+modifier-police-suspicion = police suspicion
+modifier-media-suspicion = media suspicion

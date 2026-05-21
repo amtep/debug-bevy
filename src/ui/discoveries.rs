@@ -204,7 +204,7 @@ pub fn open_discoveries_menu(
             });
             if available && discovery.funds_cost > 0 {
                 parent.spawn((
-                    TextKey::new("discoveries-funds-cost").add_arg("funds", discovery.funds_cost),
+                    TextKey::new("discoveries-funds-cost").with_arg("funds", discovery.funds_cost),
                     TextColor::from(TEXT),
                     TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
                 ));
@@ -212,7 +212,7 @@ pub fn open_discoveries_menu(
             if available && discovery.research_cost > 0 {
                 parent.spawn((
                     TextKey::new("discoveries-research-cost")
-                        .add_arg("points", discovery.research_cost as f64),
+                        .with_arg("points", discovery.research_cost as f64),
                     TextColor::from(TEXT),
                     TextFont::from_font_size(SMALL).with_font(font_handle.clone()),
                 ));

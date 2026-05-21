@@ -7,13 +7,13 @@ use bevy::{
     prelude::*,
     ui::UiSystems,
 };
-use chrono::{Datelike, NaiveDate, Timelike, Utc};
+use chrono::{Datelike, NaiveDate};
 use fluent::types::FluentNumber;
 use fluent::{FluentArgs, FluentResource, FluentValue, concurrent::FluentBundle};
 use fluent_datetime::{BundleExt, FluentDateTime, length};
 use icu::{
     calendar::{Date, Iso},
-    time::{DateTime, Hour, Minute, Nanosecond, Second, Time},
+    time::{DateTime, Time},
 };
 use line_numbers::LinePositions;
 use strum::EnumString;
@@ -55,20 +55,31 @@ pub enum TextArgValue {
     /// This uses `f64` because that's what `FluentValue` uses.
     /// It's unfortunate, because we use `i64` internally.
     Number(f64),
-    Datetime(DateTime<Iso>),
+    Datetime(NaiveDate),
 }
 
 impl TextArgValue {
+    #[allow(clippy::cast_possible_truncation)]
     fn fluent(&self) -> FluentValue<'_> {
         match self {
             TextArgValue::String(s) => s.into(),
             TextArgValue::Number(n) => n.into(),
             TextArgValue::Datetime(d) => {
-                let mut d: FluentDateTime = (*d).into();
+                let d: DateTime<Iso> = DateTime {
+                    date: Date::try_new_iso(d.year(), d.month() as u8, d.day() as u8).unwrap(),
+                    time: Time::start_of_day(),
+                };
+                let mut d: FluentDateTime = d.into();
                 d.options.set_date_style(Some(length::Date::Long));
                 d.into()
             }
         }
+    }
+}
+
+impl From<NaiveDate> for TextArgValue {
+    fn from(value: NaiveDate) -> Self {
+        TextArgValue::Datetime(value)
     }
 }
 
@@ -96,61 +107,6 @@ impl From<FundsAmount> for TextArgValue {
     }
 }
 
-#[expect(clippy::fallible_impl_from, reason = "valid dates won't fail")]
-impl From<NaiveDate> for TextArgValue {
-    fn from(value: NaiveDate) -> Self {
-        #[expect(
-            clippy::cast_possible_truncation,
-            reason = "not a problem for valid dates"
-        )]
-        if let Ok(date) = Date::try_new_iso(value.year(), value.month() as u8, value.day() as u8) {
-            TextArgValue::Datetime(DateTime {
-                date,
-                time: Time::start_of_day(),
-            })
-        } else {
-            warn!("Invalid date: {value}");
-            TextArgValue::Datetime(DateTime {
-                date: Date::try_new_iso(2000, 1, 1).unwrap(),
-                time: Time::start_of_day(),
-            })
-        }
-    }
-}
-
-#[expect(clippy::fallible_impl_from, reason = "valid dates won't fail")]
-impl From<chrono::DateTime<Utc>> for TextArgValue {
-    fn from(value: chrono::DateTime<Utc>) -> Self {
-        #[expect(
-            clippy::cast_possible_truncation,
-            reason = "not a problem for valid dates"
-        )]
-        if let Ok(date) = Date::try_new_iso(value.year(), value.month() as u8, value.day() as u8) {
-            TextArgValue::Datetime(DateTime {
-                date,
-                time: Time {
-                    hour: Hour::try_from(value.hour() as usize).unwrap(),
-                    minute: Minute::try_from(value.minute() as usize).unwrap(),
-                    second: Second::try_from(value.second() as usize).unwrap(),
-                    subsecond: Nanosecond::try_from(value.nanosecond() as usize).unwrap(),
-                },
-            })
-        } else {
-            warn!("Invalid date: {value}");
-            TextArgValue::Datetime(DateTime {
-                date: Date::try_new_iso(2000, 1, 1).unwrap(),
-                time: Time::start_of_day(),
-            })
-        }
-    }
-}
-
-impl From<DateTime<Iso>> for TextArgValue {
-    fn from(value: DateTime<Iso>) -> Self {
-        TextArgValue::Datetime(value)
-    }
-}
-
 /// This component represents localized UI text.
 /// It is the source of truth for the accompanying `Text` component.
 #[derive(Component, Debug, Clone)]
@@ -162,7 +118,12 @@ impl TextKey {
         Self(key.into(), Vec::new())
     }
 
-    pub fn add_arg(mut self, arg: &'static str, value: impl Into<TextArgValue>) -> Self {
+    pub fn with_arg(mut self, arg: &'static str, value: impl Into<TextArgValue>) -> Self {
+        self.1.push((arg, value.into()));
+        self
+    }
+
+    pub fn add_arg(&mut self, arg: &'static str, value: impl Into<TextArgValue>) -> &mut Self {
         self.1.push((arg, value.into()));
         self
     }

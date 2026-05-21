@@ -4,7 +4,12 @@ use chrono::{Days, NaiveDate};
 use moonshine_save::save::Save;
 use serde::Deserialize;
 
-use crate::{common::EndDate, state::GameState};
+use crate::{
+    common::EndDate,
+    constants::ui::colors::{TEXT_NEGATIVE, TEXT_POSITIVE},
+    state::GameState,
+    text::TextKey,
+};
 
 /// The kind of modifier: `_add` or `_mult`.
 /// `Add`s are performed before `Multiply`s.
@@ -196,7 +201,8 @@ impl<C: Component> Modifier<'_, '_, C> {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug, Component, Reflect)]
+#[reflect(Component)]
 pub struct ModifierValue {
     #[serde(flatten)]
     op: OperationValue,
@@ -205,14 +211,14 @@ pub struct ModifierValue {
     duration: Option<u32>,
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug, Reflect)]
 #[serde(rename_all = "kebab-case")]
 enum OperationValue {
     Add(f64),
     Mult(f64),
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug, Reflect)]
 #[serde(rename_all = "kebab-case")]
 enum ModifierKindValue {
     Income {
@@ -231,6 +237,87 @@ enum ModifierKindValue {
     MediaSuspicion,
 }
 
+impl ModifierValue {
+    pub fn text_bundle(&self, end_date: Option<&EndDate>, shown: bool) -> (TextKey, TextColor) {
+        let mut text_key = TextKey::new("modifier");
+        let value_positive = match self.op {
+            OperationValue::Add(amount) => {
+                text_key.add_arg("op", "add").add_arg("amount", amount);
+                amount.is_sign_positive()
+            }
+            OperationValue::Mult(amount) => {
+                text_key
+                    .add_arg("op", "mult")
+                    .add_arg("percent", ((amount - 1.0) * 100.0).round());
+                amount >= 1.0
+            }
+        };
+        if let Some(duration) = self.duration {
+            if let Some(end_date) = end_date {
+                text_key.add_arg("duration", -1).add_arg("date", end_date.0);
+            } else {
+                text_key.add_arg("duration", duration as f64);
+            }
+        } else {
+            text_key.add_arg("duration", 0);
+        }
+
+        let (positive, modifier) = match self.kind.clone() {
+            ModifierKindValue::Income { category: None } => (true, "income"),
+            ModifierKindValue::Income {
+                category: Some(cat),
+            } => {
+                text_key.add_arg("cat", cat);
+                (true, "income-category")
+            }
+            ModifierKindValue::Expense { category: None } => (false, "expense"),
+            ModifierKindValue::Expense {
+                category: Some(cat),
+            } => {
+                text_key.add_arg("cat", cat);
+                (false, "expense-category")
+            }
+            ModifierKindValue::Recruit {
+                by: Some(by),
+                of: None,
+            } => {
+                text_key.add_arg("by", by);
+                (true, "recruit-by")
+            }
+            ModifierKindValue::Recruit {
+                by: None,
+                of: Some(of),
+            } => {
+                text_key.add_arg("of", of);
+                (true, "recruit-of")
+            }
+            ModifierKindValue::Recruit {
+                by: Some(by),
+                of: Some(of),
+            } => {
+                text_key.add_arg("by", by);
+                text_key.add_arg("of", of);
+                (true, "recruit-by-of")
+            }
+            ModifierKindValue::IntelligenceSuspicion => (false, "intelligence-suspicion"),
+            ModifierKindValue::ScientificSuspicion => (false, "scientific-suspicion"),
+            ModifierKindValue::PoliceSuspicion => (false, "police-suspicion"),
+            ModifierKindValue::MediaSuspicion => (false, "media-suspicion"),
+            _ => unimplemented!(),
+        };
+
+        text_key.add_arg("modifier", if shown { modifier } else { "none" });
+
+        let text_color = TextColor::from(if positive ^ value_positive {
+            TEXT_NEGATIVE
+        } else {
+            TEXT_POSITIVE
+        });
+
+        (text_key, text_color)
+    }
+}
+
 pub fn spawn_modifiers<'a>(
     mut commands: Commands,
     entity: Option<Entity>,
@@ -244,6 +331,7 @@ pub fn spawn_modifiers<'a>(
                 OperationValue::Add(value) => (Operation::Add, Value(value)),
                 OperationValue::Mult(value) => (Operation::Multiply, Value(value)),
             },
+            modifier.clone(),
             source.clone(),
         );
 

@@ -166,9 +166,9 @@ fn recruit(
             for entity in childof.iter_ancestors(*base_entity) {
                 if let Ok(region) = regions.get(entity) {
                     let toast = TextKey::new("new-follower-toast")
-                        .add_arg("count", additional_followers as f64)
-                        .add_arg("follower-type", recruit.0.clone())
-                        .add_arg("region", region.name.clone());
+                        .with_arg("count", additional_followers as f64)
+                        .with_arg("follower-type", recruit.0.clone())
+                        .with_arg("region", region.name.clone());
                     toasts.push(toast);
                     break;
                 }

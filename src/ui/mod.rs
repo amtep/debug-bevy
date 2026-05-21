@@ -366,7 +366,7 @@ fn setup_ui(
                         .with_child((
                             mono_text_font.clone(),
                             // will be updated by funds_changed
-                            TextKey::new("funds-display").add_arg("funds", 0),
+                            TextKey::new("funds-display").with_arg("funds", 0),
                             TextColor::from(TEXT_FUNDS),
                             FundsUi,
                         ))
@@ -377,7 +377,7 @@ fn setup_ui(
                             },
                             mono_text_font.clone().with_font_size(NORMAL),
                             // funds and text color will both be updated
-                            TextKey::new("funds-change-display").add_arg("funds", 0),
+                            TextKey::new("funds-change-display").with_arg("funds", 0),
                             TextColor::from(TEXT),
                             FundsChangeUi,
                         ))
@@ -409,13 +409,13 @@ fn setup_ui(
                                 ..default()
                             },
                             GameDateTooltipUi,
-                            Tooltip::new_text(TextKey::new("game-date-tooltip").add_arg("days", 0)),
+                            Tooltip::new_text(TextKey::new("game-date-tooltip").with_arg("days", 0)),
                         ))
                         .with_child((
                             mono_text_font.clone(),
                             TextColor::from(TEXT),
                             // will be updated by update_game_date
-                            TextKey::new("game-date-display").add_arg("date", game_date.0),
+                            TextKey::new("game-date-display").with_arg("date", game_date.0),
                             GameDateUi,
                         ));
                     parent
@@ -505,7 +505,7 @@ fn setup_ui(
                         '🔓',
                         THEME_MAGENTA,
                         (
-                            TextKey::new("research-display").add_arg("points", 0),
+                            TextKey::new("research-display").with_arg("points", 0),
                             ResearchPointsUi,
                         ),
                         emoji_font_handle.clone(),
@@ -596,7 +596,7 @@ fn update_game_date(
     mut text_key: Single<&mut TextKey, With<GameDateUi>>,
 ) {
     **tooltip = Tooltip::new_text(
-        TextKey::new("game-date-tooltip").add_arg("days", game_date.days_since_start() as f64),
+        TextKey::new("game-date-tooltip").with_arg("days", game_date.days_since_start() as f64),
     );
     text_key.replace_arg("date", game_date.0);
 }
@@ -754,7 +754,7 @@ fn update_funds_tooltip(
             .with_children(|parent| {
                 parent.spawn((Text::new(format!("{count}x ")), text_font.clone()));
                 parent.spawn((
-                    TextKey::new(category).add_arg("count", count as f64),
+                    TextKey::new(category).with_arg("count", count as f64),
                     text_font.clone(),
                 ));
                 parent.spawn(Node {
@@ -763,7 +763,7 @@ fn update_funds_tooltip(
                     ..default()
                 });
                 parent.spawn((
-                    TextKey::new("funds").add_arg("funds", funds),
+                    TextKey::new("funds").with_arg("funds", funds),
                     text_font.clone(),
                 ));
             });
@@ -890,11 +890,11 @@ fn on_follower_count_insert(
                     secondary_bundle(
                         px(60),
                         TextKey::new("follower-list-tooltip")
-                            .add_arg("count", *count as f64)
-                            .add_arg("follower-type", follower.as_str()),
+                            .with_arg("count", *count as f64)
+                            .with_arg("follower-type", follower.as_str()),
                         *symbol,
                         TEXT,
-                        TextKey::new("follower-count").add_arg("count", *count as f64),
+                        TextKey::new("follower-count").with_arg("count", *count as f64),
                         unicode_font_handle.clone(),
                         mono_font_handle.clone(),
                     ),
