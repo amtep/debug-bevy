@@ -8,7 +8,7 @@ use serde::Deserialize;
 use strum::Display;
 
 use crate::{
-    common::Effect,
+    effects::Effect,
     modifiers::{
         IntelligenceSuspicionModifier, MediaSuspicionModifier, Modifier, PoliceSuspicionModifier,
         ScientificSuspicionModifier,
@@ -112,7 +112,7 @@ fn update_suspicion(
     police_suspicion_changes: Query<&PoliceSuspicionChange>,
     media_suspicion_changes: Query<&MediaSuspicionChange>,
     children: Query<&Children>,
-    mut random: ResMut<RandomSource>,
+    random: Res<RandomSource>,
     suspicion_events_handle: Res<SuspicionEventsHandle>,
     suspicion_events_asset: Res<Assets<SuspicionEventsAsset>>,
 ) {
@@ -188,7 +188,7 @@ fn update_suspicion(
         intel,
         SuspicionType::Intelligence,
         suspicion_events,
-        &mut random.0,
+        &mut random.rng(),
     );
     update_suspicion_inner(
         commands.reborrow(),
@@ -197,7 +197,7 @@ fn update_suspicion(
         scien,
         SuspicionType::Scientific,
         suspicion_events,
-        &mut random.0,
+        &mut random.rng(),
     );
 
     for (entity, police_suspicion, media_suspicion) in &mut regions {
@@ -220,7 +220,7 @@ fn update_suspicion(
             police,
             SuspicionType::Police,
             suspicion_events,
-            &mut random.0,
+            &mut random.rng(),
         );
         update_suspicion_inner(
             commands.reborrow(),
@@ -229,53 +229,46 @@ fn update_suspicion(
             media,
             SuspicionType::Media,
             suspicion_events,
-            &mut random.0,
+            &mut random.rng(),
         );
     }
 }
 
-pub fn add_suspicion_changes(
-    mut commands: Commands,
-    entity: Entity,
-    count: usize,
-    suspicions: impl IntoIterator<Item = (SuspicionType, f32)>,
+pub fn add_suspicion_change(
+    entity_commands: &mut EntityCommands,
+    suspicion: SuspicionType,
+    amount: f32,
 ) {
-    for (suspicion, amount) in suspicions {
-        #[allow(clippy::cast_possible_truncation)]
-        let amount = count as f32 * amount;
-        match suspicion {
-            SuspicionType::Intelligence => commands
-                .entity(entity)
-                .insert(IntelligenceSuspicionChange(amount)),
-            SuspicionType::Scientific => commands
-                .entity(entity)
-                .insert(ScientificSuspicionChange(amount)),
-            SuspicionType::Police => commands
-                .entity(entity)
-                .insert(PoliceSuspicionChange(amount)),
-            SuspicionType::Media => commands.entity(entity).insert(MediaSuspicionChange(amount)),
-        };
-    }
+    match suspicion {
+        SuspicionType::Intelligence => entity_commands.insert(IntelligenceSuspicionChange(amount)),
+        SuspicionType::Scientific => entity_commands.insert(ScientificSuspicionChange(amount)),
+        SuspicionType::Police => entity_commands.insert(PoliceSuspicionChange(amount)),
+        SuspicionType::Media => entity_commands.insert(MediaSuspicionChange(amount)),
+    };
 }
 
-pub fn add_suspicions(
-    In((region_entity, count, suspicions)): In<(
-        Entity,
-        usize,
-        impl IntoIterator<Item = (SuspicionType, u32)>,
-    )>,
+pub fn add_suspicion(
+    In((region_entity, suspicion, amount)): In<(Entity, SuspicionType, i32)>,
     mut intel_suspicion: ResMut<IntelligenceSuspicion>,
     mut scien_suspicion: ResMut<ScientificSuspicion>,
     mut regions: Query<(&mut PoliceSuspicion, &mut MediaSuspicion), With<Region>>,
 ) {
-    for (suspicion, amount) in suspicions {
-        #[allow(clippy::cast_possible_truncation)]
-        let amount = count as u32 * amount;
-        match suspicion {
-            SuspicionType::Intelligence => intel_suspicion.0 += amount,
-            SuspicionType::Scientific => scien_suspicion.0 += amount,
-            SuspicionType::Police => regions.get_mut(region_entity).unwrap().0.0 += amount,
-            SuspicionType::Media => regions.get_mut(region_entity).unwrap().1.0 += amount,
+    match suspicion {
+        SuspicionType::Intelligence => {
+            intel_suspicion.0 = intel_suspicion.0.saturating_add_signed(amount);
+        }
+        SuspicionType::Scientific => {
+            scien_suspicion.0 = scien_suspicion.0.saturating_add_signed(amount);
+        }
+        SuspicionType::Police => {
+            if let Ok(mut region) = regions.get_mut(region_entity) {
+                region.0.0 = region.0.0.saturating_add_signed(amount);
+            }
+        }
+        SuspicionType::Media => {
+            if let Ok(mut region) = regions.get_mut(region_entity) {
+                region.1.0 = region.1.0.saturating_add_signed(amount);
+            }
         }
     }
 }

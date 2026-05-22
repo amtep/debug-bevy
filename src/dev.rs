@@ -7,6 +7,7 @@ use crate::{
     new_game::{DifficultiesAsset, DifficultiesHandle, NewGame},
     regions::Region,
     state::GameState,
+    suspicion::{IntelligenceSuspicion, ScientificSuspicion},
     text::TextKey,
     ui::toasts::WaitingToasts,
 };
@@ -26,6 +27,8 @@ fn listen_dev_keys(
     mut funds: ResMut<Funds>,
     mut research_points: ResMut<ResearchPoints>,
     mut toasts: ResMut<WaitingToasts>,
+    mut intelligence_suspicion: ResMut<IntelligenceSuspicion>,
+    mut scientific_suspicion: ResMut<ScientificSuspicion>,
 ) {
     if keys.just_pressed(KeyCode::KeyF) {
         if keys.pressed(KeyCode::AltLeft) {
@@ -42,6 +45,12 @@ fn listen_dev_keys(
     }
     if keys.just_pressed(KeyCode::KeyT) && keys.pressed(KeyCode::ControlLeft) {
         toasts.push(TextKey::new("debug-toast"));
+    }
+    if keys.just_pressed(KeyCode::KeyQ) && keys.pressed(KeyCode::AltLeft) {
+        intelligence_suspicion.0 += 100;
+    }
+    if keys.just_pressed(KeyCode::KeyW) && keys.pressed(KeyCode::AltLeft) {
+        scientific_suspicion.0 += 100;
     }
 }
 

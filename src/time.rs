@@ -28,7 +28,7 @@ pub fn plugin(app: &mut App) {
     .add_observer(on_game_speed_changed);
 }
 
-#[derive(Resource, Clone, Reflect, Serialize, Deserialize)]
+#[derive(Resource, Clone, Copy, Reflect, Serialize, Deserialize)]
 #[reflect(Resource)]
 #[reflect(Serialize)]
 #[reflect(Deserialize)]

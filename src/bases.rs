@@ -12,7 +12,7 @@ use crate::{
     regions::{BasePlot, Region},
     rng::RandomSource,
     state::{GameState, MainSetupSet},
-    suspicion::{SuspicionType, add_suspicion_changes},
+    suspicion::{SuspicionType, add_suspicion_change},
     tasks::{Task, TasksAsset, TasksHandle},
 };
 
@@ -63,7 +63,7 @@ fn new_game(
     mut commands: Commands,
     base_types_handle: Res<BasetypesHandle>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
-    mut random_source: ResMut<RandomSource>,
+    random_source: Res<RandomSource>,
     new_game: Res<NewGame>,
     regions: Query<(&Children, &Region)>,
     base_plots: Query<(), With<BasePlot>>,
@@ -79,7 +79,7 @@ fn new_game(
         .filter(|c| base_plots.contains(*c))
         .collect();
 
-    let base_plot = *base_plots.choose(&mut random_source.0).unwrap();
+    let base_plot = *base_plots.choose(&mut random_source.rng()).unwrap();
 
     let (base_type, _) = base_types_asset
         .get(base_types_handle.0.id())
@@ -111,12 +111,10 @@ fn spawn_base_inner(
             ChildOf(base_plot),
         ))
         .id();
-    add_suspicion_changes(
-        commands.reborrow(),
-        base_entity,
-        1,
-        base_type_settings.suspicions.iter().map(|(t, a)| (*t, *a)),
-    );
+
+    for (suspicion, amount) in &base_type_settings.suspicions {
+        add_suspicion_change(&mut commands.entity(base_entity), *suspicion, *amount);
+    }
 
     if !free {
         funds.0 -= base_type_settings.initial_cost;
@@ -151,7 +149,7 @@ pub fn spawn_base(
     base_plots: Query<Has<Children>, With<BasePlot>>,
     base_types_handle: Res<BasetypesHandle>,
     base_types_asset: Res<Assets<BasetypesAsset>>,
-    mut random_source: ResMut<RandomSource>,
+    random_source: Res<RandomSource>,
 ) {
     let vacant_base_plots: Vec<Entity> = regions
         .get(region)
@@ -159,7 +157,7 @@ pub fn spawn_base(
         .iter()
         .filter(|base_plot| base_plots.get(*base_plot) == Ok(false))
         .collect();
-    let Some(base_plot) = vacant_base_plots.choose(&mut random_source.0) else {
+    let Some(base_plot) = vacant_base_plots.choose(&mut random_source.rng()) else {
         warn!("expected at least one vacant base plot");
         return;
     };

@@ -409,7 +409,9 @@ fn setup_ui(
                                 ..default()
                             },
                             GameDateTooltipUi,
-                            Tooltip::new_text(TextKey::new("game-date-tooltip").with_arg("days", 0)),
+                            Tooltip::new_text(
+                                TextKey::new("game-date-tooltip").with_arg("days", 0),
+                            ),
                         ))
                         .with_child((
                             mono_text_font.clone(),

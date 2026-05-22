@@ -1,6 +1,6 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
 
-use chrono::{Days, NaiveDate};
+use chrono::NaiveDate;
 use moonshine_save::save::Save;
 use serde::Deserialize;
 
@@ -322,86 +322,83 @@ impl ModifierValue {
     }
 }
 
-pub fn spawn_modifiers<'a>(
+pub fn spawn_modifier(
     mut commands: Commands,
     entity: Option<Entity>,
     current_date: Option<NaiveDate>,
-    modifiers: impl IntoIterator<Item = &'a ModifierValue>,
+    modifier: &ModifierValue,
     source: Source,
 ) {
-    for modifier in modifiers {
-        let bundle = (
-            match modifier.op {
-                OperationValue::Add(value) => (Operation::Add, Value(value)),
-                OperationValue::Mult(value) => (Operation::Multiply, Value(value)),
-            },
-            modifier.clone(),
-            source.clone(),
-        );
+    let bundle = (
+        match modifier.op {
+            OperationValue::Add(value) => (Operation::Add, Value(value)),
+            OperationValue::Mult(value) => (Operation::Multiply, Value(value)),
+        },
+        modifier.clone(),
+        source,
+    );
 
-        let mut commands = if let Some(entity) = entity {
-            commands.spawn((ChildOf(entity), bundle))
+    let mut commands = if let Some(entity) = entity {
+        commands.spawn((ChildOf(entity), bundle))
+    } else {
+        commands.spawn(bundle)
+    };
+
+    if let Some(duration) = modifier.duration {
+        if let Some(current_date) = current_date {
+            commands.insert(EndDate::new(current_date, duration));
         } else {
-            commands.spawn(bundle)
-        };
-
-        if let Some(duration) = modifier.duration {
-            if let Some(current_date) = current_date {
-                let end_date = current_date + Days::new(duration as u64);
-                commands.insert(EndDate(end_date));
-            } else {
-                error!("timed modifier without current date supplied");
-            }
+            error!("timed modifier without current date supplied");
         }
+    }
 
-        match modifier.kind.clone() {
-            ModifierKindValue::Income { category: None } => {
-                commands.insert(IncomeModifier);
-            }
-            ModifierKindValue::Income {
-                category: Some(category),
-            } => {
-                commands.insert(IncomeCategoryModifier(category));
-            }
-            ModifierKindValue::Expense { category: None } => {
-                commands.insert(ExpenseModifier);
-            }
-            ModifierKindValue::Expense {
-                category: Some(category),
-            } => {
-                commands.insert(ExpenseCategoryModifier(category));
-            }
-            ModifierKindValue::Recruit {
-                by: None,
-                of: Some(of),
-            } => {
-                commands.insert(RecruitmentOf(of));
-            }
-            ModifierKindValue::Recruit {
-                by: Some(by),
-                of: None,
-            } => {
-                commands.insert(RecruitmentBy(by));
-            }
-            ModifierKindValue::Recruit {
-                by: Some(by),
-                of: Some(of),
-            } => {
-                commands.insert(RecruitmentByOf(by, of));
-            }
-            ModifierKindValue::IntelligenceSuspicion => {
-                commands.insert(IntelligenceSuspicionModifier);
-            }
-            ModifierKindValue::ScientificSuspicion => {
-                commands.insert(ScientificSuspicionModifier);
-            }
-            ModifierKindValue::PoliceSuspicion => {
-                commands.insert(PoliceSuspicionModifier);
-            }
-            ModifierKindValue::MediaSuspicion => {
-                commands.insert(MediaSuspicionModifier);
-            }
-            _ => error!("incorrect modifier combination"),
+    match modifier.kind.clone() {
+        ModifierKindValue::Income { category: None } => {
+            commands.insert(IncomeModifier);
         }
+        ModifierKindValue::Income {
+            category: Some(category),
+        } => {
+            commands.insert(IncomeCategoryModifier(category));
+        }
+        ModifierKindValue::Expense { category: None } => {
+            commands.insert(ExpenseModifier);
+        }
+        ModifierKindValue::Expense {
+            category: Some(category),
+        } => {
+            commands.insert(ExpenseCategoryModifier(category));
+        }
+        ModifierKindValue::Recruit {
+            by: None,
+            of: Some(of),
+        } => {
+            commands.insert(RecruitmentOf(of));
+        }
+        ModifierKindValue::Recruit {
+            by: Some(by),
+            of: None,
+        } => {
+            commands.insert(RecruitmentBy(by));
+        }
+        ModifierKindValue::Recruit {
+            by: Some(by),
+            of: Some(of),
+        } => {
+            commands.insert(RecruitmentByOf(by, of));
+        }
+        ModifierKindValue::IntelligenceSuspicion => {
+            commands.insert(IntelligenceSuspicionModifier);
+        }
+        ModifierKindValue::ScientificSuspicion => {
+            commands.insert(ScientificSuspicionModifier);
+        }
+        ModifierKindValue::PoliceSuspicion => {
+            commands.insert(PoliceSuspicionModifier);
+        }
+        ModifierKindValue::MediaSuspicion => {
+            commands.insert(MediaSuspicionModifier);
+        }
+        _ => error!("incorrect modifier combination"),
     }
 }

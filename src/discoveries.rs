@@ -6,7 +6,7 @@ use serde_derive::Deserialize;
 
 use crate::{
     funds::{Funds, FundsAmount},
-    modifiers::{ModifierValue, Source, spawn_modifiers},
+    modifiers::{ModifierValue, Source, spawn_modifier},
     new_game::NewGame,
     state::{GameState, MainSetupSet},
 };
@@ -109,13 +109,15 @@ pub fn learn_new_discovery(
     funds.0 -= discovery_selected.1;
     secrets.0 -= discovery_selected.2;
 
-    spawn_modifiers(
-        commands.reborrow(),
-        None,
-        None,
-        &discovery.modifiers,
-        Source::Discovery(discovery_selected.0.clone()),
-    );
+    for modifier in &discovery.modifiers {
+        spawn_modifier(
+            commands.reborrow(),
+            None,
+            None,
+            modifier,
+            Source::Discovery(discovery_selected.0.clone()),
+        );
+    }
 
     discoveries_researched.research(
         commands.reborrow(),

@@ -13,7 +13,7 @@ use crate::{
     state::GameState,
     suspicion::{
         IntelligenceSuspicionChange, MediaSuspicionChange, PoliceSuspicionChange,
-        ScientificSuspicionChange, SuspicionType, add_suspicion_changes,
+        ScientificSuspicionChange, SuspicionType, add_suspicion_change,
     },
 };
 
@@ -129,12 +129,13 @@ fn on_task_changed<C: Component>(
         MediaSuspicionChange,
     )>();
 
-    add_suspicion_changes(
-        commands.reborrow(),
-        task_entity,
-        count.0,
-        settings.suspicions.iter().map(|(t, a)| (*t, *a)),
-    );
+    for (suspicion, amount) in &settings.suspicions {
+        add_suspicion_change(
+            &mut commands.entity(task_entity),
+            *suspicion,
+            *amount * count.0 as f32,
+        );
+    }
 
     if settings.research != 0 {
         commands

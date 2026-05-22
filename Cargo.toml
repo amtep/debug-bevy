@@ -4,14 +4,16 @@ version = "0.1.0"
 edition = "2024"
 license = "GPL-3.0-or-later"
 
-[features]
-dev = ["bevy/dev"]
-
 [dependencies]
 bevy_common_assets = { version = "0.16.0", features = ["toml"] }
-chrono = { version = "0.4.44", default-features = false, features = ["std", "serde", "now"] }
 bevy_ui_text_input = "0.7.0"
+chrono = { version = "0.4.44", default-features = false, features = [
+  "now",
+  "serde",
+  "std"
+] }
 directories = "6.0.0"
+either = "1.16.0"
 fluent = "0.17.0"
 fluent-datetime = "0.2.0"
 icu = "2.2.0"
@@ -27,53 +29,53 @@ strum = { version = "0.28.0", features = ["derive"] }
 thiserror = "2.0.18"
 # Ensure preserve order in tables loaded
 # This has to match the version of toml used by bevy_common_assets
-toml = { version = "0.9.12", features = ["fast_hash"]}
+toml = { version = "0.9.12", features = ["fast_hash"] }
 unic-langid = { version = "0.9.6", features = ["macros"] }
 
 [dependencies.bevy]
 version = "0.18.1"
 default-features = false
 features = [
-    # This pulls in a lot of default features, aimed at 2D games
-    "2d",
-    # This is because the main map background asset is a jpg
-    "jpeg",
-    # for scrollbars
-    "experimental_bevy_ui_widgets",
+  # This pulls in a lot of default features, aimed at 2D games
+  "2d",
+  # for scrollbars
+  "experimental_bevy_ui_widgets",
+  # This is because the main map background asset is a jpg
+  "jpeg",
 ]
 
-[profile.dev.package."*"]
-opt-level = 3
+[features]
+dev = ["bevy/dev"]
 
 [lints.clippy]
-# The Query system-parameters often triggers this, but they are self-documenting.
-type_complexity = "allow"
-# Same, systems need many Query arguments.
-too_many_arguments = "allow"
-# Something like Res<AssetServer> is warned about otherwise.
-needless_pass_by_value = "allow"
+# Ugly code
+cast_lossless = "allow"
 # This is too noisy when we do things like usize to i64 on values that will never get that large.
 cast_possible_wrap = "allow"
+# not much we can do about that
+cast_precision_loss = "allow"
+# const is a contract we don't always want
+missing_const_for_fn = "allow"
+# Something like Res<AssetServer> is warned about otherwise.
+needless_pass_by_value = "allow"
+# This one just makes ugly code
+option_if_let_else = "allow"
+# Same, systems need many Query arguments.
+too_many_arguments = "allow"
+# Usually these lines are just component bundles
+too_many_lines = "allow"
+# The Query system-parameters often triggers this, but they are self-documenting.
+type_complexity = "allow"
 # Often it's clearer to use the struct name, if it's an enum.
 use_self = "allow"
 # We do this a lot in bevy
 wildcard_imports = "allow"
-# Usually these lines are just component bundles
-too_many_lines = "allow"
-# This one just makes ugly code
-option_if_let_else = "allow"
-# Ugly code
-cast_lossless = "allow"
-# const is a contract we don't always want
-missing_const_for_fn = "allow"
-# not much we can do about that
-cast_precision_loss = "allow"
 
 # disagreement about this lint
 option_option = "allow"
 
-pedantic = { level = "warn", priority = -1 }
 nursery = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
 
 # a selection of warnings from clippy's restricted set
 clone_on_ref_ptr = "warn"
@@ -98,14 +100,14 @@ todo = "warn"
 doc_markdown = "warn"
 manual_let_else = "warn"
 match_same_arms = "warn"
+nonstandard_macro_braces = "warn"
+print_stderr = "warn"
+print_stdout = "warn"
 redundant_closure_for_method_calls = "warn"
 redundant_else = "warn"
 semicolon_if_nothing_returned = "warn"
 undocumented_unsafe_blocks = "warn"
 unwrap_or_default = "warn"
-nonstandard_macro_braces = "warn"
-print_stdout = "warn"
-print_stderr = "warn"
 
 ptr_as_ptr = "warn"
 ptr_cast_constness = "warn"
@@ -114,9 +116,12 @@ ref_as_ptr = "warn"
 [lints.rust]
 unused_qualifications = "warn"
 
-missing_debug_implementations = "warn"
 future_incompatible = { level = "warn", priority = -1 }
 missing_copy_implementations = "warn"
+missing_debug_implementations = "warn"
 noop_method_call = "warn"
 trivial_casts = "warn"
 trivial_numeric_casts = "warn"
+
+[profile.dev.package."*"]
+opt-level = 3
