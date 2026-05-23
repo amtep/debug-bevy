@@ -127,12 +127,30 @@ impl TextKey {
     }
 
     pub fn with_arg(mut self, arg: &'static str, value: impl Into<TextArgValue>) -> Self {
-        self.1.push((arg, value.into()));
+        self.add_arg(arg, value);
+        self
+    }
+
+    #[expect(dead_code)]
+    pub fn with_arg_values(
+        mut self,
+        arg_values: impl IntoIterator<Item = (&'static str, impl Into<TextArgValue>)>,
+    ) -> Self {
+        self.add_arg_values(arg_values);
         self
     }
 
     pub fn add_arg(&mut self, arg: &'static str, value: impl Into<TextArgValue>) -> &mut Self {
         self.1.push((arg, value.into()));
+        self
+    }
+
+    pub fn add_arg_values(
+        &mut self,
+        arg_values: impl IntoIterator<Item = (&'static str, impl Into<TextArgValue>)>,
+    ) -> &mut Self {
+        self.1
+            .extend(arg_values.into_iter().map(|(a, v)| (a, v.into())));
         self
     }
 

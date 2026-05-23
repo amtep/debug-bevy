@@ -21,6 +21,5 @@ acquire-ballroom-tooltip = all that glitters is not gold, guilded tombs do worms
 acquire-basetype-dialog-max-pop = Max follower count: { $count }
 acquire-basetype-dialog-initial-cost = Initial cost: { FUNDS($funds) }
 acquire-basetype-dialog-cost-per-day = Cost per day: { FUNDS($funds) }
-acquire-basetype-dialog-police-suspicion = Police suspicion: { $suspicion }
-acquire-basetype-dialog-media-suspicion = Media suspicion: { $suspicion }
+acquire-basetype-dialog-suspicion = { $suspicion }: { suspicion-change }
 acquire-basetype-dialog-confirm-tooltip = not enough funds, { FUNDS($funds) } required!

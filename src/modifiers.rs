@@ -5,10 +5,10 @@ use moonshine_save::save::Save;
 use serde::Deserialize;
 
 use crate::{
-    common::EndDate,
     constants::ui::colors::{TEXT_NEGATIVE, TEXT_POSITIVE},
     state::GameState,
     text::TextKey,
+    time::EndDate,
 };
 
 /// The kind of modifier: `_add` or `_mult`.
@@ -34,6 +34,7 @@ pub struct Value(pub f64);
 pub enum Source {
     Difficulty(String),
     Discovery(String),
+    SuspicionEvent(String),
 }
 
 /// A modifier to recruitment progress.

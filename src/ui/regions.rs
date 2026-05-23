@@ -278,9 +278,9 @@ fn on_region_click(
                                     ..default()
                                 })
                                 .with_children(|parent| {
-                                    let line = |key, arg, value| {
+                                    let line = |text_key| {
                                         (
-                                            TextKey::new(key).with_arg(arg, value),
+                                            text_key,
                                             TextColor::from(TEXT),
                                             TextFont::from_font_size(LARGE)
                                                 .with_font(font_handle.clone()),
@@ -288,27 +288,25 @@ fn on_region_click(
                                     };
 
                                     parent.spawn(line(
-                                        "acquire-basetype-dialog-max-pop".into(),
-                                        "count",
-                                        settings.max_follower_count as f64,
+                                        TextKey::new("acquire-basetype-dialog-max-pop")
+                                            .with_arg("count", settings.max_follower_count as f64),
                                     ));
                                     parent.spawn(line(
-                                        "acquire-basetype-dialog-initial-cost".into(),
-                                        "funds",
-                                        settings.initial_cost as f64,
+                                        TextKey::new("acquire-basetype-dialog-initial-cost")
+                                            .with_arg("funds", settings.initial_cost as f64),
                                     ));
                                     parent.spawn(line(
-                                        "acquire-basetype-dialog-cost-per-day".into(),
-                                        "funds",
-                                        settings.cost_per_day as f64,
+                                        TextKey::new("acquire-basetype-dialog-cost-per-day")
+                                            .with_arg("funds", settings.cost_per_day as f64),
                                     ));
                                     for (suspicion, amount) in &settings.suspicions {
                                         parent.spawn(line(
-                                            format!(
-                                                "acquire-basetype-dialog-{suspicion}-suspicion"
-                                            ),
-                                            "suspicion",
-                                            *amount as f64,
+                                            TextKey::new("acquire-basetype-dialog-suspicion")
+                                                .with_arg(
+                                                    "suspicion",
+                                                    TextKey::new(format!("{suspicion}-suspicion")),
+                                                )
+                                                .with_arg("amount", *amount as f64),
                                         ));
                                     }
                                 })
@@ -364,9 +362,9 @@ pub fn update_regional_suspicion(
     for (views, police, media) in regions.iter() {
         for view in &views.0 {
             if let Ok(mut police_suspicion_meter) = police_suspicion_uis.get_mut(*view) {
-                police_suspicion_meter.value = police.0;
+                police_suspicion_meter.value = **police;
             } else if let Ok(mut media_suspicion_meter) = media_suspicion_uis.get_mut(*view) {
-                media_suspicion_meter.value = media.0;
+                media_suspicion_meter.value = **media;
             }
         }
     }

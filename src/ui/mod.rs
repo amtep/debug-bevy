@@ -632,8 +632,8 @@ fn update_suspicion(
         ),
     >,
 ) {
-    intel_suspicion_ui.value = intel_suspicion.0;
-    scien_suspicion_ui.value = scien_suspicion.0;
+    intel_suspicion_ui.value = **intel_suspicion;
+    scien_suspicion_ui.value = **scien_suspicion;
 }
 
 fn update_meter_display<T: PartialOrd + ToString + Send + Sync + 'static>(

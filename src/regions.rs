@@ -110,8 +110,8 @@ fn new_game(
                 .spawn((
                     Region { name: name.clone() },
                     settings.location,
-                    PoliceSuspicion(0),
-                    MediaSuspicion(0),
+                    PoliceSuspicion::default(),
+                    MediaSuspicion::default(),
                 ))
                 .insert_if(Unlocked, || {
                     *name == new_game.region.name || settings.requires_discovery.is_none()

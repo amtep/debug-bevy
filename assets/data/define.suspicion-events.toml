@@ -2,7 +2,7 @@
 major = false
 suspicion-type = "police"
 effects = [
-  { follower-busy = { name = "minion", count = -3, duration = 30 } },
+  { follower-busy = { name = "minion", count = -2, duration = 30 } },
 ]
 
 [priest-arrested]

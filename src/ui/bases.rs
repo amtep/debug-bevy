@@ -18,7 +18,7 @@ use crate::{
     funds::Funds,
     regions::{BasePlot, Location, Region},
     state::GameState,
-    suspicion::{IntelligenceSuspicion, SuspicionType},
+    suspicion::{SuspicionType, add_suspicion},
     tasks::{Task, TasksAsset, TasksHandle},
     text::TextKey,
     ui::{
@@ -634,7 +634,6 @@ fn transfer_followers_dialog(
                   mut commands: Commands,
                   parents: Query<&ChildOf>,
                   mut funds: ResMut<Funds>,
-                  mut intel_suspicion: ResMut<IntelligenceSuspicion>,
                   slider_value: Single<&SliderValue, With<FollowerSliderUi>>,
                   selected: Single<&FollowerTransferBaseSelectorUi, With<Selected>>| {
                 if slider_value.0 == 0.0 {
@@ -650,7 +649,10 @@ fn transfer_followers_dialog(
                 );
 
                 funds.0 += funds_change;
-                intel_suspicion.0 += intel;
+                commands.run_system_cached_with(
+                    add_suspicion,
+                    (None, SuspicionType::Intelligence, intel as i32),
+                );
 
                 commands.run_system_cached_with(
                     transfer_followers,

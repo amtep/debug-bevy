@@ -16,6 +16,11 @@ income-category-job = { $count ->
 }
 income-category-crime = Crime
 
+income-category-event = { $count ->
+    [one] Event
+    *[other] Events
+}
+
 expense-category-global = { $count ->
     [one] Modifier
     *[other] Modifiers
@@ -26,6 +31,11 @@ expense-category-base = { $count ->
     *[other] Hideouts
 }
 expense-category-research = Research
+
+expense-category-event = { $count ->
+    [one] Event
+    *[other] Events
+}
 
 expense-category-priest = { follower-type-priest }
 expense-category-minion = { follower-type-minion }

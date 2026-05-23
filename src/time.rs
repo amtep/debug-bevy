@@ -22,6 +22,10 @@ pub fn plugin(app: &mut App) {
         FixedPreUpdate,
         fixed_pre_update.run_if(in_state(GameState::Main)),
     )
+    .add_systems(
+        FixedUpdate,
+        fixed_update_end_date.run_if(in_state(GameState::Main)),
+    )
     .add_systems(Update, listen_speed_keys.run_if(in_state(GameState::Main)))
     .add_observer(on_force_pause_insert)
     .add_observer(on_force_pause_remove)
@@ -67,6 +71,17 @@ fn new_game(mut commands: Commands) {
     commands.insert_resource(GameDate::default());
 }
 
+#[derive(Component, Reflect, Clone, Copy)]
+#[reflect(Component)]
+#[reflect(opaque)]
+pub struct EndDate(pub NaiveDate);
+
+impl EndDate {
+    pub fn new(current: NaiveDate, duration: u32) -> Self {
+        Self(current + Days::new(duration as u64))
+    }
+}
+
 /// The "source of truth" for game speed state.
 /// The state of `Time<Virtual>` is derived from this resource.
 #[derive(Resource, Default)]
@@ -86,6 +101,18 @@ pub struct CurrentGameSpeed {
 fn fixed_pre_update(mut date: ResMut<GameDate>) {
     // We don't expect to reach 262000 AD
     date.0 = date.0 + Days::new(1);
+}
+
+fn fixed_update_end_date(
+    mut commands: Commands,
+    date: Res<GameDate>,
+    end_dates: Query<(Entity, &EndDate)>,
+) {
+    for (entity, end_date) in &end_dates {
+        if end_date.0 == date.0 {
+            commands.entity(entity).despawn();
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

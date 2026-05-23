@@ -1,3 +1,4 @@
+# $op, $modifier, $amount/$percent, $duration/$date
 modifier = { $op ->
     *[add] { modifer-add }
     [mult] { modifier-mult }
@@ -12,7 +13,7 @@ modifier-add = { SIGN($amount) ->
 modifier-mult = { SIGN($percent) ->
    *[positive] +{ $percent }
     [negative] { $percent }
-    [zero] \u0020{ $amount }
+    [zero] \u0020{ $percent }
 }%
 
 modifier-duration = { $duration ->

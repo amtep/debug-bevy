@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 use crate::{
     bases::{Base, BasetypeSettings, BasetypesAsset, BasetypesHandle, spawn_base},
-    common::{EndDate, Unlocked},
+    common::Unlocked,
     discoveries::{DiscoveriesResearched, ResearchPoints},
     followers::{Follower, FollowerCount},
     funds::{Expense, Funds, FundsAmount, Income},
@@ -13,7 +13,7 @@ use crate::{
     regions::Region,
     rng::RandomSource,
     suspicion::{SuspicionType, add_suspicion, add_suspicion_change},
-    time::GameDate,
+    time::{EndDate, GameDate},
 };
 
 #[derive(Deserialize, Clone)]
@@ -128,28 +128,15 @@ impl Scopes<'_, '_> {
         base_type_settings.get(base).unwrap()
     }
 
-    pub fn get_followers(
-        &self,
-        entity: Option<Entity>,
-    ) -> impl Iterator<Item = (Entity, &Follower, &FollowerCount)> {
+    pub fn get_followers(&self, entity: Option<Entity>) -> impl Iterator<Item = EntityRef<'_>> {
         if let Some(entity) = entity {
-            Left(self.children.iter_descendants(entity).filter_map(|e| {
-                self.followers.get(e).ok().map(|e| {
-                    (
-                        e.id(),
-                        e.get::<Follower>().unwrap(),
-                        e.get::<FollowerCount>().unwrap(),
-                    )
-                })
-            }))
+            Left(
+                self.children
+                    .iter_descendants(entity)
+                    .filter_map(|e| self.followers.get(e).ok()),
+            )
         } else {
-            Right(self.followers.iter().map(|e| {
-                (
-                    e.id(),
-                    e.get::<Follower>().unwrap(),
-                    e.get::<FollowerCount>().unwrap(),
-                )
-            }))
+            Right(self.followers.iter())
         }
     }
 
@@ -188,7 +175,7 @@ impl Scopes<'_, '_> {
 }
 
 pub fn apply_effect(
-    In((entity, effect, source)): In<(Option<Entity>, &Effect, &Source)>,
+    In((entity, effect, source)): In<(Option<Entity>, Effect, Source)>,
     mut commands: Commands,
     mut funds: ResMut<Funds>,
     mut secrets: ResMut<ResearchPoints>,
@@ -199,7 +186,7 @@ pub fn apply_effect(
     macro_rules! entity_commands {
         ($duration: expr) => {
             if let Some(duration) = $duration {
-                let end_date = EndDate::new(date.0, *duration);
+                let end_date = EndDate::new(date.0, duration);
                 if let Some(entity) = entity {
                     commands.spawn((ChildOf(entity), end_date))
                 } else {
@@ -221,22 +208,22 @@ pub fn apply_effect(
     match effect {
         Effect::Funds(amount) => funds.0 += amount,
         Effect::Income { amount, duration } => {
-            entity_commands!(duration).insert(amount.clone());
+            entity_commands!(duration).insert(amount);
         }
         Effect::Expense { amount, duration } => {
-            entity_commands!(duration).insert(amount.clone());
+            entity_commands!(duration).insert(amount);
         }
         Effect::Secrets(s) => {
-            secrets.0 = secrets.0.saturating_add_signed(*s);
+            secrets.0 = secrets.0.saturating_add_signed(s);
         }
         Effect::Discovery(d) => discoveries.research(
             commands.reborrow(),
-            d.clone(),
+            d,
             crate::discoveries::DiscoveryVisibility::Shown,
         ),
         Effect::SpawnBase(base) => {
             if let Some(entity_ref) = scopes.get_region(entity) {
-                commands.run_system_cached_with(spawn_base, (entity_ref.id(), base.clone()));
+                commands.run_system_cached_with(spawn_base, (entity_ref.id(), base));
             }
         }
         Effect::DestroyBase => {
@@ -245,19 +232,17 @@ pub fn apply_effect(
             }
         }
         Effect::Suspicion { suspicion, amount } => {
-            if let Some(entity) = entity {
-                commands.run_system_cached_with(add_suspicion, (entity, *suspicion, *amount));
-            }
+            commands.run_system_cached_with(add_suspicion, (entity, suspicion, amount));
         }
         Effect::SuspicionChange {
             suspicion,
             amount,
             duration,
         } => {
-            add_suspicion_change(&mut entity_commands!(duration), *suspicion, *amount);
+            add_suspicion_change(&mut entity_commands!(duration), suspicion, amount);
         }
         Effect::Follower { name, count } => {
-            if *count == 0 {
+            if count == 0 {
                 return;
             }
 
@@ -271,15 +256,15 @@ pub fn apply_effect(
                     let max_follower_count = scopes.get_base_type_settings(base).max_follower_count;
                     let follower_counts = scopes
                         .get_followers(Some(base))
-                        .map(|(_, _, f)| f.0)
+                        .map(|e| e.get::<FollowerCount>().unwrap().0)
                         .sum::<usize>();
-                    follower_counts + *count as usize <= max_follower_count
+                    follower_counts + count as usize <= max_follower_count
                 } else {
                     count.unsigned_abs() <= entity_ref.get::<FollowerCount>().unwrap().0
                 }
             }) {
                 let mut follower_count = *entity_ref.get::<FollowerCount>().unwrap();
-                follower_count.0 = follower_count.0.saturating_add_signed(*count);
+                follower_count.0 = follower_count.0.saturating_add_signed(count);
                 commands.entity(entity_ref.id()).insert(follower_count);
             }
             // TODO: allow adding/removing followers less than the count too.
@@ -294,8 +279,8 @@ pub fn apply_effect(
                 commands.reborrow(),
                 entity,
                 Some(date.0),
-                modifier_value,
-                source.clone(),
+                &modifier_value,
+                source,
             );
         }
     }
