@@ -61,7 +61,7 @@ pub struct Region {
 
 impl Region {
     pub fn get_text_key(&self) -> TextKey {
-        TextKey::new("region-name").with_arg("region", self.name.clone())
+        TextKey::new(format!("region-{}", self.name))
     }
 }
 
