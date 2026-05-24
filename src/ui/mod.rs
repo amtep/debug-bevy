@@ -891,9 +891,13 @@ fn on_follower_count_insert(
                 parent.spawn((
                     secondary_bundle(
                         px(60),
-                        TextKey::new("follower-list-tooltip")
+                        TextKey::new("follower-type-count")
                             .with_arg("count", *count as f64)
-                            .with_arg("follower-type", follower.as_str()),
+                            .with_arg(
+                                "follower-type",
+                                TextKey::new(format!("follower-type-{follower}"))
+                                    .with_arg("count", *count as f64),
+                            ),
                         *symbol,
                         TEXT,
                         TextKey::new("follower-count").with_arg("count", *count as f64),

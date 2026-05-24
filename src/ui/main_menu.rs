@@ -386,9 +386,15 @@ fn setup_difficulties_dialog(
                                 for (follower, count) in &settings.starting_followers {
                                     parent.spawn(condition(
                                         (
-                                            TextKey::new("follower-list-tooltip")
+                                            TextKey::new("follower-type-count")
                                                 .with_arg("count", *count as f64)
-                                                .with_arg("follower-type", follower.as_str()),
+                                                .with_arg(
+                                                    "follower-type",
+                                                    TextKey::new(format!(
+                                                        "follower-type-{follower}",
+                                                    ))
+                                                    .with_arg("count", *count as f64),
+                                                ),
                                             TextColor::from(TEXT),
                                         ),
                                         2,
@@ -522,7 +528,7 @@ fn setup_region_selection_dialog(
                     Button,
                     BorderColor::all(BORDER),
                     BackgroundColor::from(BUTTON_BACKGROUND),
-                    Tooltip::new_text(TextKey::new("region-name").with_arg("region", name.clone())),
+                    Tooltip::new_text(TextKey::new(format!("region-{name}"))),
                     RegionSelectorUi(name.clone()),
                 ))
                 .with_child((

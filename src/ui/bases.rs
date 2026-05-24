@@ -170,8 +170,7 @@ fn on_base_click(
     mut commands: Commands,
     base_uis: Query<&ViewOf, With<BaseUi>>,
     bases: Query<(&Children, &Base)>,
-    followers: Query<(&Follower, &FollowerCount, &Children)>,
-    tasks: Query<&Task>,
+    followers: Query<(&Follower, &FollowerCount, &Task)>,
     discoveries_researched: Res<DiscoveriesResearched>,
     task_handle: Res<TasksHandle>,
     task_assets: Res<Assets<TasksAsset>>,
@@ -188,8 +187,7 @@ fn on_base_click(
         .iter()
         .filter_map(|child| followers.get(child).ok())
         .filter(|(_, c, _)| c.0 != 0)
-        .map(|(f, c, children)| {
-            let current_task = children.iter().find_map(|c| tasks.get(c).ok()).unwrap();
+        .map(|(f, c, t)| {
             let task_iter = task_settings
                 .iter()
                 .filter(|(_, v)| {
@@ -199,7 +197,7 @@ fn on_base_click(
                             .is_none_or(|d| discoveries_researched.contains_key(d))
                 })
                 .map(|(k, _)| {
-                    let enabled = &current_task.0 != k;
+                    let enabled = &t.0 != k;
                     let tooltip = if enabled {
                         TextKey::new(format!("switch-task-{k}-tooltip"))
                     } else {
@@ -239,27 +237,24 @@ fn on_base_click(
                   menu_clickeds: Query<&MenuClicked>,
                   mut commands: Commands,
                   bases: Query<&Children, With<Base>>,
-                  followers: Query<(&Follower, &FollowerCount, &Children)>,
-                  tasks: Query<&Task>| {
+                  followers: Query<(&Follower, &FollowerCount)>| {
                 let MenuClicked(heading, item) = menu_clickeds.get(menu_clicked.entity).unwrap();
 
                 if let Some(follower) = heading.strip_prefix("follower-type-") {
                     let children = bases.get(base_entity).unwrap();
                     if let Some(task) = item.strip_prefix("task-") {
-                        let follower_children = children
+                        let follower_entity = children
                             .iter()
-                            .find_map(|child| {
+                            .find(|child| {
                                 followers
-                                    .get(child)
+                                    .get(*child)
                                     .ok()
-                                    .and_then(|f| (**f.0 == follower).then_some(f.2))
+                                    .is_some_and(|(f, _)| f.0 == follower)
                             })
                             .unwrap();
-                        let task_entity = follower_children
-                            .iter()
-                            .find(|c| tasks.contains(*c))
-                            .unwrap();
-                        commands.entity(task_entity).insert(Task(task.to_owned()));
+                        commands
+                            .entity(follower_entity)
+                            .insert(Task(task.to_owned()));
                     } else if item == "follower-transfer" {
                         let (follower_entity, follower_count) = children
                             .iter()
@@ -493,7 +488,11 @@ fn transfer_followers_dialog(
         .with_children(|parent| {
             parent.spawn((
                 TextKey::new("follower-transfer-number")
-                    .with_arg("follower-type", follower.as_str())
+                    .with_arg(
+                        "follower-type",
+                        TextKey::new(format!("follower-type-{follower}"))
+                            .with_arg("count", follower_count.0 as f64),
+                    )
                     .with_arg("count", follower_count.0 as f64),
                 TextColor::from(WHITE),
                 TextFont::from_font_size(NORMAL).with_font(font_handle.clone()),
@@ -724,9 +723,13 @@ pub fn on_follower_count_insert(
         .entity(follower_list_box.0)
         .insert(Tooltip::new_texts(
             followers.iter().filter(|(_, c)| **c != 0).map(|(f, c)| {
-                TextKey::new("follower-list-tooltip")
+                TextKey::new("follower-type-count")
                     .with_arg("count", **c as f64)
-                    .with_arg("follower-type", f.to_string())
+                    .with_arg(
+                        "follower-type",
+                        TextKey::new(format!("follower-type-{}", f.0))
+                            .with_arg("count", **c as f64),
+                    )
             }),
         ));
 }

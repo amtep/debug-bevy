@@ -2,33 +2,39 @@
 
 [gig-work]
 follower-types = ["priest", "minion"]
-income-per-day = [50, "job"]
+effects = [{ income = { amount = [50, "job", 1] } }]
 
 [security]
 follower-types = ["goon"]
-security = 1
+effects = [
+  { suspicion-change = { suspicion = "intelligence", amount = -0.25 } },
+  { suspicion-change = { suspicion = "police", amount = 0.25 } },
+]
 
 [petty-crime]
 follower-types = ["minion", "goon"]
-income-per-day = [100, "crime"]
-suspicions = { police = 0.5 }
+effects = [
+  { income = { amount = [100, "crime", 1] } },
+  { suspicion-change = { suspicion = "police", amount = 0.5 } }
+]
 
 [priest-recruit-minions]
 follower-types = ["priest"]
-recruit-progress = ["minion", 1.0]
-achievement = "started-recruiting"
+effects = [
+  { recruit = { follower = "minion", amount = 1.0 } },
+  { achievement = "started-recruiting" }
+]
 
 [minion-recruit-minions]
 follower-types = ["minion"]
 requires-discovery = "minions-can-recruit"
-recruit-progress = ["minion", 0.5]
+effects = [{ recruit = { follower = "minion", amount = 0.5 } }]
 
 [priest-recruit-goons]
 follower-types = ["priest"]
 requires-discovery = "recruit-goons"
-recruit-progress = ["goon", 1.0]
+effects = [{ recruit = { follower = "goon", amount = 1.0 } }]
 
 [research]
 follower-types = ["priest"]
-expense-per-day = [50, "research"]
-research = 1
+effects = [{ expense = { amount = [50, "research", 1] } }, { research = 1 }]

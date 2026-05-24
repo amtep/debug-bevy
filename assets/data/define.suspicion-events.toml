@@ -14,7 +14,7 @@ effects = [{ follower-busy = { name = "priest", count = -1, duration = 60 } }]
 major = false
 suspicion-type = "scientific"
 effects = [
-  { secrets = -100 },
+  { secret = -100 },
 ]
 
 [cult-debunked]

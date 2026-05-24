@@ -63,7 +63,7 @@ pub struct ResearchPoints(pub u32);
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 #[require(Save)]
-pub struct Research(pub u32);
+pub struct Research(pub i32);
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "kebab-case")]
@@ -127,5 +127,7 @@ pub fn learn_new_discovery(
 }
 
 fn research(researches: Query<&Research>, mut points: ResMut<ResearchPoints>) {
-    points.0 += researches.iter().map(|r| r.0).sum::<u32>();
+    points.0 = points
+        .0
+        .saturating_add_signed(researches.iter().map(|r| r.0).sum::<i32>());
 }

@@ -371,14 +371,17 @@ fn spawn_suspicion_event(
                 for effect in effects.clone() {
                     commands.run_system_cached_with(
                         apply_effect,
-                        (entity, effect.clone(), source.clone()),
+                        (entity, None, effect.clone(), source.clone()),
                     );
                 }
             },
         );
     } else {
         for effect in &setting.effects {
-            commands.run_system_cached_with(apply_effect, (entity, effect.clone(), source.clone()));
+            commands.run_system_cached_with(
+                apply_effect,
+                (entity, None, effect.clone(), source.clone()),
+            );
         }
     }
 }

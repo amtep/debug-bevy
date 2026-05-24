@@ -121,14 +121,6 @@ fn spawn_base_inner(
     }
 
     for (follower, settings) in &followers_asset.get(followers_handle.0.id()).unwrap().0 {
-        let follower_entity = commands
-            .spawn((
-                ChildOf(base_entity),
-                Follower(follower.clone()),
-                Expense(settings.cost_per_day, follower.clone(), 0),
-            ))
-            .insert(FollowerCount(0))
-            .id();
         let task = task_assets
             .get(task_handle.0.id())
             .unwrap()
@@ -137,7 +129,14 @@ fn spawn_base_inner(
             .find(|(_, settings)| settings.follower_types.contains(follower))
             .unwrap()
             .0;
-        commands.spawn((Task(task.clone()), ChildOf(follower_entity)));
+        commands
+            .spawn((
+                ChildOf(base_entity),
+                Follower(follower.clone()),
+                Expense(settings.cost_per_day, follower.clone(), 0),
+                Task(task.clone()),
+            ))
+            .insert(FollowerCount(0));
     }
 }
 

@@ -11,16 +11,8 @@ follower-type-minion = { $count ->
     *[other] Minions
 }
 
-follower-type-name = { $follower-type ->
-    *[priest] { follower-type-priest }
-    [goon] { follower-type-goon }
-    [minion] { follower-type-minion }
-}
-
-follower-list-tooltip = { $count } { follower-type-name }
-
-follower-count = { BIGNUM($count, lower-limit: 1000) }
-
+follower-count = { $count }
+follower-type-count = { $count }x { $follower-type }
 follower-transfer = Transfer
 follower-transfer-tooltip = move some to a another hideout
 
@@ -28,11 +20,11 @@ follower-transfer-current-follower-count = Current follower count: { follower-co
 follower-transfer-maximum-follower-count = Maximum follower count: { follower-count }
 follower-transfer-source-base = Source hideout
 follower-transfer-full-base = Full hideout
-follower-transfer-number = { follower-type-name } to transfer:
+follower-transfer-number = { $follower-type } to transfer:
 
-follower-transfer-title = Transfer { follower-type-name }
+follower-transfer-title = Transfer { $follower-type }
 follower-transfer-confirm = Go
 follower-transfer-confirm-tooltip = select a destination hideout first!
 follower-transfer-confirm-funds-tooltip = not enough funds, { FUNDS($funds) } required!
 
-new-follower-toast = Recruited { $count } { follower-type-name } in { region-name }
+new-follower-toast = Recruited { $count } { $follower-type } in { $region }

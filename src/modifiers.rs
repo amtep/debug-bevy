@@ -35,6 +35,7 @@ pub enum Source {
     Difficulty(String),
     Discovery(String),
     SuspicionEvent(String),
+    Task(String),
 }
 
 /// A modifier to recruitment progress.

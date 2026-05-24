@@ -4,15 +4,17 @@ use rand::seq::IndexedRandom;
 use serde::Deserialize;
 
 use crate::{
+    achievements::AchievedEvent,
     bases::{Base, BasetypeSettings, BasetypesAsset, BasetypesHandle, spawn_base},
     common::Unlocked,
-    discoveries::{DiscoveriesResearched, ResearchPoints},
-    followers::{Follower, FollowerCount},
+    discoveries::{DiscoveriesResearched, Research, ResearchPoints},
+    followers::{Follower, FollowerCount, Recruit},
     funds::{Expense, Funds, FundsAmount, Income},
     modifiers::{ModifierValue, Source, spawn_modifier},
     regions::Region,
     rng::RandomSource,
     suspicion::{SuspicionType, add_suspicion, add_suspicion_change},
+    tasks::Task,
     time::{EndDate, GameDate},
 };
 
@@ -28,7 +30,8 @@ pub enum Effect {
         amount: Expense,
         duration: Option<u32>,
     },
-    Secrets(i32),
+    Secret(i32),
+    Research(i32),
     Discovery(String),
     SpawnBase(String),
     DestroyBase,
@@ -41,6 +44,10 @@ pub enum Effect {
         amount: f32,
         duration: Option<u32>,
     },
+    Recruit {
+        follower: String,
+        amount: f32,
+    },
     Follower {
         name: String,
         count: isize,
@@ -51,6 +58,7 @@ pub enum Effect {
         duration: u32,
     },
     Modifier(ModifierValue),
+    Achievement(String),
 }
 
 #[derive(SystemParam)]
@@ -59,6 +67,7 @@ pub struct Scopes<'w, 's> {
     regions: Query<'w, 's, EntityRef<'static>, (With<Region>, With<Unlocked>)>,
     bases: Query<'w, 's, EntityRef<'static>, With<Base>>,
     followers: Query<'w, 's, EntityRef<'static>, With<Follower>>,
+    tasks: Query<'w, 's, EntityRef<'static>, With<Task>>,
     random: Res<'w, RandomSource>,
 
     base_types_handle: Res<'w, BasetypesHandle>,
@@ -66,7 +75,7 @@ pub struct Scopes<'w, 's> {
 }
 
 impl Scopes<'_, '_> {
-    pub fn get_region(&mut self, entity: Option<Entity>) -> Option<EntityRef<'_>> {
+    pub fn get_region(&self, entity: Option<Entity>) -> Option<EntityRef<'_>> {
         self.get_region_if(entity, |_| true)
     }
 
@@ -174,14 +183,15 @@ impl Scopes<'_, '_> {
     }
 }
 
+#[allow(clippy::cast_possible_truncation)]
 pub fn apply_effect(
-    In((entity, effect, source)): In<(Option<Entity>, Effect, Source)>,
+    In((entity, count, effect, source)): In<(Option<Entity>, Option<usize>, Effect, Source)>,
     mut commands: Commands,
     mut funds: ResMut<Funds>,
     mut secrets: ResMut<ResearchPoints>,
     mut discoveries: ResMut<DiscoveriesResearched>,
     date: Res<GameDate>,
-    mut scopes: Scopes,
+    scopes: Scopes,
 ) {
     macro_rules! entity_commands {
         ($duration: expr) => {
@@ -205,16 +215,29 @@ pub fn apply_effect(
         };
     }
 
+    let count = count.unwrap_or(1);
+
     match effect {
-        Effect::Funds(amount) => funds.0 += amount,
-        Effect::Income { amount, duration } => {
+        Effect::Funds(amount) => funds.0 += amount * count as FundsAmount,
+        Effect::Income {
+            mut amount,
+            duration,
+        } => {
+            amount.2 *= count;
             entity_commands!(duration).insert(amount);
         }
-        Effect::Expense { amount, duration } => {
+        Effect::Expense {
+            mut amount,
+            duration,
+        } => {
+            amount.2 *= count;
             entity_commands!(duration).insert(amount);
         }
-        Effect::Secrets(s) => {
-            secrets.0 = secrets.0.saturating_add_signed(s);
+        Effect::Secret(s) => {
+            secrets.0 = secrets.0.saturating_add_signed(s * count as i32);
+        }
+        Effect::Research(amount) => {
+            entity_commands!().insert(Research(amount * count as i32));
         }
         Effect::Discovery(d) => discoveries.research(
             commands.reborrow(),
@@ -232,14 +255,22 @@ pub fn apply_effect(
             }
         }
         Effect::Suspicion { suspicion, amount } => {
-            commands.run_system_cached_with(add_suspicion, (entity, suspicion, amount));
+            commands
+                .run_system_cached_with(add_suspicion, (entity, suspicion, amount * count as i32));
         }
         Effect::SuspicionChange {
             suspicion,
             amount,
             duration,
         } => {
-            add_suspicion_change(&mut entity_commands!(duration), suspicion, amount);
+            add_suspicion_change(
+                &mut entity_commands!(duration),
+                suspicion,
+                amount * count as f32,
+            );
+        }
+        Effect::Recruit { follower, amount } => {
+            entity_commands!().insert(Recruit(follower, amount * count as f32));
         }
         Effect::Follower { name, count } => {
             if count == 0 {
@@ -282,6 +313,9 @@ pub fn apply_effect(
                 &modifier_value,
                 source,
             );
+        }
+        Effect::Achievement(name) => {
+            commands.trigger(AchievedEvent { achievement: name });
         }
     }
 }

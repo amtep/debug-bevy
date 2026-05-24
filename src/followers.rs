@@ -110,7 +110,8 @@ fn recruit(
     mut commands: Commands,
     bases: Query<(&Base, &Children)>,
     followers: Query<(&ChildOf, &Follower, &FollowerCount)>,
-    mut recruits: Query<(Entity, &ChildOf, &Recruit, &mut RecruitProgress)>,
+    mut recruit_progresses: Query<&mut RecruitProgress>,
+    recruits: Query<(Entity, &ChildOf, &Recruit)>,
     m_by: Modifier<RecruitmentBy>,
     m_of: Modifier<RecruitmentOf>,
     m_by_of: Modifier<RecruitmentByOf>,
@@ -125,9 +126,9 @@ fn recruit(
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
     let followers_types = &followers_asset.get(followers_handle.0.id()).unwrap().0;
 
-    for (entity, follower_entity, recruit, mut recruit_progress) in &mut recruits {
+    for (entity, ChildOf(follower_entity), recruit) in &recruits {
         let (ChildOf(base_entity), follower, FollowerCount(follower_count)) =
-            followers.get(follower_entity.0).unwrap();
+            followers.get(*follower_entity).unwrap();
         let (base, children) = bases.get(*base_entity).unwrap();
         let max_follower_count = base_types.get(&base.0).unwrap().max_follower_count;
 
@@ -146,6 +147,7 @@ fn recruit(
         base = m_of.calc_with(base, entity, |f| f.0 == recruit.0);
         base = m_by_of.calc_with(base, entity, |f| f.0 == follower.0 && f.1 == recruit.0);
 
+        let mut recruit_progress = recruit_progresses.get_mut(*follower_entity).unwrap();
         let recruit_progress = recruit_progress.0.entry(recruit.0.clone()).or_default();
         *recruit_progress += (base as f32) * (*follower_count as f32);
 
@@ -167,8 +169,12 @@ fn recruit(
                 if let Ok(region) = regions.get(entity) {
                     let toast = TextKey::new("new-follower-toast")
                         .with_arg("count", additional_followers as f64)
-                        .with_arg("follower-type", recruit.0.clone())
-                        .with_arg("region", region.name.clone());
+                        .with_arg(
+                            "follower-type",
+                            TextKey::new(format!("follower-type-{}", follower.0))
+                                .with_arg("count", follower_count.0 as f64),
+                        )
+                        .with_arg("region", TextKey::new(format!("region-{}", region.name)));
                     toasts.push(toast);
                     break;
                 }
