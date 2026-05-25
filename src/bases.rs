@@ -6,14 +6,14 @@ use rand::seq::IndexedRandom;
 use serde_derive::Deserialize;
 
 use crate::{
-    followers::{Follower, FollowerCount, FollowersAsset, FollowersHandle},
+    followers::{Follower, FollowerCount, FollowerEffects, FollowersAsset, FollowersHandle},
     funds::{Expense, Funds, FundsAmount},
     new_game::NewGame,
     regions::{BasePlot, Region},
     rng::RandomSource,
     state::{GameState, MainSetupSet},
     suspicion::{SuspicionType, add_suspicion_change},
-    tasks::{Task, TasksAsset, TasksHandle},
+    tasks::{Task, TaskEffects, TasksAsset, TasksHandle},
 };
 
 const BASETYPES_ASSET_PATH: &str = "data/define.basetypes.toml";
@@ -120,7 +120,7 @@ fn spawn_base_inner(
         funds.0 -= base_type_settings.initial_cost;
     }
 
-    for (follower, settings) in &followers_asset.get(followers_handle.0.id()).unwrap().0 {
+    for (follower, _) in &followers_asset.get(followers_handle.0.id()).unwrap().0 {
         let task = task_assets
             .get(task_handle.0.id())
             .unwrap()
@@ -133,10 +133,11 @@ fn spawn_base_inner(
             .spawn((
                 ChildOf(base_entity),
                 Follower(follower.clone()),
-                Expense(settings.cost_per_day, follower.clone(), 0),
                 Task(task.clone()),
             ))
-            .insert(FollowerCount(0));
+            .insert(FollowerCount(0))
+            .with_child(FollowerEffects)
+            .with_child(TaskEffects);
     }
 }
 

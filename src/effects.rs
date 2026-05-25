@@ -185,7 +185,12 @@ impl Scopes<'_, '_> {
 
 #[allow(clippy::cast_possible_truncation)]
 pub fn apply_effect(
-    In((entity, count, effect, source)): In<(Option<Entity>, Option<usize>, Effect, Source)>,
+    In((entity, count, effect, source)): In<(
+        Option<Entity>,
+        Option<usize>,
+        Effect,
+        Option<Source>,
+    )>,
     mut commands: Commands,
     mut funds: ResMut<Funds>,
     mut secrets: ResMut<ResearchPoints>,
@@ -193,6 +198,11 @@ pub fn apply_effect(
     date: Res<GameDate>,
     scopes: Scopes,
 ) {
+    if count == Some(0) {
+        return;
+    }
+    let count = count.unwrap_or(1);
+
     macro_rules! entity_commands {
         ($duration: expr) => {
             if let Some(duration) = $duration {
@@ -214,8 +224,6 @@ pub fn apply_effect(
             }
         };
     }
-
-    let count = count.unwrap_or(1);
 
     match effect {
         Effect::Funds(amount) => funds.0 += amount * count as FundsAmount,
@@ -311,7 +319,7 @@ pub fn apply_effect(
                 entity,
                 Some(date.0),
                 &modifier_value,
-                source,
+                source.unwrap(),
             );
         }
         Effect::Achievement(name) => {

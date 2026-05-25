@@ -1,12 +1,19 @@
 [priest]
-cost-per-day = 30
 symbol = "\u2600"
+effects = [
+  { expense = { amount = [30, "priest", 1] } },
+  { research = 1 },
+]
 
 [minion]
-cost-per-day = 20
 symbol = "\u2608"
+effects = [
+  { expense = { amount = [20, "minion", 1] } },
+]
 first-recruit-achievement = "first-minion-recruit"
 
 [goon]
-cost-per-day = 20
 symbol = "\u2644"
+effects = [
+  { expense = { amount = [20, "goon", 1] } },
+]

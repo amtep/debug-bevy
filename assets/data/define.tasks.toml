@@ -22,19 +22,27 @@ effects = [
 follower-types = ["priest"]
 effects = [
   { recruit = { follower = "minion", amount = 1.0 } },
+  { suspicion-change = { suspicion = "media", amount = 0.25 } },
   { achievement = "started-recruiting" }
 ]
 
 [minion-recruit-minions]
 follower-types = ["minion"]
 requires-discovery = "minions-can-recruit"
-effects = [{ recruit = { follower = "minion", amount = 0.5 } }]
+effects = [{ recruit = { follower = "minion", amount = 0.34 } }]
 
 [priest-recruit-goons]
 follower-types = ["priest"]
 requires-discovery = "recruit-goons"
-effects = [{ recruit = { follower = "goon", amount = 1.0 } }]
+effects = [
+  { recruit = { follower = "goon", amount = 1.0 } },
+  { suspicion-change = { suspicion = "media", amount = 0.25 } },
+]
 
 [research]
 follower-types = ["priest"]
-effects = [{ expense = { amount = [50, "research", 1] } }, { research = 1 }]
+effects = [
+  { expense = { amount = [100, "research", 1] } },
+  { research = 10 },
+  { suspicion-change = { suspicion = "scientific", amount = 0.5 } }
+]

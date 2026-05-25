@@ -9,7 +9,7 @@ use serde::Deserialize;
 use crate::{
     achievements::AchievedEvent,
     bases::{Base, BasetypesAsset, BasetypesHandle},
-    funds::{Expense, FundsAmount},
+    effects::{Effect, apply_effect},
     modifiers::{Modifier, RecruitmentBy, RecruitmentByOf, RecruitmentOf},
     new_game::NewGame,
     regions::Region,
@@ -23,6 +23,7 @@ const FOLLOWERS_ASSET_PATH: &str = "data/define.followers.toml";
 pub fn plugin(app: &mut App) {
     app.add_plugins(TomlAssetPlugin::<FollowersAsset>::new(&["followers.toml"]))
         .add_systems(OnEnter(GameState::Load), setup_load)
+        .add_observer(on_follower_count_changed)
         .add_systems(
             OnEnter(GameState::Main),
             new_game
@@ -41,12 +42,12 @@ pub struct FollowersHandle(pub Handle<FollowersAsset>);
 /// These are the general settings for all follower types.
 /// Once there are also specific follower settings, there
 /// will need to be an enum to distinguish them.
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct FollowerSettings {
-    pub cost_per_day: FundsAmount,
     pub symbol: char,
     pub first_recruit_achievement: Option<String>,
+    pub effects: Vec<Effect>,
 }
 
 #[derive(Component, Reflect, Clone, Deserialize, Debug, Deref, PartialEq, Eq)]
@@ -60,6 +61,9 @@ pub struct Follower(pub String);
 #[reflect(Component)]
 #[component(immutable)]
 pub struct FollowerCount(pub usize);
+
+#[derive(Component)]
+pub struct FollowerEffects;
 
 #[derive(Component, Reflect)]
 #[reflect(Component)]
@@ -76,11 +80,46 @@ fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(FollowersHandle(asset_server.load(FOLLOWERS_ASSET_PATH)));
 }
 
+fn on_follower_count_changed(
+    insert: On<Insert, FollowerCount>,
+    mut commands: Commands,
+    followers: Query<(&FollowerCount, &Follower, &Children)>,
+    follower_effects: Query<&FollowerEffects>,
+    followers_asset: Res<Assets<FollowersAsset>>,
+    followers_handle: Res<FollowersHandle>,
+) {
+    let Ok((FollowerCount(count), Follower(follower), children)) = followers.get(insert.entity)
+    else {
+        return;
+    };
+
+    let follower_settings = &followers_asset.get(followers_handle.0.id()).unwrap().0;
+    let settings = follower_settings.get(follower).unwrap();
+
+    let follower_effects_entity = children
+        .iter()
+        .find(|e| follower_effects.contains(*e))
+        .unwrap();
+    commands.entity(follower_effects_entity).despawn_children();
+
+    for effect in &settings.effects {
+        commands.run_system_cached_with(
+            apply_effect,
+            (
+                Some(follower_effects_entity),
+                Some(*count),
+                effect.clone(),
+                None,
+            ),
+        );
+    }
+}
+
 /// Create the starting priest for the cult.
 fn new_game(
     mut commands: Commands,
     base: Single<&Children, With<Base>>,
-    mut followers: Query<(&Follower, &FollowerCount, &Expense)>,
+    followers: Query<&Follower>,
     new_game: Res<NewGame>,
 ) {
     info!("Creating starting follower");
@@ -88,15 +127,11 @@ fn new_game(
     let starting_followers = &new_game.difficulty.starting_followers;
 
     for child in base.iter() {
-        if let Ok((follower, follower_count, expense)) = followers.get_mut(child)
+        if let Ok(follower) = followers.get(child)
             && let Some(count) = starting_followers.get(&follower.0)
         {
-            let mut follower_count = *follower_count;
-            follower_count.0 = *count;
-            let mut expense = expense.clone();
-            expense.2 = *count;
+            let follower_count = FollowerCount(*count);
             commands.entity(child).insert(follower_count);
-            commands.entity(child).insert(expense);
         }
     }
 }
@@ -109,9 +144,9 @@ const RECRUIT_PROGRESS: f32 = 100.0;
 fn recruit(
     mut commands: Commands,
     bases: Query<(&Base, &Children)>,
-    followers: Query<(&ChildOf, &Follower, &FollowerCount)>,
+    followers: Query<(Entity, &ChildOf, &Follower, &FollowerCount)>,
     mut recruit_progresses: Query<&mut RecruitProgress>,
-    recruits: Query<(Entity, &ChildOf, &Recruit)>,
+    recruits: Query<(Entity, &Recruit)>,
     m_by: Modifier<RecruitmentBy>,
     m_of: Modifier<RecruitmentOf>,
     m_by_of: Modifier<RecruitmentByOf>,
@@ -126,15 +161,18 @@ fn recruit(
     let base_types = &base_types_asset.get(base_types_handle.0.id()).unwrap().0;
     let followers_types = &followers_asset.get(followers_handle.0.id()).unwrap().0;
 
-    for (entity, ChildOf(follower_entity), recruit) in &recruits {
-        let (ChildOf(base_entity), follower, FollowerCount(follower_count)) =
-            followers.get(*follower_entity).unwrap();
+    for (entity, recruit) in &recruits {
+        let (follower_entity, ChildOf(base_entity), follower, FollowerCount(follower_count)) =
+            childof
+                .iter_ancestors(entity)
+                .find_map(|e| followers.get(e).ok())
+                .unwrap();
         let (base, children) = bases.get(*base_entity).unwrap();
         let max_follower_count = base_types.get(&base.0).unwrap().max_follower_count;
 
         let total_followers = children
             .iter()
-            .filter_map(|c| followers.get(c).ok().map(|(_, _, c)| c.0))
+            .filter_map(|c| followers.get(c).ok().map(|(_, _, _, c)| c.0))
             .sum::<usize>();
 
         // TODO: automatically switch to the default task if the base is full
@@ -147,7 +185,7 @@ fn recruit(
         base = m_of.calc_with(base, entity, |f| f.0 == recruit.0);
         base = m_by_of.calc_with(base, entity, |f| f.0 == follower.0 && f.1 == recruit.0);
 
-        let mut recruit_progress = recruit_progresses.get_mut(*follower_entity).unwrap();
+        let mut recruit_progress = recruit_progresses.get_mut(follower_entity).unwrap();
         let recruit_progress = recruit_progress.0.entry(recruit.0.clone()).or_default();
         *recruit_progress += (base as f32) * (*follower_count as f32);
 
@@ -159,8 +197,8 @@ fn recruit(
             let (follower_entity, mut follower_count) = children
                 .iter()
                 .filter_map(|c| followers.get(c).ok().map(|f| (c, f)))
-                .find(|(_, (_, f, _))| f.0 == recruit.0)
-                .map(|(e, (_, _, c))| (e, *c))
+                .find(|(_, (_, _, f, _))| f.0 == recruit.0)
+                .map(|(e, (_, _, _, c))| (e, *c))
                 .unwrap();
             follower_count.0 += additional_followers;
             commands.entity(follower_entity).insert(follower_count);

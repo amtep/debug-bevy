@@ -1,5 +1,5 @@
 [personal-magnetism]
-research-cost = 50
+research-cost = 1000
 modifiers = [
   {
     recruit = {
@@ -10,53 +10,53 @@ modifiers = [
 ]
 
 [recruit-goons]
-research-cost = 50
+research-cost = 500
 
 [minions-can-recruit]
-research-cost = 50
+research-cost = 1000
 
 [shadowy-contacts]
-research-cost = 50
+research-cost = 500
 
 [unlock-region-north-america]
-research-cost = 50
+research-cost = 1000
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 
 [unlock-region-south-america]
-research-cost = 50
+research-cost = 1000
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 
 [unlock-region-europe]
-research-cost = 50
+research-cost = 1000
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 
 [unlock-region-africa]
-research-cost = 50
+research-cost = 1000
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 
 [unlock-region-western-asia]
-research-cost = 50
+research-cost = 1000
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 
 [unlock-region-eastern-asia]
-research-cost = 50
+research-cost = 1000
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 
 [unlock-region-oceania]
-research-cost = 50
+research-cost = 1000
 funds-cost = 5000
 requires = ["shadowy-contacts"]
 
 [esoteric-knowledge]
-research-cost = 100
+research-cost = 2000
 # not implemented yet
 
 [election-interference]
-research-cost = 100
+research-cost = 10000
 # not implemented yet

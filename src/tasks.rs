@@ -34,6 +34,9 @@ pub struct TaskSettings {
     pub effects: Vec<Effect>,
 }
 
+#[derive(Component)]
+pub struct TaskEffects;
+
 fn setup_load(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(TasksHandle(asset_server.load(TASKS_ASSET_PATH)));
 }
@@ -49,11 +52,12 @@ pub struct Task(pub String);
 fn on_task_changed<C: Component>(
     insert: On<Insert, C>,
     mut commands: Commands,
+    followers: Query<(&FollowerCount, &Task, &Children)>,
+    task_effects: Query<&TaskEffects>,
     task_handle: Res<TasksHandle>,
     task_assets: Res<Assets<TasksAsset>>,
-    followers: Query<(&FollowerCount, &Task)>,
 ) {
-    let Ok((FollowerCount(count), Task(task))) = followers.get(insert.entity) else {
+    let Ok((FollowerCount(count), Task(task), children)) = followers.get(insert.entity) else {
         return;
     };
     let task_settings = &task_assets.get(task_handle.0.id()).unwrap().0;
@@ -63,17 +67,18 @@ fn on_task_changed<C: Component>(
         return;
     };
 
-    commands.entity(insert.entity).despawn_children();
+    let task_effects_entity = children.iter().find(|e| task_effects.contains(*e)).unwrap();
+    commands.entity(task_effects_entity).despawn_children();
 
     for effect in &settings.effects {
         // FIXME: any modifier applied is currently acting on the task, but not the base on a whole.
         commands.run_system_cached_with(
             apply_effect,
             (
-                Some(insert.entity),
+                Some(task_effects_entity),
                 Some(*count),
                 effect.clone(),
-                Source::Task(task.clone()),
+                Some(Source::Task(task.clone())),
             ),
         );
     }
