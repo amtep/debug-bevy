@@ -156,9 +156,8 @@ jobs:
             runner: windows-latest
 
           - platform: macos
-            targets: x86_64-apple-darwin aarch64-apple-darwin
-            app_suffix: .app/Contents/MacOS
-            package_ext: .dmg
+            targets: x86_64-apple-darwin
+            package_ext: .zip
             runner: macos-latest
     runs-on: ${{ matrix.runner }}
     permissions:
@@ -263,11 +262,11 @@ jobs:
             bevy build --locked --target="${target}" --features='${{ matrix.features }}'
             mv target/"${target}"/debug/'${{ env.cargo_build_binary_name }}${{ matrix.binary_ext }}' tmp/binary/"${target}"'${{ matrix.binary_ext }}'
           done
-          if [ '${{ matrix.platform }}' = 'macos' ]; then
-            lipo tmp/binary/*'${{ matrix.binary_ext }}' -create -output '${{ env.app }}/${{ env.app_binary_name }}${{ matrix.binary_ext }}'
-          else
+          #if [ '${{ matrix.platform }}' = 'macos' ]; then
+          #  lipo tmp/binary/*'${{ matrix.binary_ext }}' -create -output '${{ env.app }}/${{ env.app_binary_name }}${{ matrix.binary_ext }}'
+          #else
             mv tmp/binary/*'${{ matrix.binary_ext }}' '${{ env.app }}/${{ env.app_binary_name }}${{ matrix.binary_ext }}'
-          fi
+          #fi
 
       - name: Add assets to app (non-Web)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform != 'web' }}
