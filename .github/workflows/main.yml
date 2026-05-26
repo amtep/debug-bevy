@@ -314,12 +314,7 @@ jobs:
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform != 'windows' }}
         working-directory: tmp/app
         run: |
-          if [ '${{ matrix.platform }}' = 'macos' ]; then
-            ln -s /Applications .
-            hdiutil create -fs HFS+ -volname '${{ env.app_package_name }}' -srcfolder . '${{ env.package }}'
-          else
-            zip --recurse-paths '${{ env.package }}' '${{ env.app_package_name }}'
-          fi
+          zip --recurse-paths '${{ env.package }}' '${{ env.app_package_name }}'
 
       - name: Package app (Windows)
         if: ${{ env.is_platform_enabled == 'true' && matrix.platform == 'windows' }}
